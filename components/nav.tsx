@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const links = [["Home", "/"], ["Competitions", "/competitions"], ["Winners", "/results"], ["Dog", "/dog-profile"], ["Badges", "/rewards"]];
+const links = [["Home", "/"], ["Competitions", "/competitions"], ["Winners", "/results"], ["Profiles", "/profiles"], ["Badges", "/rewards"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
   return <span className="inline-flex items-center gap-2" aria-label="Bark Booth logo"><span className="relative grid h-11 w-11 place-items-center rounded-[1rem] border-2 border-navy bg-cream shadow-soft"><span className="absolute -right-1 -top-1 h-3 w-5 rounded-t-lg bg-pink" /><span className="absolute left-2 top-1 h-2 w-3 rounded-t-md bg-navy" /><span className="text-xl leading-none">🐾</span></span>{!iconOnly && <span className="text-lg font-black tracking-tight text-navy">Bark Booth</span>}</span>;

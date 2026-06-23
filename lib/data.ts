@@ -142,3 +142,60 @@ export const tricksAndTails = [
   "Celebrate a recall win",
   "Share the story behind a favourite photo"
 ];
+
+export const profileDog = {
+  name: "Mabel",
+  breed: "Cocker Spaniel mix",
+  age: "3 years old",
+  dateOfBirth: "14 April 2023",
+  county: "Somerset",
+  ownerUsername: "mabels_mate",
+  bio: "Mabel is a sunny, snack-motivated spaniel who loves garden zoomies, calm training wins, and posing with every digital rosette she has earned. Her scrapbook celebrates the tiny steps as much as the big podium moments.",
+  stats: [
+    { label: "Rosettes earned", value: "7" },
+    { label: "Badges earned", value: "11" },
+    { label: "Competitions entered", value: "14" },
+    { label: "People’s Choice wins", value: "2" },
+    { label: "Calendar appearances", value: "1" },
+    { label: "Training achievements", value: "5" }
+  ],
+  timeline: [
+    { date: "Jan 2026", type: "Entry", icon: "🐾", title: "First Entry", story: "A cosy sofa portrait became Mabel’s first Bark Booth moment and started her public scrapbook." },
+    { date: "Feb 2026", type: "Rosette", icon: "🏵️", title: "First Rosette", story: "Her bright recall photo placed in Action Shot and unlocked the first rosette on her wall." },
+    { date: "Jun 2026", type: "Winner", icon: "☀️", title: "Summer Smiles Winner", story: "A golden-hour garden grin won the seasonal headline class and became her signature photo." },
+    { date: "Jun 2026", type: "Feature", icon: "💖", title: "People’s Choice Feature", story: "The community picked Mabel’s muddy-paws blooper as a favourite feel-good moment." },
+    { date: "Jul 2026", type: "Finalist", icon: "📅", title: "Calendar Pup Finalist", story: "Her wildflower portrait was shortlisted for the mock Bark Booth calendar collection." },
+    { date: "Aug 2026", type: "Entry", icon: "🎪", title: "Tricks & Tails Entry", story: "Mabel shared a gentle paw-touch trick after weeks of patient positive reinforcement." },
+    { date: "Sep 2026", type: "Training", icon: "🎓", title: "Top Pup Graduate", story: "A calm settle at a busy café marked her proudest training milestone so far." }
+  ],
+  gallery: [
+    { title: "Competition entry", caption: "Garden grin for Summer Smiles" },
+    { title: "Winner photo", caption: "Gold rosette celebration" },
+    { title: "Training moment", caption: "Paw touch practice" },
+    { title: "Calendar photo", caption: "Wildflowers and floppy ears" },
+    { title: "Owner favourite", caption: "Muddy-paws blooper" }
+  ],
+  rosettes: [
+    { place: "1st", label: "Summer Smiles", date: "June 2026" },
+    { place: "PC", label: "People’s Choice", date: "June 2026" },
+    { place: "Top", label: "Calendar Pup Finalist", date: "July 2026" },
+    { place: "3rd", label: "Action Shot", date: "February 2026" }
+  ],
+  badges: ["First Entry", "First Rosette", "Summer Smiles Winner", "People’s Choice Feature", "Calendar Pup Finalist", "Tricks & Tails Entry", "Top Pup Graduate", "3 Month Streak"],
+  history: [
+    { competition: "Summer Smiles", className: "Headline class", placement: "1st", date: "Jun 2026", result: "Gold rosette" },
+    { competition: "Community Favourites", className: "People’s Choice", placement: "Winner", date: "Jun 2026", result: "Community badge" },
+    { competition: "Calendar Pups", className: "Summer page", placement: "Finalist", date: "Jul 2026", result: "Calendar badge" },
+    { competition: "Tricks & Tails", className: "Paw touch", placement: "Entered", date: "Aug 2026", result: "Training badge" },
+    { competition: "Action Shot", className: "Recall run", placement: "3rd", date: "Feb 2026", result: "Bronze rosette" }
+  ]
+};
+
+export const profileCards = [
+  { name: "Luna", breed: "Golden Retriever", county: "Devon", rosetteCount: 5, latestAchievement: "Puppy Star" },
+  { name: "Mabel", breed: "Cocker Spaniel mix", county: "Somerset", rosetteCount: 7, latestAchievement: "Top Pup Graduate" },
+  { name: "Biscuit", breed: "Beagle", county: "Kent", rosetteCount: 3, latestAchievement: "Action Shot finalist" },
+  { name: "Pepper", breed: "Rescue Terrier", county: "Yorkshire", rosetteCount: 4, latestAchievement: "Best Rescue" },
+  { name: "Otis", breed: "French Bulldog", county: "Bristol", rosetteCount: 1, latestAchievement: "Community Favourite" },
+  { name: "Daisy", breed: "Labrador", county: "Norfolk", rosetteCount: 6, latestAchievement: "Calendar Pup" }
+];
