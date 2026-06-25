@@ -3,5 +3,29 @@ import { profileCards } from "@/lib/data";
 import { Card, PawAvatar, Section } from "@/components/ui";
 
 export default function ProfilesPage() {
-  return <Section eyebrow="Dog profiles" title="Browse public scrapbook profiles"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{profileCards.map(dog => <Card key={dog.name} className="flex flex-col"><PawAvatar label={`${dog.name} profile image`} className="text-5xl" /><div className="mt-4 flex-1"><h3 className="text-3xl font-black text-navy">{dog.name}</h3><p className="mt-1 font-bold text-pink">{dog.breed}</p><p className="mt-1 text-sm font-bold text-charcoal/60">📍 {dog.county}</p><div className="mt-4 grid grid-cols-2 gap-2 text-sm font-black"><span className="rounded-2xl bg-biscuit/60 p-3">🏵️ {dog.rosetteCount} rosettes</span><span className="rounded-2xl bg-lightgrey p-3">✨ {dog.latestAchievement}</span></div></div><Link href="/dog-profile" className="mt-5 rounded-full bg-cocoa px-5 py-3 text-center text-sm font-black text-white shadow-soft">View scrapbook</Link></Card>)}</div></Section>;
+  const memorialDog = profileCards.find(dog => dog.status === "Rainbow Bridge");
+
+  return <>
+    <Section eyebrow="Dog profiles" title="Browse public Dog Passports">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{profileCards.map(dog => <Card key={dog.profileNumber} className={`flex flex-col ${dog.status === "Rainbow Bridge" ? "bg-gradient-to-br from-white to-skysoft/40" : ""}`}>
+        <PawAvatar label={`${dog.name} profile image`} className="text-5xl" />
+        <div className="mt-4 flex-1">
+          <div className="flex flex-wrap gap-2"><span className="rounded-full bg-lightgrey px-3 py-2 text-xs font-black text-cocoa">{dog.profileNumber}</span><span className="rounded-full bg-biscuit px-3 py-2 text-xs font-black text-cocoa">{dog.status}</span>{dog.rescueBadge && <span className="rounded-full bg-emerald-100 px-3 py-2 text-xs font-black text-cocoa">🐾 {dog.rescueBadge}</span>}</div>
+          <h3 className="mt-3 text-3xl font-black text-navy">{dog.name}</h3>
+          <p className="mt-1 font-bold text-pink">{dog.breed}</p>
+          <p className="mt-1 text-sm font-bold text-charcoal/60">📍 {dog.county}</p>
+          {dog.rescueName && <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-charcoal/70">Rescue: {dog.rescueName}</p>}
+          {dog.memorial && <div className="mt-3 rounded-2xl bg-white/70 p-4"><p className="font-black text-navy">{dog.memorial.heading}</p><p className="mt-1 text-sm text-charcoal/65">{dog.memorial.birthDate} – {dog.memorial.passingDate}</p><p className="mt-2 text-sm leading-6 text-charcoal/70">{dog.memorial.message}</p></div>}
+          <div className="mt-4 grid grid-cols-2 gap-2 text-sm font-black"><span className="rounded-2xl bg-biscuit/60 p-3">🏵️ {dog.rosetteCount} rosettes</span><span className="rounded-2xl bg-lightgrey p-3">✨ {dog.latestAchievement}</span></div>
+        </div>
+        {dog.adoptionCta ? <button type="button" className="mt-5 rounded-full bg-emerald-600 px-5 py-3 text-center text-sm font-black text-white shadow-soft">{dog.adoptionCta}</button> : <Link href="/dog-profile" className="mt-5 rounded-full bg-cocoa px-5 py-3 text-center text-sm font-black text-white shadow-soft">View passport</Link>}
+      </Card>)}</div>
+    </Section>
+
+    <Section eyebrow="Memorial example" title="Rainbow Bridge profiles stay calm and respectful">
+      <Card className="bg-gradient-to-br from-white to-skysoft/50">
+        <div className="grid gap-5 md:grid-cols-[180px_1fr]"><PawAvatar label="Daisy memorial photos" /><div><p className="text-sm font-black uppercase tracking-[0.2em] text-terracotta">In Loving Memory</p><h3 className="mt-2 text-4xl font-black text-navy">Daisy · BB-000042</h3><p className="mt-2 font-bold text-charcoal/65">3 March 2012 – 18 November 2025</p><p className="mt-4 leading-8 text-charcoal/70">A peaceful memorial passport with selected achievements, selected photos, and one family message — never a social feed.</p><div className="mt-4 flex flex-wrap gap-2">{memorialDog?.memorial?.achievements.map(achievement => <span key={achievement} className="rounded-full bg-white px-3 py-2 text-sm font-black text-cocoa">{achievement}</span>)}</div><div className="mt-4 grid gap-2 sm:grid-cols-3">{memorialDog?.memorial?.photos.map(photo => <span key={photo} className="rounded-2xl bg-white/70 p-3 text-sm font-black text-cocoa">📷 {photo}</span>)}</div></div></div>
+      </Card>
+    </Section>
+  </>;
 }
