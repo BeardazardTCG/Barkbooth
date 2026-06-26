@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const links = [["Home", "/"], ["Competitions", "/competitions"], ["People’s Choice", "/peoples-choice-pooch"], ["Calendar", "/calendar-pups"], ["Tricks", "/tricks-and-tails"], ["Winners", "/winners"], ["Profiles", "/profiles"]];
+const links = [["Home", "/"], ["Competitions", "/competitions"], ["People’s Choice", "/peoples-choice-pooch"], ["Mission", "/mission"], ["Calendar", "/calendar-pups"], ["Tricks", "/tricks-and-tails"], ["Winners", "/winners"], ["Profiles", "/profiles"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
