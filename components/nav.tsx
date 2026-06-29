@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const links = [["Registry", "/profiles"], ["Register Dog", "/dog-profile"], ["Competitions", "/competitions"], ["Winners", "/winners"], ["Mission", "/mission"]];
+const links = [["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Winners", "/winners"], ["Mission", "/mission"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -8,7 +8,7 @@ export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
 }
 
 export function Nav() {
-  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={href} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}</div><Link href="/dog-profile" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Register Dog</Link></nav></header>;
+  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={href} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}</div><Link href="/register-dog" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Register Dog</Link></nav></header>;
 }
 
 export function SiteFooter() {
@@ -16,5 +16,5 @@ export function SiteFooter() {
 }
 
 export function MobileTabs() {
-  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Register", "/dog-profile"], ["Registry", "/profiles"], ["Comps", "/competitions"], ["Winners", "/winners"], ["Mission", "/mission"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 0 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
+  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Register", "/register-dog"], ["Registry", "/profiles"], ["Comps", "/competitions"], ["Winners", "/winners"], ["Mission", "/mission"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 0 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
 }
