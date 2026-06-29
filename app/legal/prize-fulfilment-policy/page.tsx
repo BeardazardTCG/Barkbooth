@@ -1,5 +1,5 @@
 import { Card, Section } from "@/components/ui";
 
 export default function Page() {
-  return <Section eyebrow="Legal placeholder" title="Prize Fulfilment Policy"><Card><p className="text-lg leading-8 text-charcoal/70">Future prizes would be fulfilled according to published class rules. Photo competitions are judged, not raffles or random prize draws.</p><p className="mt-4 font-black text-navy">Short placeholder copy only — not legal advice.</p></Card></Section>;
+  return <Section eyebrow="Legal placeholder" title="Prize Fulfilment Policy"><Card><p className="text-lg leading-8 text-charcoal/70">Future optional activities may include profile badges, rosettes, or prizes according to published rules. Bark Booth’s registry/profile use would need separate terms from any competition fulfilment process.</p><p className="mt-4 font-black text-navy">Short placeholder copy only — not a real legal document and not legal advice.</p></Card></Section>;
 }

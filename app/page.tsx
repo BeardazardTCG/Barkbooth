@@ -27,7 +27,7 @@ export default function HomePage() {
         <h1 className="mt-5 text-5xl font-black leading-[0.95] tracking-tight text-navy md:text-7xl">Every dog deserves a Bark Booth profile.</h1>
         <p className="mt-5 max-w-xl text-lg leading-8 text-charcoal/75">Create a lasting digital identity for your dog with a Bark Booth number, profile photo, milestones, care notes, memories, and achievements.</p>
         <p className="mt-3 max-w-xl text-base leading-7 text-charcoal/65">Bark Booth is a registry-style home for every dog’s story — useful whether your dog competes, trains, rescues, retires, or simply fills your life with moments worth preserving.</p>
-        <div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/dog-profile">Register Your Dog</ButtonLink><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink></div>
+        <div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/register-dog">Register Your Dog</ButtonLink><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink></div>
       </div>
       <Card className="mt-8 overflow-hidden bg-gradient-to-br from-white via-cream to-biscuit/60 md:mt-0">
         <div className="rounded-[1.75rem] bg-gradient-to-br from-pink-100 via-white to-skysoft p-5">
