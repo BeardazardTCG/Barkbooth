@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const links = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Identity", "/dog-profile"], ["Log in", "/login"]];
+const links = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Log in", "/login"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -16,5 +16,5 @@ export function SiteFooter() {
 }
 
 export function MobileTabs() {
-  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register", "/register-dog"], ["Comps", "/competitions"], ["Identity", "/dog-profile"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 2 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
+  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register", "/register-dog"], ["Comps", "/competitions"], ["Account", "/dashboard"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 2 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
 }

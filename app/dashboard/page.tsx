@@ -10,7 +10,7 @@ const quickActions = [
   ["Register a Dog", "/register-dog", "Create a Bark Booth Identity for a dog."],
   ["Search Registry", "/profiles", "Find canine identities by name or number."],
   ["View Competitions", "/competitions", "Optional activities that build history."],
-  ["Static Demo", "/dog-profile", "Keep viewing the original mock identity page."],
+  ["Example Identity", "/dog-profile", "View an example Bark Booth Identity layout."],
 ];
 
 function formatStatus(status: string) {
@@ -29,13 +29,13 @@ export default async function DashboardPage() {
   }) as DashboardDog[];
 
   return <>
-    <Section eyebrow="User dashboard" title={`Welcome back, ${user.displayName}`}>
+    <Section eyebrow="Your account" title={`Welcome back, ${user.displayName}`}>
       <div className="grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
         <Card className="bg-gradient-to-br from-navy to-cocoa text-white">
           <div className="flex items-center gap-4">
             <div className="grid h-20 w-20 place-items-center rounded-3xl bg-white/15 text-4xl">👤</div>
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-white/55">Logged-in tester</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-white/55">Bark Booth Member</p>
               <h1 className="mt-1 text-3xl font-black">{user.displayName}</h1>
               <p className="font-bold text-biscuit">@{user.username}</p>
             </div>
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-terracotta">Owner Status, not Dog Role</p>
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-terracotta">Your account</p>
           <h2 className="mt-2 text-2xl font-black text-navy">Account statuses</h2>
           <p className="mt-2 leading-7 text-charcoal/65">People can have one or more owner statuses. Dogs separately have identities and dog roles such as Pet, Breeding, Show, Working or Rescue.</p>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       </Card>}
     </Section>
 
-    <Section eyebrow="Quick actions" title="Manage Bark Booth identity records">
+    <Section eyebrow="Quick actions" title="Manage Bark Booth records">
       <div className="grid gap-4 md:grid-cols-4">{quickActions.map(([label, href, detail]) => <Card key={label}><h3 className="text-xl font-black text-navy">{label}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-charcoal/65">{detail}</p><div className="mt-4"><ButtonLink href={href} variant="secondary">Open</ButtonLink></div></Card>)}</div>
     </Section>
   </>;
