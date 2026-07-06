@@ -1,6 +1,5 @@
 "use server";
 
-import { DogVisibility } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -20,9 +19,10 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   if (!name || !primaryRole) return "Dog name and primary role are required.";
 
   const dateOfBirth = asString(formData.get("dateOfBirth"));
-  const visibilityValue = asString(formData.get("visibility")) as DogVisibility;
+  const allowedVisibility = ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const;
+  const visibilityValue = asString(formData.get("visibility"));
 
-  const dog = await prisma.$transaction(async (tx) => {
+  const dog = await prisma.$transaction(async (tx: typeof prisma) => {
     const created = await tx.dogIdentity.create({
       data: {
         registryNumber: "PENDING",
@@ -34,7 +34,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
         sex: asString(formData.get("sex")) || null,
         colour: asString(formData.get("colour")) || null,
         countryOfRegistration: asString(formData.get("countryOfRegistration")) || null,
-        visibility: Object.values(DogVisibility).includes(visibilityValue) ? visibilityValue : DogVisibility.PUBLIC,
+        visibility: allowedVisibility.includes(visibilityValue as (typeof allowedVisibility)[number]) ? visibilityValue as (typeof allowedVisibility)[number] : "PUBLIC",
       },
     });
     return tx.dogIdentity.update({

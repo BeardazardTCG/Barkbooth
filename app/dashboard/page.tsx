@@ -3,6 +3,9 @@ import { ButtonLink, Card, PawAvatar, Section } from "@/components/ui";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
+type DashboardOwnerStatus = { status: string };
+type DashboardDog = { id: string; name: string; registryNumber: string; primaryRole: string; breed: string | null };
+
 const quickActions = [
   ["Register a Dog", "/register-dog", "Create a Bark Booth Identity for a dog."],
   ["Search Registry", "/profiles", "Find canine identities by name or number."],
@@ -19,7 +22,7 @@ export default async function DashboardPage() {
   const dogs = await prisma.dogIdentity.findMany({
     where: { ownerships: { some: { userId: user.id } } },
     orderBy: { createdAt: "desc" },
-  });
+  }) as DashboardDog[];
 
   return <>
     <Section eyebrow="User dashboard" title={`Welcome back, ${user.displayName}`}>
@@ -44,7 +47,7 @@ export default async function DashboardPage() {
           <h2 className="mt-2 text-2xl font-black text-navy">Account statuses</h2>
           <p className="mt-2 leading-7 text-charcoal/65">People can have one or more owner statuses. Dogs separately have identities and dog roles such as Pet, Breeding, Show, Working or Rescue.</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            {user.ownerStatuses.length ? user.ownerStatuses.map(({ status }) => <span key={status} className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">{formatStatus(status)}</span>) : <span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">No optional statuses selected</span>}
+            {user.ownerStatuses.length ? (user.ownerStatuses as DashboardOwnerStatus[]).map(({ status }) => <span key={status} className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">{formatStatus(status)}</span>) : <span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">No optional statuses selected</span>}
           </div>
         </Card>
       </div>
