@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const links = [["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Winners", "/winners"], ["Mission", "/mission"]];
+const links = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Identity", "/dog-profile"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -12,9 +12,9 @@ export function Nav() {
 }
 
 export function SiteFooter() {
-  return <footer className="border-t border-navy/10 bg-white/70 px-5 pb-28 pt-8 md:pb-8"><div className="mx-auto max-w-6xl"><p className="font-black text-navy">Bark Booth trust placeholders</p><p className="mt-2 text-sm text-charcoal/65">Bark Booth is a registry-style dog profile platform for identity, milestones, care notes, and memories. Optional competitions can add achievements, while welfare-first principles and owner-controlled information stay central.</p><div className="mt-4 flex flex-wrap gap-2">{footerLinks.map(([label, href]) => <Link key={href} href={href} className="rounded-full bg-lightgrey px-3 py-2 text-xs font-black text-navy">{label}</Link>)}</div></div></footer>;
+  return <footer className="border-t border-navy/10 bg-white/70 px-5 pb-28 pt-8 md:pb-8"><div className="mx-auto max-w-6xl"><p className="font-black text-navy">Bark Booth trust placeholders</p><p className="mt-2 text-sm text-charcoal/65">Bark Booth is a lifelong canine identity and registry platform. The owner has the account; the dog has the identity. Optional competitions can add history, while structured records and owner-controlled information stay central.</p><div className="mt-4 flex flex-wrap gap-2">{footerLinks.map(([label, href]) => <Link key={href} href={href} className="rounded-full bg-lightgrey px-3 py-2 text-xs font-black text-navy">{label}</Link>)}</div></div></footer>;
 }
 
 export function MobileTabs() {
-  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Register", "/register-dog"], ["Registry", "/profiles"], ["Comps", "/competitions"], ["Winners", "/winners"], ["Mission", "/mission"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 0 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
+  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register", "/register-dog"], ["Comps", "/competitions"], ["Identity", "/dog-profile"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 2 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
 }
