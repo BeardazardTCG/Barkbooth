@@ -23,19 +23,19 @@ export default function HomePage() {
   return <>
     <section className="px-5 pb-8 pt-8 sm:px-8 md:grid md:grid-cols-[1fr_0.85fr] md:items-center md:gap-8 md:py-14">
       <div>
-        <p className="inline-flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm font-black text-pink shadow-sm"><BarkBoothLogo iconOnly /> Bark Booth · Lifelong dog profiles.</p>
-        <h1 className="mt-5 text-5xl font-black leading-[0.95] tracking-tight text-navy md:text-7xl">Every dog deserves a Bark Booth profile.</h1>
-        <p className="mt-5 max-w-xl text-lg leading-8 text-charcoal/75">Create a lasting digital identity for your dog with a Bark Booth number, profile photo, milestones, care notes, memories, and achievements.</p>
-        <p className="mt-3 max-w-xl text-base leading-7 text-charcoal/65">Bark Booth is a registry-style home for every dog’s story — useful whether your dog competes, trains, rescues, retires, or simply fills your life with moments worth preserving.</p>
+        <p className="inline-flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm font-black text-pink shadow-sm"><BarkBoothLogo iconOnly /> Bark Booth · Canine Identity</p>
+        <h1 className="mt-5 text-5xl font-black leading-[0.95] tracking-tight text-navy md:text-7xl">Every dog deserves a Bark Booth Identity.</h1>
+        <p className="mt-5 max-w-xl text-lg leading-8 text-charcoal/75">Create a lifelong digital identity for your dog with a unique Bark Booth Registry Number. Your dog’s identity stays with them for life and can grow alongside them, whether they’re a beloved family pet, breeding dog, rescue, working dog or show dog.</p>
+        <p className="mt-3 max-w-xl text-base leading-7 text-charcoal/65">Bark Booth is an inclusive platform built for everyone who loves dogs. Whether you’re looking for a dog, already own one, run a breeding programme, work with a rescue or simply enjoy taking part in competitions, you’re welcome here.</p>
         <div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/register-dog">Register Your Dog</ButtonLink><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink></div>
       </div>
       <Card className="mt-8 overflow-hidden bg-gradient-to-br from-white via-cream to-biscuit/60 md:mt-0">
         <div className="rounded-[1.75rem] bg-gradient-to-br from-pink-100 via-white to-skysoft p-5">
           <PawAvatar label="Bark Booth dog profile" />
-          <p className="mt-5 text-sm font-black uppercase tracking-widest text-navy/55">Example Dog Passport</p>
+          <p className="mt-5 text-sm font-black uppercase tracking-widest text-navy/55">Example Canine Identity</p>
           <h2 className="mt-2 text-3xl font-black text-navy">Mabel · BB-000001</h2>
-          <p className="mt-2 text-charcoal/70">A public dog profile can hold identity details, gotcha-day memories, wellness placeholders, training milestones, and optional achievements in one calm record.</p>
-          <div className="mt-5 grid grid-cols-2 gap-3 text-sm font-bold"><span className="rounded-2xl bg-white/75 p-3">🛂 Bark Booth No.</span><span className="rounded-2xl bg-white/75 p-3">📖 Lifetime profile</span></div>
+          <p className="mt-2 text-charcoal/70">A Bark Booth Identity can hold permanent details first, then grow with health records, documents, history and optional achievements in one calm record.</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 text-sm font-bold"><span className="rounded-2xl bg-white/75 p-3">🛂 Registry Number</span><span className="rounded-2xl bg-white/75 p-3">📖 Lifelong identity</span></div>
         </div>
       </Card>
     </section>
@@ -44,7 +44,7 @@ export default function HomePage() {
 
     <Section eyebrow="What a Bark Booth Profile Can Include" title="Identity, memories, care notes, and optional achievements"><div className="grid gap-4 md:grid-cols-4">{profileIncludes.map(([title, detail, icon]) => <Card key={title} className="bg-gradient-to-br from-white to-cream"><p className="text-4xl">{icon}</p><h3 className="mt-3 text-xl font-black text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}</div></Section>
 
-    <Section eyebrow="Search the Registry" title="Browse public Dog Passports"><Card className="bg-gradient-to-br from-white via-cream to-skysoft/50"><div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center"><div><p className="text-lg leading-8 text-charcoal/70">Look up public Bark Booth profiles by dog name, profile number, life stage, rescue status, or memorial status in this frontend preview. Registry search uses existing mock profile cards only — no live backend lookup is connected.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><span className="rounded-2xl bg-white/80 p-3 text-sm font-black text-cocoa">BB-000001</span><span className="rounded-2xl bg-white/80 p-3 text-sm font-black text-cocoa">Rescue profiles</span><span className="rounded-2xl bg-white/80 p-3 text-sm font-black text-cocoa">Rainbow Bridge</span></div></div><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink></div></Card></Section>
+    <Section eyebrow="Search the Registry" title="Search canine identities"><Card className="bg-gradient-to-br from-white via-cream to-skysoft/50"><div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center"><div><p className="text-lg leading-8 text-charcoal/70">Look up public Bark Booth identities by dog name, registry number, life stage, rescue status, or memorial status in this frontend preview. Registry search uses existing mock profile cards only — no live backend lookup is connected.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><span className="rounded-2xl bg-white/80 p-3 text-sm font-black text-cocoa">BB-000001</span><span className="rounded-2xl bg-white/80 p-3 text-sm font-black text-cocoa">Rescue profiles</span><span className="rounded-2xl bg-white/80 p-3 text-sm font-black text-cocoa">Rainbow Bridge</span></div></div><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink></div></Card></Section>
 
     <Section eyebrow="Active Competitions" title="Optional activities that add achievements to a dog’s profile"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{competitions.map(c => <Card key={c.slug}><div className={`h-28 rounded-[1.5rem] bg-gradient-to-br ${c.color}`} /><p className="mt-4 text-xs font-black uppercase tracking-widest text-pink">Optional profile achievement</p><h3 className="mt-1 text-2xl font-black text-navy">{c.title}</h3><p className="mt-2 text-sm text-charcoal/65">{c.classType} · {c.entries} entries · {c.price}</p><p className="mt-2 text-sm leading-6 text-charcoal/65">Entries can add rosettes, badges, and results to a dog’s Bark Booth record.</p><ButtonLink href={`/competitions/${c.slug}`}>View activity</ButtonLink></Card>)}</div></Section>
 
