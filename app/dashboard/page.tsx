@@ -17,6 +17,10 @@ function formatStatus(status: string) {
   return status.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(date);
+}
+
 export default async function DashboardPage() {
   const user = await requireUser();
   const dogs = await prisma.dogIdentity.findMany({
@@ -37,8 +41,9 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="mt-6 grid gap-3 text-sm font-bold">
-            <div className="rounded-2xl bg-white/10 p-4"><span className="text-white/55">Email</span><p className="mt-1 text-lg text-white">{user.email}</p></div>
+            <div className="rounded-2xl bg-white/10 p-4"><span className="text-white/55">Account</span><p className="mt-1 text-lg text-white">Bark Booth Member</p></div>
             <div className="rounded-2xl bg-white/10 p-4"><span className="text-white/55">Country</span><p className="mt-1 text-lg text-white">{user.country}</p></div>
+            <div className="rounded-2xl bg-white/10 p-4"><span className="text-white/55">Member since</span><p className="mt-1 text-lg text-white">{formatDate(user.createdAt)}</p></div>
           </div>
         </Card>
 
