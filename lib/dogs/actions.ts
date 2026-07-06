@@ -22,7 +22,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   const allowedVisibility = ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const;
   const visibilityValue = asString(formData.get("visibility"));
 
-  const dog = await prisma.$transaction(async (tx: typeof prisma) => {
+  const dog = await prisma.$transaction(async (tx) => {
     const created = await tx.dogIdentity.create({
       data: {
         registryNumber: "PENDING",
