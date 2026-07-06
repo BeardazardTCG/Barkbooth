@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const links = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Identity", "/dog-profile"]];
+const links = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Competitions", "/competitions"], ["Identity", "/dog-profile"], ["Log in", "/login"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -8,7 +8,7 @@ export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
 }
 
 export function Nav() {
-  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={href} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}</div><Link href="/register-dog" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Register Dog</Link></nav></header>;
+  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={href} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}</div><Link href="/signup" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Sign up</Link></nav></header>;
 }
 
 export function SiteFooter() {
