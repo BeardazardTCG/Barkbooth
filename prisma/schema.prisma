@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OwnerStatusType {
+  PET_OWNER
+  BREEDER
+  RESCUE
+  FOSTER
+  PROFESSIONAL
+}
+
+enum DogVisibility {
+  PUBLIC
+  PRIVATE
+  LINK_ONLY
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  displayName  String
+  username     String         @unique
+  country      String
+  over16       Boolean
+  ownerStatuses OwnerStatus[]
+  dogOwnerships DogOwnership[]
+  sessions     Session[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model OwnerStatus {
+  id        String          @id @default(cuid())
+  userId    String
+  status    OwnerStatusType
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now())
+
+  @@unique([userId, status])
+}
+
+model DogIdentity {
+  id                    String          @id @default(cuid())
+  registryNumber        String          @unique
+  registrySequence      Int             @unique @default(autoincrement())
+  name                  String
+  primaryRole           String
+  breed                 String?
+  dateOfBirth           DateTime?
+  estimatedDob          Boolean         @default(false)
+  sex                   String?
+  colour                String?
+  countryOfRegistration String?
+  visibility            DogVisibility   @default(PUBLIC)
+  ownerships            DogOwnership[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+}
+
+model DogOwnership {
+  id        String      @id @default(cuid())
+  userId    String
+  dogId     String
+  role      String      @default("OWNER")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dog       DogIdentity @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([userId, dogId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
