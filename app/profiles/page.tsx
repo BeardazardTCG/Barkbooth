@@ -12,9 +12,9 @@ export default function ProfilesPage() {
       <Card className="bg-gradient-to-br from-white via-cream to-skysoft/50">
         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <p className="text-lg leading-8 text-charcoal/70">This is a public canine identity registry preview using static mock data. It shows how owners could look up a dog by name or Bark Booth number while keeping the dog’s permanent Bark Booth Identity as the foundation.</p>
+            <p className="text-lg leading-8 text-charcoal/70">This early registry view shows example canine identities. Live public registry search will expand as more Bark Booth Identities are registered.</p>
             <label className="mt-5 block text-sm font-black text-navy">Dog name or Bark Booth number<input placeholder="Try Mabel or BB-000001" className="mt-2 w-full rounded-2xl border border-cocoa/10 bg-white px-4 py-3 font-bold text-charcoal" /></label>
-            <p className="mt-2 text-sm font-bold text-charcoal/55">Search and filters are frontend preview controls only; no live registry lookup is connected.</p>
+            <p className="mt-2 text-sm font-bold text-charcoal/55">Search and filters are shown as a registry preview while live public search grows over time.</p>
           </div>
           <div className="flex flex-wrap gap-3 md:justify-end"><ButtonLink href="/register-dog">Register Your Dog</ButtonLink><ButtonLink href="/dog-profile" variant="secondary">View Example Identity</ButtonLink></div>
         </div>
@@ -35,7 +35,7 @@ export default function ProfilesPage() {
           <div className="mt-4 rounded-2xl bg-lightgrey p-3 text-sm font-black text-cocoa">Latest identity record: {dog.latestAchievement}</div>
           <p className="mt-2 text-xs font-bold text-charcoal/55">Rosettes: {dog.rosetteCount} · shown as one optional achievement type, not the whole identity.</p>
         </div>
-        {dog.adoptionCta ? <button type="button" className="mt-5 rounded-full bg-emerald-600 px-5 py-3 text-center text-sm font-black text-white shadow-soft">{dog.adoptionCta} mock</button> : <Link href="/dog-profile" className="mt-5 rounded-full bg-cocoa px-5 py-3 text-center text-sm font-black text-white shadow-soft">View example identity</Link>}
+        {dog.adoptionCta ? <button type="button" className="mt-5 rounded-full bg-emerald-600 px-5 py-3 text-center text-sm font-black text-white shadow-soft">{dog.adoptionCta}</button> : <Link href="/dog-profile" className="mt-5 rounded-full bg-cocoa px-5 py-3 text-center text-sm font-black text-white shadow-soft">View example identity</Link>}
       </Card>)}</div>
     </Section>
 
