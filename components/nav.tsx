@@ -1,20 +1,31 @@
 import Link from "next/link";
+import { logout } from "@/lib/auth/actions";
+import { getCurrentUser } from "@/lib/auth/session";
 
-const links = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Records", "/dashboard#records"], ["Competitions", "/competitions"], ["Log in", "/login"]];
+const loggedOutLinks = [["Registry", "/profiles"], ["Competitions", "/competitions"], ["Log in", "/login"], ["Sign up", "/signup"]];
+const loggedInLinks = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Records", "/dashboard#records"], ["Competitions", "/competitions"], ["Account", "/dashboard"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
   return <span className="inline-flex items-center gap-2" aria-label="Bark Booth logo"><span className="relative grid h-11 w-11 place-items-center rounded-[1rem] border-2 border-navy bg-cream shadow-soft"><span className="absolute -right-1 -top-1 h-3 w-5 rounded-t-lg bg-pink" /><span className="absolute left-2 top-1 h-2 w-3 rounded-t-md bg-navy" /><span className="text-xl leading-none">🐾</span></span>{!iconOnly && <span className="text-lg font-black tracking-tight text-navy">Bark Booth</span>}</span>;
 }
 
-export function Nav() {
-  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={href} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}</div><Link href="/signup" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Sign up</Link></nav></header>;
+function LogoutButton({ className }: { className: string }) {
+  return <form action={logout}><button type="submit" className={className}>Log out</button></form>;
+}
+
+export async function Nav() {
+  const user = await getCurrentUser();
+  const links = user ? loggedInLinks : loggedOutLinks.filter(([label]) => label !== "Sign up");
+  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={`${label}-${href}`} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}{user && <LogoutButton className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy" />}</div>{user ? <Link href="/dashboard" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Account</Link> : <Link href="/signup" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Sign up</Link>}</nav></header>;
 }
 
 export function SiteFooter() {
-  return <footer className="border-t border-navy/10 bg-white/70 px-5 pb-28 pt-8 md:pb-8"><div className="mx-auto max-w-6xl"><p className="font-black text-navy">Bark Booth trust placeholders</p><p className="mt-2 text-sm text-charcoal/65">Bark Booth is a lifelong canine identity and registry platform. The owner has the account; the dog has the identity. Optional competitions can add history, while structured records and owner-controlled information stay central.</p><div className="mt-4 flex flex-wrap gap-2">{footerLinks.map(([label, href]) => <Link key={href} href={href} className="rounded-full bg-lightgrey px-3 py-2 text-xs font-black text-navy">{label}</Link>)}</div></div></footer>;
+  return <footer className="border-t border-navy/10 bg-white/70 px-5 pb-28 pt-8 md:pb-8"><div className="mx-auto max-w-6xl"><p className="font-black text-navy">Bark Booth trust placeholders</p><p className="mt-2 text-sm text-charcoal/65">Bark Booth is a lifelong canine identity and registry platform. The owner has the account; the dog has the identity. Optional competitions can add history, while structured records and owner-controlled information stay central.</p><div className="mt-4 flex flex-wrap gap-2">{footerLinks.map(([label, href]) => <Link key={`${label}-${href}`} href={href} className="rounded-full bg-lightgrey px-3 py-2 text-xs font-black text-navy">{label}</Link>)}</div></div></footer>;
 }
 
-export function MobileTabs() {
-  return <div className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden">{[["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register", "/register-dog"], ["Records", "/dashboard#records"], ["Account", "/dashboard"]].map(([label, href], index) => <Link key={href} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${index === 2 ? "bg-pink" : ""}`}>{label}</Link>)}</div>;
+export async function MobileTabs() {
+  const user = await getCurrentUser();
+  const links = user ? loggedInLinks : loggedOutLinks;
+  return <div className="fixed inset-x-3 bottom-3 z-30 grid rounded-[1.5rem] bg-navy/95 p-2 text-center text-[11px] font-bold text-white shadow-soft md:hidden" style={{ gridTemplateColumns: `repeat(${links.length + (user ? 1 : 0)}, minmax(0, 1fr))` }}>{links.map(([label, href]) => <Link key={`${label}-${href}`} href={href} className={`rounded-2xl px-1 py-2 hover:bg-white/10 ${label === "Register Dog" || label === "Sign up" ? "bg-pink" : ""}`}>{label === "Register Dog" ? "Register" : label}</Link>)}{user && <LogoutButton className="w-full rounded-2xl px-1 py-2 text-[11px] font-bold text-white hover:bg-white/10" />}</div>;
 }

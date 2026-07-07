@@ -21,6 +21,12 @@ export async function getCurrentUser() {
   return session.user;
 }
 
+export async function deleteCurrentSession() {
+  const token = cookies().get(SESSION_COOKIE)?.value;
+  if (token) await prisma.session.deleteMany({ where: { token } });
+  cookies().delete(SESSION_COOKIE);
+}
+
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
