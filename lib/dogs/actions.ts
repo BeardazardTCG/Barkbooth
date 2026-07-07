@@ -51,3 +51,69 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   });
   redirect(`/dogs/${dog.registryNumber}`);
 }
+
+const recordCategories = ["IDENTITY", "DNA", "HEALTH", "CARE", "IDENTIFICATION", "INSURANCE", "PEDIGREE", "TITLES", "WORKING_QUALIFICATIONS", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS", "OTHER"] as const;
+const recordStatuses = ["HAVE_RECORD", "DO_NOT_HAVE"] as const;
+
+function asEnum<T extends readonly string[]>(value: string, allowed: T, fallback: T[number]): T[number] {
+  return allowed.includes(value as T[number]) ? value as T[number] : fallback;
+}
+
+function asDate(value: string) {
+  return value ? new Date(`${value}T00:00:00.000Z`) : null;
+}
+
+async function requireDogOwner(dogId: string) {
+  const user = await requireUser();
+  const ownership = await prisma.dogOwnership.findUnique({ where: { userId_dogId: { userId: user.id, dogId } }, include: { dog: true } });
+  if (!ownership) throw new Error("You can only manage records for dogs you own.");
+  return ownership.dog;
+}
+
+export async function addDogRecord(formData: FormData) {
+  const dogId = asString(formData.get("dogId"));
+  const dog = await requireDogOwner(dogId);
+  const recordType = asString(formData.get("recordType"));
+  if (!recordType) throw new Error("Record type is required.");
+  await prisma.dogRecord.create({ data: {
+    dogId,
+    category: asEnum(asString(formData.get("category")), recordCategories, "OTHER"),
+    recordType,
+    provider: asString(formData.get("provider")) || null,
+    status: asEnum(asString(formData.get("status")), recordStatuses, "HAVE_RECORD"),
+    verificationStatus: "NOT_SUBMITTED",
+    referenceNumber: asString(formData.get("referenceNumber")) || null,
+    issueDate: asDate(asString(formData.get("issueDate"))),
+    expiryDate: asDate(asString(formData.get("expiryDate"))),
+    notes: asString(formData.get("notes")) || null,
+  } });
+  redirect(`/dogs/${dog.registryNumber}#records`);
+}
+
+export async function updateDogRecord(formData: FormData) {
+  const recordId = asString(formData.get("recordId"));
+  const existing = await prisma.dogRecord.findUnique({ where: { id: recordId } });
+  if (!existing) throw new Error("Record not found.");
+  const dog = await requireDogOwner(existing.dogId);
+  const recordType = asString(formData.get("recordType"));
+  await prisma.dogRecord.update({ where: { id: recordId }, data: {
+    category: asEnum(asString(formData.get("category")), recordCategories, existing.category),
+    recordType: recordType || existing.recordType,
+    provider: asString(formData.get("provider")) || null,
+    status: asEnum(asString(formData.get("status")), recordStatuses, existing.status),
+    referenceNumber: asString(formData.get("referenceNumber")) || null,
+    issueDate: asDate(asString(formData.get("issueDate"))),
+    expiryDate: asDate(asString(formData.get("expiryDate"))),
+    notes: asString(formData.get("notes")) || null,
+  } });
+  redirect(`/dogs/${dog.registryNumber}#records`);
+}
+
+export async function removeDogRecord(formData: FormData) {
+  const recordId = asString(formData.get("recordId"));
+  const existing = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true } });
+  if (!existing) throw new Error("Record not found.");
+  const dog = await requireDogOwner(existing.dogId);
+  await prisma.dogRecord.delete({ where: { id: recordId } });
+  redirect(`/dogs/${dog.registryNumber}#records`);
+}
