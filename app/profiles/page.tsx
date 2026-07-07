@@ -28,7 +28,7 @@ export default function ProfilesPage() {
         <div className="mt-4 flex-1">
           <div className="flex flex-wrap gap-2"><span className="rounded-full bg-lightgrey px-3 py-2 text-xs font-black text-cocoa">{dog.profileNumber}</span><span className="rounded-full bg-biscuit px-3 py-2 text-xs font-black text-cocoa">{dog.status}</span>{dog.rescueBadge && <span className="rounded-full bg-emerald-100 px-3 py-2 text-xs font-black text-cocoa">🐾 {dog.rescueBadge}</span>}{dog.memorial && <span className="rounded-full bg-skysoft px-3 py-2 text-xs font-black text-cocoa">🌈 Memorial</span>}</div>
           <h3 className="mt-3 text-3xl font-black text-navy">{dog.name}</h3>
-          <p className="mt-1 font-bold text-pink">{dog.breed}</p>
+          <p className="mt-1 font-bold text-pink">{dog.breed}</p>{dog.kennelClubName && <p className="mt-1 text-sm font-bold text-charcoal/60">KC name: {dog.kennelClubName}</p>}<div className="mt-2 flex flex-wrap gap-2">{dog.dogTypes?.map((type) => <span key={type} className="rounded-full bg-white px-3 py-1 text-xs font-black text-cocoa">{type}</span>)}</div>
           <p className="mt-1 text-sm font-bold text-charcoal/60">📍 {dog.county}</p>
           {dog.rescueName && <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-charcoal/70">Rescue: {dog.rescueName}</p>}
           {dog.memorial && <div className="mt-3 rounded-2xl bg-white/70 p-4"><p className="font-black text-navy">{dog.memorial.heading}</p><p className="mt-1 text-sm text-charcoal/65">{dog.memorial.birthDate} – {dog.memorial.passingDate}</p><p className="mt-2 text-sm leading-6 text-charcoal/70">{dog.memorial.message}</p></div>}

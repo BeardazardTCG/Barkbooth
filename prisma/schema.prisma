@@ -52,7 +52,12 @@ model DogIdentity {
   registrySequence      Int             @unique @default(autoincrement())
   name                  String
   primaryRole           String
+  kennelClubName        String?
   breed                 String?
+  isMixedBreed          Boolean         @default(false)
+  breedMix              String?
+  dnaConfirmed          String?
+  dogTypes              String?
   dateOfBirth           DateTime?
   estimatedDob          Boolean         @default(false)
   sex                   String?

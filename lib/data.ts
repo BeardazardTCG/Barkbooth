@@ -93,7 +93,12 @@ export const profileDog = {
   name: "Mabel",
   barkBoothNumber: "BB-000001",
   status: "Active",
-  breed: "Cocker Spaniel mix",
+  kennelClubName: "Sunrise Meadow Mabel",
+  breed: "Mixed Breed: Cocker Spaniel / Poodle",
+  isMixedBreed: true,
+  breedMix: ["Cocker Spaniel", "Poodle"],
+  dnaConfirmed: "Yes",
+  dogTypes: ["Pet", "Companion", "Sporting"],
   age: "3 years old",
   dateOfBirth: "14 April 2023",
   gotchaDay: "21 June 2023",
@@ -129,10 +134,10 @@ export const profileDog = {
   history: [{ competition: "Summer Smiles", className: "Headline class", placement: "1st", date: "Jun 2026", result: "Gold rosette", points: "100 pts" }, { competition: "Profile Favourites", className: "People’s Choice", placement: "Winner", date: "Jun 2026", result: "Community badge", points: "80 pts" }, { competition: "Calendar Pups", className: "Summer page", placement: "Finalist", date: "Jul 2026", result: "Calendar badge", points: "45 pts" }, { competition: "Tricks & Tails", className: "Paw touch", placement: "Entered", date: "Aug 2026", result: "Training badge", points: "20 pts" }, { competition: "Action Shot", className: "Recall run", placement: "3rd", date: "Feb 2026", result: "Bronze rosette", points: "60 pts" }]
 };
 export const profileCards = [
-  { name: "Luna", breed: "Golden Retriever", county: "Devon", status: "Active", profileNumber: "BB-000104", rosetteCount: 5, latestAchievement: "Puppy Star" },
-  { name: "Mabel", breed: "Cocker Spaniel mix", county: "Somerset", status: "Active", profileNumber: "BB-000001", rosetteCount: 7, latestAchievement: "Top Pup Graduate" },
-  { name: "Biscuit", breed: "Beagle", county: "Kent", status: "Retired", profileNumber: "BB-000088", rosetteCount: 3, latestAchievement: "Action Shot finalist" },
-  { name: "Pepper", breed: "Rescue Terrier", county: "Yorkshire", status: "Active", profileNumber: "BB-000207", rosetteCount: 4, latestAchievement: "Best Rescue" },
-  { name: "Rafa", breed: "Lurcher", county: "Lancashire", status: "Available for Adoption", profileNumber: "BB-000312", rosetteCount: 0, latestAchievement: "Rescue ready", rescueName: "North Star Dog Rescue", rescueBadge: "Rescue profile", adoptionCta: "Enquire to Adopt" },
-  { name: "Daisy", breed: "Labrador", county: "Norfolk", status: "Rainbow Bridge", profileNumber: "BB-000042", rosetteCount: 6, latestAchievement: "Calendar Pup", memorial: { heading: "In Loving Memory", birthDate: "3 March 2012", passingDate: "18 November 2025", message: "Forever the gentle beach girl who taught her family to notice every small joy.", achievements: ["Calendar Pup", "People’s Choice Recognition", "Senior Sweetheart"], photos: ["Beach paws", "Birthday nap", "Rosette day"] } }
+  { name: "Luna", kennelClubName: "", breed: "Golden Retriever", dnaConfirmed: "Not provided", dogTypes: ["Pet", "Showing"], county: "Devon", status: "Active", profileNumber: "BB-000104", rosetteCount: 5, latestAchievement: "Puppy Star" },
+  { name: "Mabel", kennelClubName: "Sunrise Meadow Mabel", breed: "Mixed Breed: Cocker Spaniel / Poodle", dnaConfirmed: "Yes", dogTypes: ["Pet", "Companion", "Sporting"], county: "Somerset", status: "Active", profileNumber: "BB-000001", rosetteCount: 7, latestAchievement: "Top Pup Graduate" },
+  { name: "Biscuit", kennelClubName: "", breed: "Beagle", dnaConfirmed: "No", dogTypes: ["Pet", "Retired"], county: "Kent", status: "Retired", profileNumber: "BB-000088", rosetteCount: 3, latestAchievement: "Action Shot finalist" },
+  { name: "Pepper", kennelClubName: "", breed: "Mixed Breed: Terrier", dnaConfirmed: "Not provided", dogTypes: ["Rescue", "Companion"], county: "Yorkshire", status: "Active", profileNumber: "BB-000207", rosetteCount: 4, latestAchievement: "Best Rescue" },
+  { name: "Rafa", kennelClubName: "", breed: "Lurcher", dnaConfirmed: "Not provided", dogTypes: ["Rescue", "Foster"], county: "Lancashire", status: "Available for Adoption", profileNumber: "BB-000312", rosetteCount: 0, latestAchievement: "Rescue ready", rescueName: "North Star Dog Rescue", rescueBadge: "Rescue profile", adoptionCta: "Enquire to Adopt" },
+  { name: "Daisy", kennelClubName: "", breed: "Labrador", dnaConfirmed: "Not provided", dogTypes: ["Memorial", "Companion"], county: "Norfolk", status: "Rainbow Bridge", profileNumber: "BB-000042", rosetteCount: 6, latestAchievement: "Calendar Pup", memorial: { heading: "In Loving Memory", birthDate: "3 March 2012", passingDate: "18 November 2025", message: "Forever the gentle beach girl who taught her family to notice every small joy.", achievements: ["Calendar Pup", "People’s Choice Recognition", "Senior Sweetheart"], photos: ["Beach paws", "Birthday nap", "Rosette day"] } }
 ];

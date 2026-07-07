@@ -12,6 +12,7 @@ function asString(value: FormDataEntryValue | null) {
 export async function signup(_prevState: string | null, formData: FormData) {
   const email = asString(formData.get("email")).toLowerCase();
   const password = asString(formData.get("password"));
+  const passwordConfirm = asString(formData.get("passwordConfirm"));
   const displayName = asString(formData.get("displayName"));
   const username = asString(formData.get("username")).toLowerCase().replace(/^@/, "");
   const country = asString(formData.get("country"));
@@ -21,6 +22,7 @@ export async function signup(_prevState: string | null, formData: FormData) {
 
   if (!email || !password || !displayName || !username || !country) return "Please complete all required fields.";
   if (password.length < 8) return "Password must be at least 8 characters.";
+  if (password !== passwordConfirm) return "Passwords do not match.";
   if (!over16) return "You must confirm you are over 16 to create an account.";
 
   try {
