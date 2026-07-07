@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createSession } from "@/lib/auth/session";
+import { createSession, deleteCurrentSession } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/prisma";
 
@@ -52,4 +52,9 @@ export async function login(_prevState: string | null, formData: FormData) {
   if (!user || !verifyPassword(password, user.passwordHash)) return "Invalid email or password.";
   await createSession(user.id);
   redirect("/dashboard");
+}
+
+export async function logout() {
+  await deleteCurrentSession();
+  redirect("/login");
 }
