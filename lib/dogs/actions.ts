@@ -15,8 +15,10 @@ function registryNumber(sequence: number) {
 export async function registerDog(_prevState: string | null, formData: FormData) {
   const user = await requireUser();
   const name = asString(formData.get("name"));
-  const primaryRole = asString(formData.get("primaryRole"));
-  if (!name || !primaryRole) return "Dog name and primary role are required.";
+  if (!name) return "Dog name is required.";
+
+  const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map((value) => asString(value)).filter(Boolean)));
+  const primaryRole = dogTypes[0] ?? "Pet";
 
   const dateOfBirth = asString(formData.get("dateOfBirth"));
   const allowedVisibility = ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const;
@@ -28,7 +30,12 @@ export async function registerDog(_prevState: string | null, formData: FormData)
         registryNumber: "PENDING",
         name,
         primaryRole,
+        kennelClubName: asString(formData.get("kennelClubName")) || null,
         breed: asString(formData.get("breed")) || null,
+        isMixedBreed: formData.get("isMixedBreed") === "on" || asString(formData.get("breed")) === "Mixed Breed",
+        breedMix: formData.getAll("breedMix").map((value) => asString(value)).filter(Boolean).join(", ") || null,
+        dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
+        dogTypes: dogTypes.join(", ") || null,
         dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null,
         estimatedDob: formData.get("estimatedDob") === "on",
         sex: asString(formData.get("sex")) || null,

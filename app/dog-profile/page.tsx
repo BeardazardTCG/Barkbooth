@@ -3,8 +3,11 @@ import { Card, PawAvatar, Section } from "@/components/ui";
 
 const identity = {
   registryNumber: "BB-000001",
-  breed: "Golden Retriever",
-  dateOfBirth: "12 May 2023",
+  kennelClubName: "Sunrise Meadow Mabel",
+  breed: "Mixed Breed: Cocker Spaniel / Poodle",
+  dnaConfirmed: "Yes",
+  dogTypes: ["Pet", "Companion", "Sporting"],
+  dateOfBirth: "DOB: 14 April 2023",
   sex: "Female",
   role: "Pet",
   colour: "Golden",
@@ -14,11 +17,11 @@ const identity = {
 };
 
 const recordSections = [
-  ["Health", "3 Records", "Vaccinations, health checks, tests and medical notes."],
-  ["Family Tree", "4 Entries", "Parents, siblings and offspring information."],
-  ["Competitions", "12 Entries", "Optional activities, results and achievements."],
-  ["Badges & Awards", "8 Earned", "Training, activity and community badges."],
-  ["Verified Documents", "5 Verified", "KC registration, DNA tests and certificates."],
+  ["Records for Mabel", "Foundation", "Please select what records you currently hold for your dog. Verification can happen after."],
+  ["Health & Care", "Coming soon", "Vaccinations, health checks, tests, medication, weight, and care notes will live here."],
+  ["Family Tree", "Planned", "Parentage, siblings, offspring, and pedigree foundations will live here."],
+  ["Ownership History", "Foundation", "Current ownership is shown now; previous owners, breeder, rescue and foster history are planned."],
+  ["Badges & Awards", "Early preview", "Training badges, competition rosettes, awards, and milestones will attach here over time."],
 ];
 
 const history = [
@@ -42,11 +45,13 @@ export default function DogProfilePage() {
           <div>
             <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-cocoa">{identity.status}</span><span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">Identity created {identity.created}</span></div>
             <h1 className="mt-4 text-6xl font-black tracking-tight text-navy md:text-8xl">{dog.name}</h1>
-            <p className="mt-2 text-3xl font-black text-cocoa">{identity.registryNumber}</p>
+            <p className="mt-2 text-3xl font-black text-cocoa">{identity.registryNumber}</p><p className="mt-2 font-bold text-charcoal/65">KC name: {identity.kennelClubName}</p><div className="mt-3 flex flex-wrap gap-2">{identity.dogTypes.map((type) => <span key={type} className="rounded-full bg-lightgrey px-3 py-2 text-sm font-black text-cocoa">{type}</span>)}</div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ["Breed", identity.breed],
                 ["Date of Birth", identity.dateOfBirth],
+                ["Kennel Club Name", identity.kennelClubName],
+                ["DNA Confirmed", identity.dnaConfirmed],
                 ["Sex", identity.sex],
                 ["Primary Role", identity.role],
                 ["Colour", identity.colour],
@@ -62,15 +67,15 @@ export default function DogProfilePage() {
 
     <Section eyebrow="Identity record areas" title="Structured records that can grow over time">
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {[...recordSections, ["History", "6 Entries", "Ownership, breeder, rescue and foster continuity."]].map(([title, count, detail]) => <Card key={title}><p className="text-sm font-black uppercase tracking-widest text-terracotta">{count}</p><h3 className="mt-2 text-xl font-black text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}
+        {recordSections.map(([title, count, detail]) => <Card key={title}><p className="text-sm font-black uppercase tracking-widest text-terracotta">{count}</p><h3 className="mt-2 text-xl font-black text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}
       </div>
     </Section>
 
-    <Section eyebrow="Expandable sections" title="Mock canine record modules">
+    <Section eyebrow="Expandable sections" title="Foundation canine record modules">
       <div className="space-y-3">
         {recordSections.map(([title, count, detail]) => <details key={title} className="rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-soft" open={title === "Health"}>
           <summary className="cursor-pointer list-none"><span className="text-xl font-black text-navy">{title}</span><span className="float-right rounded-full bg-lightgrey px-3 py-1 text-sm font-black text-cocoa">{count}</span></summary>
-          <p className="mt-3 text-charcoal/65">{detail} Mock data only; no live verification or uploads are connected.</p>
+          <p className="mt-3 text-charcoal/65">{detail} Foundation placeholder only; no live verification or uploads are connected yet.</p>
         </details>)}
         <details className="rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-soft" open>
           <summary className="cursor-pointer list-none"><span className="text-xl font-black text-navy">History</span><span className="float-right rounded-full bg-lightgrey px-3 py-1 text-sm font-black text-cocoa">6 Entries</span></summary>
