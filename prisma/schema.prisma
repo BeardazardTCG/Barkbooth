@@ -21,6 +21,33 @@ enum DogVisibility {
   LINK_ONLY
 }
 
+enum DogRecordCategory {
+  IDENTITY
+  DNA
+  HEALTH
+  CARE
+  IDENTIFICATION
+  INSURANCE
+  PEDIGREE
+  TITLES
+  WORKING_QUALIFICATIONS
+  TEMPERAMENT_TESTS
+  BREEDING_APPROVALS
+  OTHER
+}
+
+enum DogRecordStatus {
+  HAVE_RECORD
+  DO_NOT_HAVE
+}
+
+enum DogRecordVerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 model User {
   id           String         @id @default(cuid())
   email        String         @unique
@@ -65,8 +92,31 @@ model DogIdentity {
   countryOfRegistration String?
   visibility            DogVisibility   @default(PUBLIC)
   ownerships            DogOwnership[]
+  records               DogRecord[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+}
+
+model DogRecord {
+  id                 String                      @id @default(cuid())
+  dogId              String
+  dog                DogIdentity                 @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  category           DogRecordCategory
+  recordType         String
+  provider           String?
+  status             DogRecordStatus             @default(HAVE_RECORD)
+  verificationStatus DogRecordVerificationStatus @default(NOT_SUBMITTED)
+  referenceNumber    String?
+  issueDate          DateTime?
+  expiryDate         DateTime?
+  notes              String?
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  @@index([dogId, category])
+  @@index([dogId, verificationStatus])
+  @@index([category, recordType])
+  @@index([provider])
 }
 
 model DogOwnership {

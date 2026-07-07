@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       </Card>}
     </Section>
 
-    <Section eyebrow="Quick actions" title="Manage Bark Booth records">
+    <Section eyebrow="Quick actions" title="Manage Bark Booth records"><div id="records" />
       <div className="grid gap-4 md:grid-cols-4">{quickActions.map(([label, href, detail]) => <Card key={label}><h3 className="text-xl font-black text-navy">{label}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-charcoal/65">{detail}</p><div className="mt-4"><ButtonLink href={href} variant="secondary">Open</ButtonLink></div></Card>)}</div>
     </Section>
   </>;
