@@ -16,7 +16,7 @@ export async function createSession(userId: string) {
 export async function getCurrentUser() {
   const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const session = await prisma.session.findUnique({ where: { token }, include: { user: { include: { ownerStatuses: true } } } });
+  const session = await prisma.session.findUnique({ where: { token }, include: { user: { include: { ownerStatuses: true, roleApplications: true } } } });
   if (!session || session.expiresAt < new Date()) return null;
   return session.user;
 }

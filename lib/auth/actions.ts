@@ -17,8 +17,7 @@ export async function signup(_prevState: string | null, formData: FormData) {
   const username = asString(formData.get("username")).toLowerCase().replace(/^@/, "");
   const country = asString(formData.get("country"));
   const over16 = formData.get("over16") === "on";
-  const allowedStatuses = ["PET_OWNER", "BREEDER", "RESCUE", "FOSTER", "PROFESSIONAL"] as const;
-  const statuses = formData.getAll("ownerStatuses").filter((status): status is (typeof allowedStatuses)[number] => allowedStatuses.includes(status as (typeof allowedStatuses)[number]));
+  const wantsPetOwner = formData.get("ownerStatuses") === "PET_OWNER";
 
   if (!email || !password || !displayName || !username || !country) return "Please complete all required fields.";
   if (password.length < 8) return "Password must be at least 8 characters.";
@@ -34,7 +33,7 @@ export async function signup(_prevState: string | null, formData: FormData) {
         username,
         country,
         over16,
-        ownerStatuses: { create: statuses.map((status) => ({ status })) },
+        ownerStatuses: wantsPetOwner ? { create: [{ status: "PET_OWNER" }] } : undefined,
       },
     });
     await createSession(user.id);
