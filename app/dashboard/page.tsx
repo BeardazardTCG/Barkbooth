@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { AccountRoleSummary } from "@/components/roles";
 import { ButtonLink, Card, PawAvatar, Section } from "@/components/ui";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
-type DashboardOwnerStatus = { status: string };
 type DashboardDog = { id: string; name: string; registryNumber: string; primaryRole: string; breed: string | null };
 
 const quickActions = [
@@ -13,16 +13,13 @@ const quickActions = [
   ["Example Identity", "/dog-profile", "View an example Bark Booth Identity layout."],
 ];
 
-function formatStatus(status: string) {
-  return status.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(date);
 }
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const account = await prisma.user.findUniqueOrThrow({ where: { id: user.id }, include: { ownerStatuses: true, roleApplications: true } });
   const dogs = await prisma.dogIdentity.findMany({
     where: { ownerships: { some: { userId: user.id } } },
     orderBy: { createdAt: "desc" },
@@ -49,11 +46,10 @@ export default async function DashboardPage() {
 
         <Card>
           <p className="text-sm font-black uppercase tracking-[0.2em] text-terracotta">Your account</p>
-          <h2 className="mt-2 text-2xl font-black text-navy">Account statuses</h2>
-          <p className="mt-2 leading-7 text-charcoal/65">People can have one or more owner statuses. Dogs separately have identities and dog roles such as Pet, Breeding, Show, Working or Rescue.</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {user.ownerStatuses.length ? (user.ownerStatuses as DashboardOwnerStatus[]).map(({ status }) => <span key={status} className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">{formatStatus(status)}</span>) : <span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">No optional statuses selected</span>}
-          </div>
+          <h2 className="mt-2 text-2xl font-black text-navy">Community roles</h2>
+          <p className="mt-2 leading-7 text-charcoal/65">Every account is a Bark Booth Member account. Pet Owner is self-declared; breeder, rescue, foster and professional labels become verified only after approval.</p>
+          <div className="mt-5"><AccountRoleSummary ownerStatuses={account.ownerStatuses} applications={account.roleApplications} /></div>
+          <div className="mt-5"><ButtonLink href="/account" variant="secondary">Manage roles and applications</ButtonLink></div>
         </Card>
       </div>
     </Section>

@@ -3,7 +3,7 @@ import { logout } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 
 const loggedOutLinks = [["Registry", "/profiles"], ["Competitions", "/competitions"], ["Log in", "/login"], ["Sign up", "/signup"]];
-const loggedInLinks = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Records", "/dashboard#records"], ["Competitions", "/competitions"], ["Account", "/dashboard"]];
+const loggedInLinks = [["Dashboard", "/dashboard"], ["Registry", "/profiles"], ["Register Dog", "/register-dog"], ["Records", "/dashboard#records"], ["Competitions", "/competitions"], ["Directory", "/directory"], ["Account", "/account"]];
 const footerLinks = [["Terms and Conditions", "/legal/terms-and-conditions"], ["Privacy Policy", "/legal/privacy-policy"], ["Cookie Policy", "/legal/cookie-policy"], ["Image Usage Consent", "/legal/image-usage-consent"], ["Refund Policy", "/legal/refund-policy"], ["Prize Fulfilment Policy", "/legal/prize-fulfilment-policy"]];
 
 export function BarkBoothLogo({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -17,7 +17,7 @@ function LogoutButton({ className }: { className: string }) {
 export async function Nav() {
   const user = await getCurrentUser();
   const links = user ? loggedInLinks : loggedOutLinks.filter(([label]) => label !== "Sign up");
-  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={`${label}-${href}`} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}{user && <LogoutButton className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy" />}</div>{user ? <Link href="/dashboard" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Account</Link> : <Link href="/signup" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Sign up</Link>}</nav></header>;
+  return <header className="sticky top-0 z-20 border-b border-navy/10 bg-cream/90 backdrop-blur"><nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3"><Link href="/" className="flex items-center gap-2"><BarkBoothLogo /></Link><div className="hidden items-center gap-1 overflow-x-auto md:flex">{links.map(([label, href]) => <Link key={`${label}-${href}`} href={href} className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy">{label}</Link>)}{user && <LogoutButton className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold text-navy/75 hover:bg-lightgrey hover:text-navy" />}</div>{user ? <Link href="/account" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Account</Link> : <Link href="/signup" className="rounded-full bg-pink px-5 py-3 text-sm font-black text-white shadow-soft">Sign up</Link>}</nav></header>;
 }
 
 export function SiteFooter() {

@@ -15,6 +15,38 @@ enum OwnerStatusType {
   PROFESSIONAL
 }
 
+enum RoleApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+  WITHDRAWN
+}
+
+enum RequestedRole {
+  BREEDER
+  RESCUE
+  FOSTER
+  PROFESSIONAL
+}
+
+enum ProfessionalCategory {
+  TRAINER
+  GROOMER
+  DOG_WALKER
+  BEHAVIOURIST
+  PHOTOGRAPHER
+  VETERINARY_CARE
+  OTHER
+}
+
+enum PromotionTier {
+  NONE
+  FEATURED
+}
+
 enum DogVisibility {
   PUBLIC
   PRIVATE
@@ -57,6 +89,8 @@ model User {
   country      String
   over16       Boolean
   ownerStatuses OwnerStatus[]
+  roleApplications RoleApplication[]
+  reviewedRoleApplications RoleApplication[] @relation("RoleApplicationReviewer")
   dogOwnerships DogOwnership[]
   sessions     Session[]
   createdAt    DateTime       @default(now())
@@ -71,6 +105,45 @@ model OwnerStatus {
   createdAt DateTime        @default(now())
 
   @@unique([userId, status])
+}
+
+model RoleApplication {
+  id                 String                @id @default(cuid())
+  userId             String
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestedRole      RequestedRole
+  status             RoleApplicationStatus @default(DRAFT)
+  applicantType      String?
+  organisationName   String?
+  publicDisplayName  String?
+  website            String?
+  email              String?
+  phone              String?
+  serviceArea        String?
+  registrationNumber String?
+  charityNumber      String?
+  insuranceDetails   String?
+  qualifications     String?
+  professionalCategory ProfessionalCategory?
+  breeds             String?
+  description        String?
+  evidenceNotes      String?
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  reviewedById       String?
+  reviewedBy         User?                 @relation("RoleApplicationReviewer", fields: [reviewedById], references: [id])
+  rejectionReason    String?
+  isFeatured         Boolean               @default(false)
+  featuredUntil      DateTime?
+  promotionTier      PromotionTier         @default(NONE)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([userId])
+  @@index([requestedRole])
+  @@index([status])
+  @@index([organisationName])
+  @@index([requestedRole, status])
 }
 
 model DogIdentity {

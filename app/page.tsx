@@ -27,7 +27,7 @@ export default function HomePage() {
         <h1 className="mt-5 text-5xl font-black leading-[0.95] tracking-tight text-navy md:text-7xl">Create a lifelong digital identity for your dog.</h1>
         <p className="mt-5 max-w-xl text-lg leading-8 text-charcoal/75">Create a lifelong digital identity for your dog with a unique Bark Booth Registry Number. Your dog’s identity stays with them for life and can grow alongside them, whether they’re a beloved family pet, breeding dog, rescue, working dog or show dog.</p>
         <p className="mt-3 max-w-xl text-base leading-7 text-charcoal/65">Bark Booth is an inclusive platform built for everyone who loves dogs. Whether you’re looking for a dog, already own one, run a breeding programme, work with a rescue or simply enjoy taking part in competitions, you’re welcome here.</p>
-        <div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/signup">Sign Up / Create Your Dog’s Profile</ButtonLink><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink><ButtonLink href="/competitions" variant="secondary">View Competitions</ButtonLink><ButtonLink href="/about" variant="secondary">Join the Directory</ButtonLink></div>
+        <div className="mt-7 flex flex-wrap gap-3"><ButtonLink href="/signup">Sign Up / Create Your Dog’s Profile</ButtonLink><ButtonLink href="/profiles" variant="secondary">Search Registry</ButtonLink><ButtonLink href="/competitions" variant="secondary">View Competitions</ButtonLink><ButtonLink href="/directory" variant="secondary">Join the Directory</ButtonLink></div>
       </div>
       <Card className="mt-8 overflow-hidden bg-gradient-to-br from-white via-cream to-biscuit/60 md:mt-0">
         <div className="rounded-[1.75rem] bg-gradient-to-br from-pink-100 via-white to-skysoft p-5">
@@ -51,8 +51,8 @@ export default function HomePage() {
     <Section eyebrow="Directory" title="Bark Booth Directory for dog professionals">
       <Card className="bg-gradient-to-br from-white via-cream to-biscuit/60">
         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
-          <div><p className="text-lg leading-8 text-charcoal/70">The Bark Booth Directory is a planned home for trusted dog professionals, services, breeders, rescues, trainers, groomers, photographers, and care providers to sit alongside dog identities without pretending integrations are live yet.</p><p className="mt-3 text-sm font-black uppercase tracking-widest text-terracotta">Coming soon · Directory foundation</p></div>
-          <ButtonLink href="/about" variant="secondary">Join the Directory</ButtonLink>
+          <div><p className="text-lg leading-8 text-charcoal/70">Everyone joins with one free Bark Booth account, and members can hold more than one community role. Rescues, fosters, breeders, and professionals apply for relevant status; verification creates trust while rescues and professional verification remain free to participate. Optional paid promotion may be introduced later, but no paid placement is live.</p><p className="mt-3 text-sm font-black uppercase tracking-widest text-terracotta">Verified role foundation</p></div>
+          <ButtonLink href="/directory" variant="secondary">Join the Directory</ButtonLink>
         </div>
       </Card>
     </Section>
