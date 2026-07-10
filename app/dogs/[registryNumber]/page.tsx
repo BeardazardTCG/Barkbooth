@@ -74,19 +74,19 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
           <div className="grid gap-5 sm:grid-cols-[180px_1fr] sm:items-center">
             <PawAvatar label={`${dog.name} official profile photo placeholder`} className="bg-gradient-to-br from-white via-cream to-biscuit text-6xl ring-4 ring-white/20" />
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-white/55">Official Bark Booth Identity</p>
-              <h1 className="mt-3 text-5xl font-black leading-none">{dog.name}</h1>
-              <p className="mt-3 text-2xl font-black text-biscuit">{dog.registryNumber}</p>{dog.kennelClubName && <p className="mt-2 text-lg font-bold text-white/75">KC name: {dog.kennelClubName}</p>}<p className="mt-2 font-bold text-white/75">{breedSummary(dog)} · {formatDob(dog.dateOfBirth, dog.estimatedDob)}</p>
-              <div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-cocoa">Registered</span><span className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">Created {formatDate(dog.createdAt)}</span>{dogTypeTags.map((type) => <span key={type} className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">{type}</span>)}<span className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">{completeness.percentage}% complete</span></div>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/55">Official Bark Booth Identity</p>
+              <h1 className="mt-3 text-5xl font-bold leading-none">{dog.name}</h1>
+              <p className="mt-3 text-2xl font-bold text-biscuit">{dog.registryNumber}</p>{dog.kennelClubName && <p className="mt-2 text-lg font-bold text-white/75">KC name: {dog.kennelClubName}</p>}<p className="mt-2 font-bold text-white/75">{breedSummary(dog)} · {formatDob(dog.dateOfBirth, dog.estimatedDob)}</p>
+              <div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-navy">Registered</span><span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white">Created {formatDate(dog.createdAt)}</span>{dogTypeTags.map((type) => <span key={type} className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white">{type}</span>)}<span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white">{completeness.percentage}% complete</span></div>
             </div>
           </div>
           <p className="mt-6 leading-7 text-white/75">A Bark Booth Identity keeps the dog’s core details at the centre, with optional records and history able to grow over time.</p>
         </Card>
 
         <Card>
-          <h2 className="text-2xl font-black text-navy">Identity details</h2>
+          <h2 className="text-2xl font-bold text-navy">Identity details</h2>
           <dl className="mt-5 grid gap-3 sm:grid-cols-2">
-            {identityDetails.map(([label, value]) => <div key={label} className="rounded-2xl bg-lightgrey p-4"><dt className="text-xs font-black uppercase tracking-widest text-charcoal/45">{label}</dt><dd className="mt-1 font-black text-cocoa">{value}</dd></div>)}
+            {identityDetails.map(([label, value]) => <div key={label} className="rounded-2xl bg-lightgrey p-4"><dt className="text-xs font-bold uppercase tracking-widest text-charcoal/45">{label}</dt><dd className="mt-1 font-bold text-navy">{value}</dd></div>)}
           </dl>
           <div className="mt-5 flex flex-wrap gap-3"><ButtonLink href="/dashboard">Back to Dashboard</ButtonLink></div>
         </Card>
@@ -94,13 +94,13 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
     </Section>
 
     <Section eyebrow="Profile navigation" title="Dog profile foundations">
-      <div className="flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-cocoa px-4 py-2 text-sm font-black text-white">Records</a><a href="#completion" className="rounded-full bg-white px-4 py-2 text-sm font-black text-cocoa">Completeness</a><a href="#history" className="rounded-full bg-white px-4 py-2 text-sm font-black text-cocoa">Ownership History</a></div>
+      <div className="flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#completion" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Completeness</a><a href="#history" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Ownership History</a></div>
     </Section>
 
     <Section eyebrow="Trust foundation" title={`${dog.name}'s structured records`}>
       <div id="completion" className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <ProfileCompletionCard percentage={completeness.percentage} sections={completeness.sections} />
-        <div id="records"><Card><p className="text-sm font-black uppercase tracking-[0.2em] text-terracotta">Records Overview</p><h3 className="mt-2 text-3xl font-black text-navy">{dog.records.length} record statements</h3><div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-black uppercase tracking-widest text-charcoal/45">Verified Records</p><p className="mt-1 text-2xl font-black text-cocoa">{dog.records.filter((record) => record.verificationStatus === "VERIFIED").length}</p></div><div className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-black uppercase tracking-widest text-charcoal/45">Pending Records</p><p className="mt-1 text-2xl font-black text-cocoa">{dog.records.filter((record) => record.verificationStatus === "PENDING").length}</p></div><div className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-black uppercase tracking-widest text-charcoal/45">Not Submitted</p><p className="mt-1 text-2xl font-black text-cocoa">{dog.records.filter((record) => record.verificationStatus === "NOT_SUBMITTED").length}</p></div></div><div className="mt-5 flex flex-wrap gap-2"><StatusBadge status="FOUNDATION" /><StatusBadge status="COMING_SOON" label="Uploads Coming Soon" /><StatusBadge status="PREVIEW" label="Verification Preview" /></div></Card></div>
+        <div id="records"><Card><p className="text-sm font-bold uppercase tracking-[0.2em] text-rosette">Records Overview</p><h3 className="mt-2 text-3xl font-bold text-navy">{dog.records.length} record statements</h3><div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-bold uppercase tracking-widest text-charcoal/45">Verified Records</p><p className="mt-1 text-2xl font-bold text-navy">{dog.records.filter((record) => record.verificationStatus === "VERIFIED").length}</p></div><div className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-bold uppercase tracking-widest text-charcoal/45">Pending Records</p><p className="mt-1 text-2xl font-bold text-navy">{dog.records.filter((record) => record.verificationStatus === "PENDING").length}</p></div><div className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-bold uppercase tracking-widest text-charcoal/45">Not Submitted</p><p className="mt-1 text-2xl font-bold text-navy">{dog.records.filter((record) => record.verificationStatus === "NOT_SUBMITTED").length}</p></div></div><div className="mt-5 flex flex-wrap gap-2"><StatusBadge status="FOUNDATION" /><StatusBadge status="COMING_SOON" label="Uploads Coming Soon" /><StatusBadge status="PREVIEW" label="Verification Preview" /></div></Card></div>
       </div>
       {canManage && <div className="mt-5"><AddRecordForm dogId={dog.id} /></div>}
       <div className="mt-7 grid gap-5">{recordCategories.map((category) => <CategorySection key={category} category={category} records={dog.records.filter((record) => record.category === category)} canManage={canManage} />)}</div>
@@ -108,10 +108,10 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
 
     <Section eyebrow="Foundation areas" title="Future-ready trust areas">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {foundationSections.map(([section, status, detail]) => <Card key={section}><StatusBadge status={status.toUpperCase().replace(/ /g, "_")} label={status} /><h3 className="mt-3 text-2xl font-black text-navy">{section}</h3><p className="mt-3 leading-7 text-charcoal/65">{detail}</p></Card>)}
+        {foundationSections.map(([section, status, detail]) => <Card key={section}><StatusBadge status={status.toUpperCase().replace(/ /g, "_")} label={status} /><h3 className="mt-3 text-2xl font-bold text-navy">{section}</h3><p className="mt-3 leading-7 text-charcoal/65">{detail}</p></Card>)}
         <div id="history" className="lg:col-span-4"><Card>
-          <h3 className="text-2xl font-black text-navy">History</h3>
-          {primaryOwner ? <div className="mt-4 rounded-2xl bg-lightgrey p-4"><p className="text-sm font-black uppercase tracking-widest text-charcoal/45">Current owner</p><p className="mt-1 font-black text-cocoa">{owner?.displayName} (@{owner?.username})</p><p className="mt-1 text-sm font-bold text-charcoal/60">Recorded {formatDate(primaryOwner.createdAt)}</p></div> : null}
+          <h3 className="text-2xl font-bold text-navy">History</h3>
+          {primaryOwner ? <div className="mt-4 rounded-2xl bg-lightgrey p-4"><p className="text-sm font-bold uppercase tracking-widest text-charcoal/45">Current owner</p><p className="mt-1 font-bold text-navy">{owner?.displayName} (@{owner?.username})</p><p className="mt-1 text-sm font-bold text-charcoal/60">Recorded {formatDate(primaryOwner.createdAt)}</p></div> : null}
           <p className="mt-4 leading-7 text-charcoal/65">Ownership history is a foundation area. Previous keepers, breeder, rescue, foster, and transfer records are coming soon.</p>
         </Card></div>
       </div>
