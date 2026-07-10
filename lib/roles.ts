@@ -1,7 +1,7 @@
 import type { OwnerStatusType, RequestedRole, RoleApplication, RoleApplicationStatus } from "@prisma/client";
 
 export const applicationRoles: RequestedRole[] = ["BREEDER", "RESCUE", "FOSTER", "PROFESSIONAL"];
-export const activeApplicationStatuses: RoleApplicationStatus[] = ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED"];
+export const activeApplicationStatuses: RoleApplicationStatus[] = ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED"];
 export const roleLabels: Record<RequestedRole | "PET_OWNER" | "MEMBER", string> = {
   MEMBER: "Bark Booth Member",
   PET_OWNER: "Pet Owner",

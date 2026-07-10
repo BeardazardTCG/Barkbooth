@@ -13,6 +13,7 @@ CREATE TABLE "RoleApplication" (
   "publicDisplayName" TEXT,
   "website" TEXT,
   "email" TEXT,
+  "showEmailPublicly" BOOLEAN NOT NULL DEFAULT false,
   "phone" TEXT,
   "serviceArea" TEXT,
   "registrationNumber" TEXT,

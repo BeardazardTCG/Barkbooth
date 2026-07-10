@@ -118,6 +118,7 @@ model RoleApplication {
   publicDisplayName  String?
   website            String?
   email              String?
+  showEmailPublicly  Boolean               @default(false)
   phone              String?
   serviceArea        String?
   registrationNumber String?
