@@ -1,13 +1,21 @@
 const badgeStyles: Record<string, string> = {
-  VERIFIED: "bg-emerald-100 text-emerald-800",
-  PENDING: "bg-amber-100 text-amber-800",
-  NOT_SUBMITTED: "bg-lightgrey text-charcoal/70",
-  REJECTED: "bg-red-100 text-red-800",
-  HAVE_RECORD: "bg-blue-100 text-blue-800",
-  DO_NOT_HAVE: "bg-white text-charcoal/60 border border-cocoa/10",
-  COMING_SOON: "bg-purple-100 text-purple-800",
-  FOUNDATION: "bg-biscuit text-cocoa",
-  PREVIEW: "bg-pink/10 text-pink",
+  VERIFIED: "border-verified/25 bg-verified/10 text-verified",
+  APPROVED: "border-verified/25 bg-verified/10 text-verified",
+  PENDING: "border-award/30 bg-award/10 text-award",
+  SUBMITTED: "border-award/30 bg-award/10 text-award",
+  UNDER_REVIEW: "border-info/25 bg-info/10 text-info",
+  DRAFT: "border-muted bg-muted/70 text-slate",
+  NOT_SUBMITTED: "border-muted bg-muted/70 text-slate",
+  REJECTED: "border-danger/25 bg-danger/10 text-danger",
+  SUSPENDED: "border-danger/25 bg-danger/10 text-danger",
+  HAVE_RECORD: "border-info/25 bg-info/10 text-info",
+  DO_NOT_HAVE: "border-muted bg-white text-slate",
+  COMING_SOON: "border-muted bg-muted/70 text-slate",
+  FOUNDATION: "border-sand bg-sand/25 text-navy",
+  PREVIEW: "border-rosette/25 bg-rosette/10 text-rosette",
+  AWARD: "border-award/30 bg-award/10 text-award",
+  CHAMPION: "border-award/30 bg-award/10 text-award",
+  LEGACY: "border-muted bg-muted/70 text-slate",
 };
 
 export function humanizeStatus(value: string) {
@@ -15,5 +23,5 @@ export function humanizeStatus(value: string) {
 }
 
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
-  return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${badgeStyles[status] ?? "bg-lightgrey text-cocoa"}`}>{label ?? humanizeStatus(status)}</span>;
+  return <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-extrabold uppercase tracking-[0.12em] ${badgeStyles[status] ?? "border-muted bg-muted/70 text-navy"}`}>{label ?? humanizeStatus(status)}</span>;
 }

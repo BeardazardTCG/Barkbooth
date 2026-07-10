@@ -40,12 +40,12 @@ export default function DogProfilePage() {
         <div className="grid gap-7 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <PawAvatar label="Official Profile Photograph" className="min-h-[320px] text-7xl" />
-            <div className="mt-3 rounded-2xl border border-cocoa/10 bg-white p-3 text-center text-sm font-black text-cocoa">Official Profile Photograph</div>
+            <div className="mt-3 rounded-2xl border border-cocoa/10 bg-white p-3 text-center text-sm font-bold text-navy">Official Profile Photograph</div>
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-cocoa">{identity.status}</span><span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-black text-cocoa">Identity created {identity.created}</span></div>
-            <h1 className="mt-4 text-6xl font-black tracking-tight text-navy md:text-8xl">{dog.name}</h1>
-            <p className="mt-2 text-3xl font-black text-cocoa">{identity.registryNumber}</p><p className="mt-2 font-bold text-charcoal/65">KC name: {identity.kennelClubName}</p><div className="mt-3 flex flex-wrap gap-2">{identity.dogTypes.map((type) => <span key={type} className="rounded-full bg-lightgrey px-3 py-2 text-sm font-black text-cocoa">{type}</span>)}</div>
+            <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-navy">{identity.status}</span><span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-bold text-navy">Identity created {identity.created}</span></div>
+            <h1 className="mt-4 text-6xl font-bold tracking-tight text-navy md:text-8xl">{dog.name}</h1>
+            <p className="mt-2 text-3xl font-bold text-navy">{identity.registryNumber}</p><p className="mt-2 font-bold text-charcoal/65">KC name: {identity.kennelClubName}</p><div className="mt-3 flex flex-wrap gap-2">{identity.dogTypes.map((type) => <span key={type} className="rounded-full bg-lightgrey px-3 py-2 text-sm font-bold text-navy">{type}</span>)}</div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ["Breed", identity.breed],
@@ -58,7 +58,7 @@ export default function DogProfilePage() {
                 ["Country of Registration", identity.country],
                 ["Identity status", identity.status],
                 ["Identity created date", identity.created],
-              ].map(([label, value]) => <div key={label} className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-black uppercase tracking-widest text-pink">{label}</p><p className="mt-1 font-black text-navy">{value}</p></div>)}
+              ].map(([label, value]) => <div key={label} className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-bold uppercase tracking-widest text-rosette">{label}</p><p className="mt-1 font-bold text-navy">{value}</p></div>)}
             </div>
           </div>
         </div>
@@ -67,20 +67,20 @@ export default function DogProfilePage() {
 
     <Section eyebrow="Identity record areas" title="Structured records that can grow over time">
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {recordSections.map(([title, count, detail]) => <Card key={title}><p className="text-sm font-black uppercase tracking-widest text-terracotta">{count}</p><h3 className="mt-2 text-xl font-black text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}
+        {recordSections.map(([title, count, detail]) => <Card key={title}><p className="text-sm font-bold uppercase tracking-widest text-rosette">{count}</p><h3 className="mt-2 text-xl font-bold text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}
       </div>
     </Section>
 
     <Section eyebrow="Expandable sections" title="Foundation canine record modules">
       <div className="space-y-3">
         {recordSections.map(([title, count, detail]) => <details key={title} className="rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-soft" open={title === "Health"}>
-          <summary className="cursor-pointer list-none"><span className="text-xl font-black text-navy">{title}</span><span className="float-right rounded-full bg-lightgrey px-3 py-1 text-sm font-black text-cocoa">{count}</span></summary>
+          <summary className="cursor-pointer list-none"><span className="text-xl font-bold text-navy">{title}</span><span className="float-right rounded-full bg-lightgrey px-3 py-1 text-sm font-bold text-navy">{count}</span></summary>
           <p className="mt-3 text-charcoal/65">{detail} Foundation placeholder only; no live verification or uploads are connected yet.</p>
         </details>)}
         <details className="rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-soft" open>
-          <summary className="cursor-pointer list-none"><span className="text-xl font-black text-navy">History</span><span className="float-right rounded-full bg-lightgrey px-3 py-1 text-sm font-black text-cocoa">6 Entries</span></summary>
+          <summary className="cursor-pointer list-none"><span className="text-xl font-bold text-navy">History</span><span className="float-right rounded-full bg-lightgrey px-3 py-1 text-sm font-bold text-navy">6 Entries</span></summary>
           <p className="mt-3 text-charcoal/65">History demonstrates identity continuity when ownership or care changes.</p>
-          <div className="mt-4 space-y-3">{history.map(([role, name, date, tag]) => <div key={role} className="grid gap-2 rounded-2xl bg-lightgrey p-4 md:grid-cols-[0.8fr_1fr_1fr_auto] md:items-center"><p className="font-black text-navy">{role}</p><p className="font-bold text-charcoal/75">{name}</p><p className="text-sm font-bold text-charcoal/55">{date}</p><span className="rounded-full bg-white px-3 py-2 text-xs font-black text-cocoa">{tag}</span></div>)}</div>
+          <div className="mt-4 space-y-3">{history.map(([role, name, date, tag]) => <div key={role} className="grid gap-2 rounded-2xl bg-lightgrey p-4 md:grid-cols-[0.8fr_1fr_1fr_auto] md:items-center"><p className="font-bold text-navy">{role}</p><p className="font-bold text-charcoal/75">{name}</p><p className="text-sm font-bold text-charcoal/55">{date}</p><span className="rounded-full bg-white px-3 py-2 text-xs font-bold text-navy">{tag}</span></div>)}</div>
         </details>
       </div>
     </Section>
