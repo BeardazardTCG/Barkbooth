@@ -12,6 +12,8 @@ function registryNumber(sequence: number) {
   return `BB-${sequence.toString().padStart(6, "0")}`;
 }
 
+const neuteredSpayedAnswers = ["YES", "NO", "UNKNOWN"] as const;
+
 export async function registerDog(_prevState: string | null, formData: FormData) {
   const user = await requireUser();
   const name = asString(formData.get("name"));
@@ -23,6 +25,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   const dateOfBirth = asString(formData.get("dateOfBirth"));
   const allowedVisibility = ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const;
   const visibilityValue = asString(formData.get("visibility"));
+  const neuteredSpayedValue = asString(formData.get("neuteredSpayed"));
 
   const dog = await prisma.$transaction(async (tx) => {
     const created = await tx.dogIdentity.create({
@@ -36,7 +39,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
         breedMix: formData.getAll("breedMix").map((value) => asString(value)).filter(Boolean).join(", ") || null,
         dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
         dogTypes: dogTypes.join(", ") || null,
-        neuteredSpayed: asString(formData.get("neuteredSpayed")) || null,
+        neuteredSpayed: neuteredSpayedAnswers.includes(neuteredSpayedValue as (typeof neuteredSpayedAnswers)[number]) ? neuteredSpayedValue : "UNKNOWN",
         dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null,
         estimatedDob: formData.get("estimatedDob") === "on",
         sex: asString(formData.get("sex")) || null,
@@ -54,7 +57,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
 }
 
 const recordCategories = ["IDENTITY", "DNA", "HEALTH", "CARE", "IDENTIFICATION", "INSURANCE", "PEDIGREE", "TITLES", "WORKING_QUALIFICATIONS", "ACTIVITIES_WORK", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS", "OTHER"] as const;
-const behaviourAnswers = ["YES", "NO", "UNKNOWN"] as const;
+const behaviourAnswers = neuteredSpayedAnswers;
 const recordStatuses = ["HAVE_RECORD", "DO_NOT_HAVE"] as const;
 
 function asEnum<T extends readonly string[]>(value: string, allowed: T, fallback: T[number]): T[number] {
