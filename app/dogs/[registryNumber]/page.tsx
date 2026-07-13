@@ -24,7 +24,7 @@ function breedSummary(dog: { breed: string | null; isMixedBreed: boolean; breedM
 }
 function primaryDogType(dog: { primaryRole: string; dogTypes: string | null }) { return dog.primaryRole || splitList(dog.dogTypes)[0] || "Other"; }
 
-const indicatorConfig: { key: string; label: string; href: string; categories: DogRecordCategory[] }[] = [
+const indicatorConfig: { key: string; label: string; href: string; categories?: DogRecordCategory[] }[] = [
   { key: "dna", label: "DNA", href: "#records-dna", categories: ["DNA"] },
   { key: "health", label: "Health", href: "#records-health", categories: ["HEALTH", "CARE"] },
   { key: "pedigree", label: "Pedigree", href: "#records-pedigree", categories: ["PEDIGREE"] },
@@ -32,7 +32,7 @@ const indicatorConfig: { key: string; label: string; href: string; categories: D
   { key: "family", label: "Family", href: "#family", categories: ["PEDIGREE"] },
   { key: "records", label: "Records", href: "#records", categories: ["IDENTITY", "IDENTIFICATION", "OTHER"] },
   { key: "awards", label: "Awards", href: "#awards", categories: ["ACTIVITIES_WORK", "WORKING_QUALIFICATIONS", "TITLES"] },
-  { key: "behaviour", label: "Behaviour", href: "#behaviour", categories: ["TEMPERAMENT_TESTS"] },
+  { key: "behaviour", label: "Behaviour", href: "#behaviour" },
 ];
 
 const behaviourQuestions: { name: keyof DogBehaviourLifestyle; label: string }[] = [
@@ -42,8 +42,13 @@ const behaviourQuestions: { name: keyof DogBehaviourLifestyle; label: string }[]
   { name: "recallTrained", label: "Recall trained?" }, { name: "crateTrained", label: "Crate trained?" }, { name: "muzzleTrained", label: "Muzzle trained?" }, { name: "neuteredSpayed", label: "Neutered / Spayed?" },
 ];
 
-function indicatorState(records: DogRecord[], categories: DogRecordCategory[], hasBehaviour: boolean) {
-  if (categories.includes("TEMPERAMENT_TESTS") && hasBehaviour) return "owner";
+function behaviourIndicatorState(behaviourLifestyle: Pick<DogBehaviourLifestyle, "assessmentSource"> | null | undefined, rescueVerified: boolean) {
+  if (!behaviourLifestyle) return "inactive";
+  return behaviourLifestyle.assessmentSource === "VERIFIED_RESCUE_ASSESSED" && rescueVerified ? "verified" : "owner";
+}
+
+function indicatorState(records: DogRecord[], categories: DogRecordCategory[] | undefined, behaviourState: string) {
+  if (!categories) return behaviourState;
   const matching = records.filter((record) => categories.includes(record.category) && record.status === "HAVE_RECORD");
   if (matching.some((record) => record.verificationStatus === "VERIFIED")) return "verified";
   if (matching.length) return "owner";
@@ -56,15 +61,20 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
     include: { behaviourLifestyle: true, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
   }), getCurrentUser()]);
   if (!dog) notFound();
+  const canManage = Boolean(currentUser && dog.ownerships.some((ownership) => ownership.userId === currentUser.id));
+  if (dog.visibility !== "PUBLIC" && !canManage) notFound();
+
   const primaryOwner = dog.ownerships[0];
   const owner = primaryOwner?.user;
-  const canManage = Boolean(currentUser && dog.ownerships.some((ownership) => ownership.userId === currentUser.id));
-  const completeness = calculateDogProfileCompleteness(dog);
-  const verifiedCount = dog.records.filter((record) => record.verificationStatus === "VERIFIED").length;
-  const ownerDeclaredCount = dog.records.filter((record) => record.status === "HAVE_RECORD" && record.verificationStatus === "NOT_SUBMITTED").length + (dog.behaviourLifestyle ? 1 : 0);
-  const submittedCount = dog.records.filter((record) => record.verificationStatus === "PENDING").length;
   const rescueVerified = owner?.roleApplications.some((application) => application.requestedRole === "RESCUE" && application.status === "APPROVED") ?? false;
-  const behaviourTrust = dog.behaviourLifestyle?.assessmentSource === "VERIFIED_RESCUE_ASSESSED" && rescueVerified ? "Behaviour Assessed by Verified Rescue" : "Owner Declared";
+  const behaviourState = behaviourIndicatorState(dog.behaviourLifestyle, rescueVerified);
+  const behaviourVerifiedCount = behaviourState === "verified" ? 1 : 0;
+  const behaviourOwnerDeclaredCount = behaviourState === "owner" ? 1 : 0;
+  const completeness = calculateDogProfileCompleteness(dog);
+  const verifiedCount = dog.records.filter((record) => record.verificationStatus === "VERIFIED").length + behaviourVerifiedCount;
+  const ownerDeclaredCount = dog.records.filter((record) => record.status === "HAVE_RECORD" && record.verificationStatus === "NOT_SUBMITTED").length + behaviourOwnerDeclaredCount;
+  const submittedCount = dog.records.filter((record) => record.verificationStatus === "PENDING").length;
+  const behaviourTrust = behaviourState === "verified" ? "Behaviour Assessed by Verified Rescue" : "Owner Declared";
   const identityDetails = [
     ["Bark Booth Registry Number", dog.registryNumber], ["Dog Name", dog.name], ["Breed", breedSummary(dog)], ["Date of Birth", formatDate(dog.dateOfBirth, dog.estimatedDob)],
     ["Sex", dog.sex ?? "Not provided"], ["Neutered / Spayed", formatAnswer(dog.neuteredSpayed)], ["Primary Dog Type", primaryDogType(dog)], ["Registry Status", "Registered"],
@@ -79,8 +89,9 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
             <div><p className="text-sm font-bold uppercase tracking-[0.2em] text-white/55">Official Bark Booth Identity</p><h1 className="mt-3 text-4xl font-bold leading-none">{dog.name}</h1><p className="mt-3 text-2xl font-bold text-biscuit">{dog.registryNumber}</p><p className="mt-2 font-bold text-white/75">{breedSummary(dog)} · {primaryDogType(dog)}</p></div>
           </div>
           <dl className="mt-6 grid gap-3 sm:grid-cols-2">{identityDetails.map(([label, value]) => <div key={label} className="rounded-2xl bg-white/10 p-3"><dt className="text-[0.65rem] font-bold uppercase tracking-widest text-white/50">{label}</dt><dd className="mt-1 font-bold text-white">{value}</dd></div>)}</dl>
+          <p className="mt-4 rounded-2xl bg-white/10 p-3 text-sm font-bold text-white/75">Core identity information is owner-declared unless marked as verified.</p>
           <div className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Verification Summary</p><p className="mt-1 font-bold text-white">{verifiedCount} verified · {submittedCount} document submitted · {ownerDeclaredCount} owner declared</p></div>
-          <div className="mt-5 grid grid-cols-4 gap-2">{indicatorConfig.map((item) => { const state = indicatorState(dog.records, item.categories, Boolean(dog.behaviourLifestyle)); return <a key={item.key} href={item.href} title={`${item.label}: ${state}`} className={`rounded-2xl px-2 py-3 text-center text-xs font-bold ${state === "verified" ? "bg-emerald-100 text-navy" : state === "owner" ? "bg-biscuit text-navy" : "bg-white/10 text-white/45"}`}>{item.label}</a>; })}</div>
+          <div className="mt-5 grid grid-cols-4 gap-2">{indicatorConfig.map((item) => { const state = indicatorState(dog.records, item.categories, behaviourState); return <a key={item.key} href={item.href} title={`${item.label}: ${state}`} className={`rounded-2xl px-2 py-3 text-center text-xs font-bold ${state === "verified" ? "bg-emerald-100 text-navy" : state === "owner" ? "bg-biscuit text-navy" : "bg-white/10 text-white/45"}`}>{item.label}</a>; })}</div>
           <div id="awards" className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Awards Summary</p><p className="mt-1 font-bold text-white">{dog.records.filter((record) => ["ACTIVITIES_WORK", "WORKING_QUALIFICATIONS", "TITLES"].includes(record.category)).length} activities, work, or award records</p></div>
         </Card>
         <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">The public card stays consistent and compact. Detailed identity, ownership, records, health, family tree, awards, behaviour, and history information remains inside this full profile.</p><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><a href="#history" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">History</a><ButtonLink href="/dashboard">Back to Dashboard</ButtonLink></div></Card>

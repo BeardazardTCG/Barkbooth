@@ -149,6 +149,7 @@ export async function updateBehaviourLifestyle(formData: FormData) {
       neuteredSpayed,
     },
     update: {
+      assessmentSource: "OWNER_DECLARED",
       reactive: answer("reactive"),
       foodAggression: answer("foodAggression"),
       resourceGuarding: answer("resourceGuarding"),
