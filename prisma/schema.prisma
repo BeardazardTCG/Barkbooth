@@ -63,6 +63,7 @@ enum DogRecordCategory {
   PEDIGREE
   TITLES
   WORKING_QUALIFICATIONS
+  ACTIVITIES_WORK
   TEMPERAMENT_TESTS
   BREEDING_APPROVALS
   OTHER
@@ -78,6 +79,17 @@ enum DogRecordVerificationStatus {
   PENDING
   VERIFIED
   REJECTED
+}
+
+enum BehaviourAnswer {
+  YES
+  NO
+  UNKNOWN
+}
+
+enum BehaviourAssessmentSource {
+  OWNER_DECLARED
+  VERIFIED_RESCUE_ASSESSED
 }
 
 model User {
@@ -159,6 +171,7 @@ model DogIdentity {
   breedMix              String?
   dnaConfirmed          String?
   dogTypes              String?
+  neuteredSpayed        String?
   dateOfBirth           DateTime?
   estimatedDob          Boolean         @default(false)
   sex                   String?
@@ -167,8 +180,36 @@ model DogIdentity {
   visibility            DogVisibility   @default(PUBLIC)
   ownerships            DogOwnership[]
   records               DogRecord[]
+  behaviourLifestyle    DogBehaviourLifestyle?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+}
+
+model DogBehaviourLifestyle {
+  id                  String                    @id @default(cuid())
+  dogId               String                    @unique
+  dog                 DogIdentity               @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  assessmentSource    BehaviourAssessmentSource @default(OWNER_DECLARED)
+  reactive            BehaviourAnswer           @default(UNKNOWN)
+  foodAggression      BehaviourAnswer           @default(UNKNOWN)
+  resourceGuarding    BehaviourAnswer           @default(UNKNOWN)
+  separationAnxiety   BehaviourAnswer           @default(UNKNOWN)
+  highPreyDrive       BehaviourAnswer           @default(UNKNOWN)
+  escapeArtist        BehaviourAnswer           @default(UNKNOWN)
+  goodWithChildren    BehaviourAnswer           @default(UNKNOWN)
+  goodWithDogs        BehaviourAnswer           @default(UNKNOWN)
+  goodWithCats        BehaviourAnswer           @default(UNKNOWN)
+  goodWithLivestock   BehaviourAnswer           @default(UNKNOWN)
+  friendlyWithStrangers BehaviourAnswer         @default(UNKNOWN)
+  reliableOffLead     BehaviourAnswer           @default(UNKNOWN)
+  recallTrained       BehaviourAnswer           @default(UNKNOWN)
+  crateTrained        BehaviourAnswer           @default(UNKNOWN)
+  muzzleTrained       BehaviourAnswer           @default(UNKNOWN)
+  neuteredSpayed      BehaviourAnswer           @default(UNKNOWN)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@index([assessmentSource])
 }
 
 model DogRecord {

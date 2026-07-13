@@ -12,6 +12,8 @@ function registryNumber(sequence: number) {
   return `BB-${sequence.toString().padStart(6, "0")}`;
 }
 
+const neuteredSpayedAnswers = ["YES", "NO", "UNKNOWN"] as const;
+
 export async function registerDog(_prevState: string | null, formData: FormData) {
   const user = await requireUser();
   const name = asString(formData.get("name"));
@@ -23,6 +25,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   const dateOfBirth = asString(formData.get("dateOfBirth"));
   const allowedVisibility = ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const;
   const visibilityValue = asString(formData.get("visibility"));
+  const neuteredSpayedValue = asString(formData.get("neuteredSpayed"));
 
   const dog = await prisma.$transaction(async (tx) => {
     const created = await tx.dogIdentity.create({
@@ -36,6 +39,7 @@ export async function registerDog(_prevState: string | null, formData: FormData)
         breedMix: formData.getAll("breedMix").map((value) => asString(value)).filter(Boolean).join(", ") || null,
         dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
         dogTypes: dogTypes.join(", ") || null,
+        neuteredSpayed: neuteredSpayedAnswers.includes(neuteredSpayedValue as (typeof neuteredSpayedAnswers)[number]) ? neuteredSpayedValue : "UNKNOWN",
         dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null,
         estimatedDob: formData.get("estimatedDob") === "on",
         sex: asString(formData.get("sex")) || null,
@@ -52,7 +56,8 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   redirect(`/dogs/${dog.registryNumber}`);
 }
 
-const recordCategories = ["IDENTITY", "DNA", "HEALTH", "CARE", "IDENTIFICATION", "INSURANCE", "PEDIGREE", "TITLES", "WORKING_QUALIFICATIONS", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS", "OTHER"] as const;
+const recordCategories = ["IDENTITY", "DNA", "HEALTH", "CARE", "IDENTIFICATION", "INSURANCE", "PEDIGREE", "TITLES", "WORKING_QUALIFICATIONS", "ACTIVITIES_WORK", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS", "OTHER"] as const;
+const behaviourAnswers = neuteredSpayedAnswers;
 const recordStatuses = ["HAVE_RECORD", "DO_NOT_HAVE"] as const;
 
 function asEnum<T extends readonly string[]>(value: string, allowed: T, fallback: T[number]): T[number] {
@@ -116,4 +121,56 @@ export async function removeDogRecord(formData: FormData) {
   const dog = await requireDogOwner(existing.dogId);
   await prisma.dogRecord.delete({ where: { id: recordId } });
   redirect(`/dogs/${dog.registryNumber}#records`);
+}
+
+
+export async function updateBehaviourLifestyle(formData: FormData) {
+  const dogId = asString(formData.get("dogId"));
+  const dog = await requireDogOwner(dogId);
+  const answer = (name: string) => asEnum(asString(formData.get(name)), behaviourAnswers, "UNKNOWN");
+  const neuteredSpayed = answer("neuteredSpayed");
+  await prisma.dogBehaviourLifestyle.upsert({
+    where: { dogId },
+    create: {
+      dogId,
+      assessmentSource: "OWNER_DECLARED",
+      reactive: answer("reactive"),
+      foodAggression: answer("foodAggression"),
+      resourceGuarding: answer("resourceGuarding"),
+      separationAnxiety: answer("separationAnxiety"),
+      highPreyDrive: answer("highPreyDrive"),
+      escapeArtist: answer("escapeArtist"),
+      goodWithChildren: answer("goodWithChildren"),
+      goodWithDogs: answer("goodWithDogs"),
+      goodWithCats: answer("goodWithCats"),
+      goodWithLivestock: answer("goodWithLivestock"),
+      friendlyWithStrangers: answer("friendlyWithStrangers"),
+      reliableOffLead: answer("reliableOffLead"),
+      recallTrained: answer("recallTrained"),
+      crateTrained: answer("crateTrained"),
+      muzzleTrained: answer("muzzleTrained"),
+      neuteredSpayed,
+    },
+    update: {
+      assessmentSource: "OWNER_DECLARED",
+      reactive: answer("reactive"),
+      foodAggression: answer("foodAggression"),
+      resourceGuarding: answer("resourceGuarding"),
+      separationAnxiety: answer("separationAnxiety"),
+      highPreyDrive: answer("highPreyDrive"),
+      escapeArtist: answer("escapeArtist"),
+      goodWithChildren: answer("goodWithChildren"),
+      goodWithDogs: answer("goodWithDogs"),
+      goodWithCats: answer("goodWithCats"),
+      goodWithLivestock: answer("goodWithLivestock"),
+      friendlyWithStrangers: answer("friendlyWithStrangers"),
+      reliableOffLead: answer("reliableOffLead"),
+      recallTrained: answer("recallTrained"),
+      crateTrained: answer("crateTrained"),
+      muzzleTrained: answer("muzzleTrained"),
+      neuteredSpayed,
+    },
+  });
+  await prisma.dogIdentity.update({ where: { id: dogId }, data: { neuteredSpayed } });
+  redirect(`/dogs/${dog.registryNumber}#behaviour`);
 }
