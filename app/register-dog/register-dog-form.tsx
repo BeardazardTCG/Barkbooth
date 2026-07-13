@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { BreedSelector } from "@/components/breed-selector";
 import { registerDog } from "@/lib/dogs/actions";
 
-const dogTypes = ["Pet", "Companion", "Working", "Sporting", "Showing", "Breeding", "Rescue", "Foster", "Retired", "Memorial", "Assistance", "Therapy", "Other"];
+const dogTypes = ["Companion", "Working", "Showing", "Breeding", "Rescue", "Foster", "Retired", "Memorial", "Other"];
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -23,6 +23,7 @@ export function RegisterDogForm() {
       <BreedSelector />
       <label className="font-bold text-navy">DNA confirmed<select name="dnaConfirmed" defaultValue="UNKNOWN" className="mt-2 w-full rounded-2xl border border-cocoa/10 px-4 py-3"><option value="UNKNOWN">Not provided</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
       <label className="font-bold text-navy">Sex<input name="sex" className="mt-2 w-full rounded-2xl border border-cocoa/10 px-4 py-3" /></label>
+      <label className="font-bold text-navy">Neutered / Spayed<select name="neuteredSpayed" defaultValue="UNKNOWN" className="mt-2 w-full rounded-2xl border border-cocoa/10 px-4 py-3"><option value="UNKNOWN">Unknown</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
       <label className="font-bold text-navy">Colour<input name="colour" className="mt-2 w-full rounded-2xl border border-cocoa/10 px-4 py-3" /></label>
       <label className="font-bold text-navy">Country of registration<input name="countryOfRegistration" className="mt-2 w-full rounded-2xl border border-cocoa/10 px-4 py-3" /></label>
       <label className="font-bold text-navy">Visibility of identity<select name="visibility" defaultValue="PUBLIC" className="mt-2 w-full rounded-2xl border border-cocoa/10 px-4 py-3"><option value="PUBLIC">Public registry identity</option><option value="PRIVATE">Private to your account</option><option value="LINK_ONLY">Visible only with a shared link</option></select></label>
