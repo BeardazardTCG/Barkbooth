@@ -48,6 +48,11 @@ export async function registerDog(_prevState: string | null, formData: FormData)
         visibility: allowedVisibility.includes(visibilityValue as (typeof allowedVisibility)[number]) ? visibilityValue as (typeof allowedVisibility)[number] : "PUBLIC",
       },
     });
+    await tx.ownerStatus.upsert({
+      where: { userId_status: { userId: user.id, status: "PET_OWNER" } },
+      create: { userId: user.id, status: "PET_OWNER" },
+      update: {},
+    });
     return tx.dogIdentity.update({
       where: { id: created.id },
       data: { registryNumber: registryNumber(created.registrySequence), ownerships: { create: { userId: user.id } } },
