@@ -3,6 +3,7 @@ import { AccountRoleSummary } from "@/components/roles";
 import { ButtonLink, Card, PawAvatar, Section } from "@/components/ui";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { canAccessBreederTools, canAccessFosterTools, canAccessProfessionalTools, canAccessRescueTools, canReceiveProfessionalPromotion } from "@/lib/roles";
 
 type DashboardDog = { id: string; name: string; registryNumber: string; primaryRole: string; breed: string | null };
 
@@ -24,6 +25,13 @@ export default async function DashboardPage() {
     where: { ownerships: { some: { userId: user.id } } },
     orderBy: { createdAt: "desc" },
   }) as DashboardDog[];
+
+  const roleActions = [
+    canAccessBreederTools(account) && ["Verified Breeder", "Future litter tools, breeder profile foundation and dog registrations."] as const,
+    canAccessRescueTools(account) && ["Verified Rescue", "Future rescue registrations, rescue dog management and behaviour assessment foundation."] as const,
+    canAccessFosterTools(account) && ["Verified Foster", "Future foster-linked dog access foundation."] as const,
+    canAccessProfessionalTools(account) && ["Verified Professional", `Professional profile, directory listing, contact settings and ${canReceiveProfessionalPromotion(account) ? "active featured promotion" : "promotion status foundation"}.`] as const,
+  ].filter(Boolean) as readonly (readonly [string, string])[];
 
   return <>
     <Section eyebrow="Your account" title={`Welcome back, ${user.displayName}`}>
@@ -64,6 +72,8 @@ export default async function DashboardPage() {
         </div>
       </Card>}
     </Section>
+
+    {roleActions.length > 0 && <Section eyebrow="Role-aware tools" title="Verified status foundations"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{roleActions.map(([label, detail]) => <Card key={label}><h3 className="text-xl font-bold text-navy">{label}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p><p className="mt-4 rounded-full bg-lightgrey px-4 py-2 text-xs font-bold text-navy">Foundation / planned tools only</p></Card>)}</div></Section>}
 
     <Section eyebrow="Quick actions" title="Manage Bark Booth records"><div id="records" />
       <div className="grid gap-4 md:grid-cols-4">{quickActions.map(([label, href, detail]) => <Card key={label}><h3 className="text-xl font-bold text-navy">{label}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-charcoal/65">{detail}</p><div className="mt-4"><ButtonLink href={href} variant="secondary">Open</ButtonLink></div></Card>)}</div>
