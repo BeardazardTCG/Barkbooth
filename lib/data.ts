@@ -42,10 +42,10 @@ export const prizeStructure = [
 ];
 
 export const competitions: Competition[] = [
-  { slug: "miami-mutts", title: "Miami Mutts", theme: "Bright colours, sunshine, poolside poses, and bold holiday energy", month: "June 2026", entries: 284, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-cyan-200 to-pink-200", classType: "Themed photo competition", classes: ["Beach Babe", "Neon Pup", "Poolside Pose", "Tropical Smile"], description: "A vivid judged photo competition for confident colour, sunny personality, and playful Miami-inspired styling." },
-  { slug: "cosy-companions", title: "Cosy Companions", theme: "Blankets, sofa snuggles, calm winter portraits, and gentle companionship", month: "July 2026", entries: 172, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-amber-100 to-orange-200", classType: "Themed photo competition", classes: ["Sofa Snuggles", "Blanket Buddy", "Tea-Time Pup", "Sleepy Sweetheart"], description: "A soft seasonal showcase for warm indoor moments, comfort, and the quiet bond between dogs and owners." },
-  { slug: "summer-smiles", title: "Summer Smiles", theme: "Bright, happy portraits, garden zoomies, and sunshine grins", month: "August 2026", entries: 326, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-amber-200 to-orange-200", classType: "Themed photo competition", classes: ["Golden Hour", "Garden Zoomies", "Picnic Pal", "Best Grin"], description: "Celebrate beach days, garden zoomies, and sunny sofa snoozes with a warm seasonal showcase. Phone photos and proud moments encouraged." },
-  { slug: "autumn-adventures", title: "Autumn Adventures", theme: "Crunchy leaves, woodland walks, pumpkin tones, and outdoor exploring", month: "September 2026", entries: 148, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-orange-200 to-rose-200", classType: "Themed photo competition", classes: ["Leaf Leaper", "Woodland Wanderer", "Pumpkin Pup", "Muddy Boots"], description: "For dogs who love leaf piles, nature trails, cosy colours, and the small adventures that become big scrapbook memories." }
+  { slug: "miami-mutts", title: "Miami Mutts", theme: "Bright colours, sunshine, poolside poses, and bold holiday energy", month: "June 2026", entries: 284, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-white to-skysoft", classType: "Themed photo competition", classes: ["Beach Babe", "Neon Pup", "Poolside Pose", "Tropical Smile"], description: "A vivid judged photo competition for confident colour, sunny personality, and playful Miami-inspired styling." },
+  { slug: "cosy-companions", title: "Cosy Companions", theme: "Blankets, sofa snuggles, calm winter portraits, and gentle companionship", month: "July 2026", entries: 172, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-white to-skysoft", classType: "Themed photo competition", classes: ["Sofa Snuggles", "Blanket Buddy", "Tea-Time Pup", "Sleepy Sweetheart"], description: "A soft seasonal showcase for warm indoor moments, comfort, and the quiet bond between dogs and owners." },
+  { slug: "summer-smiles", title: "Summer Smiles", theme: "Bright, happy portraits, garden zoomies, and sunshine grins", month: "August 2026", entries: 326, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-white to-skysoft", classType: "Themed photo competition", classes: ["Golden Hour", "Garden Zoomies", "Picnic Pal", "Best Grin"], description: "Celebrate beach days, garden zoomies, and sunny sofa snoozes with a warm seasonal showcase. Phone photos and proud moments encouraged." },
+  { slug: "autumn-adventures", title: "Autumn Adventures", theme: "Crunchy leaves, woodland walks, pumpkin tones, and outdoor exploring", month: "September 2026", entries: 148, closes: "Day 25", price: "From £3", prize: "Treat bundle + themed rosette", color: "from-white to-skysoft", classType: "Themed photo competition", classes: ["Leaf Leaper", "Woodland Wanderer", "Pumpkin Pup", "Muddy Boots"], description: "For dogs who love leaf piles, nature trails, cosy colours, and the small adventures that become big scrapbook memories." }
 ];
 
 export const peopleChoiceCards = [
@@ -70,16 +70,16 @@ export const dogs = [
 ];
 
 export const winners = [
-  { place: "1st", dog: "Luna", className: "Puppy", note: "A confident, joyful portrait with real personality and a beautifully natural moment.", ribbon: "bg-amber-300", owner: "Maya" },
+  { place: "1st", dog: "Luna", className: "Puppy", note: "A confident, joyful portrait with real personality and a beautifully natural moment.", ribbon: "bg-award/40", owner: "Maya" },
   { place: "2nd", dog: "Biscuit", className: "Action Shot", note: "Mid-air ears, sharp timing, and the kind of photo every dog owner smiles at.", ribbon: "bg-slate-300", owner: "Noah" },
-  { place: "3rd", dog: "Pepper", className: "Best Rescue", note: "Soft eyes, strong story, and a calm image that stayed with the judging panel.", ribbon: "bg-orange-300", owner: "Sofia" }
+  { place: "3rd", dog: "Pepper", className: "Best Rescue", note: "Soft eyes, strong story, and a calm image that stayed with the judging panel.", ribbon: "bg-award/30", owner: "Sofia" }
 ];
 
 export const galleryGroups = [
   { tab: "Recent winners", items: winners },
-  { tab: "People’s Choice recognitions", items: [{ place: "PC", dog: "Mabel", className: "People’s Choice Pooch", note: "Gentle recognition badge chosen from the mock shortlist.", ribbon: "bg-pink", owner: "Amelia" }] },
+  { tab: "People’s Choice recognitions", items: [{ place: "PC", dog: "Mabel", className: "People’s Choice Pooch", note: "Gentle recognition badge chosen from the mock shortlist.", ribbon: "bg-info/30", owner: "Amelia" }] },
   { tab: "Calendar Pups winners", items: [{ place: "Jan", dog: "Daisy", className: "Calendar Pups", note: "January page winner with a frosty morning portrait.", ribbon: "bg-skysoft", owner: "Grace" }] },
-  { tab: "Tricks & Tails winners", items: [{ place: "Top", dog: "Rolo", className: "Freestyle", note: "Kind, enthusiastic teamwork in a 20-second routine.", ribbon: "bg-emerald-200", owner: "Sam" }] }
+  { tab: "Tricks & Tails winners", items: [{ place: "Top", dog: "Rolo", className: "Freestyle", note: "Kind, enthusiastic teamwork in a 20-second routine.", ribbon: "bg-verified/20", owner: "Sam" }] }
 ];
 
 export const annualAwards = ["Dog of the Year", "Best Rescue", "Best Puppy", "Best Senior", "Profile Favourite"];

@@ -1,4 +1,5 @@
 import { profileDog } from "@/lib/data";
+import { BarkBoothLogo } from "@/components/nav";
 import { Card, PawAvatar, Section } from "@/components/ui";
 
 const identity = {
@@ -36,14 +37,15 @@ export default function DogProfilePage() {
 
   return <>
     <Section eyebrow="Canine Identity" title="Bark Booth Identity Record">
-      <Card className="overflow-hidden bg-white">
+      <Card className="overflow-hidden border-navy/15 bg-white">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-navy/10 pb-5"><BarkBoothLogo /><span className="registry-label rounded-full border border-navy/10 bg-offwhite px-4 py-2">Official Identity Card</span></div>
         <div className="grid gap-7 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <PawAvatar label="Official Profile Photograph" className="min-h-[320px] text-7xl" />
-            <div className="mt-3 rounded-2xl border border-cocoa/10 bg-white p-3 text-center text-sm font-bold text-navy">Official Profile Photograph</div>
+            <div className="mt-3 rounded-2xl border border-navy/10 bg-white p-3 text-center text-sm font-bold text-navy">Official Profile Photograph</div>
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-navy">{identity.status}</span><span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-bold text-navy">Identity created {identity.created}</span></div>
+            <div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-verified/25 bg-verified/10 px-4 py-2 text-sm font-bold text-verified">{identity.status}</span><span className="rounded-full bg-lightgrey px-4 py-2 text-sm font-bold text-navy">Identity created {identity.created}</span></div>
             <h1 className="mt-4 text-6xl font-bold tracking-tight text-navy md:text-8xl">{dog.name}</h1>
             <p className="mt-2 text-3xl font-bold text-navy">{identity.registryNumber}</p><p className="mt-2 font-bold text-charcoal/65">KC name: {identity.kennelClubName}</p><div className="mt-3 flex flex-wrap gap-2">{identity.dogTypes.map((type) => <span key={type} className="rounded-full bg-lightgrey px-3 py-2 text-sm font-bold text-navy">{type}</span>)}</div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -58,7 +60,7 @@ export default function DogProfilePage() {
                 ["Country of Registration", identity.country],
                 ["Identity status", identity.status],
                 ["Identity created date", identity.created],
-              ].map(([label, value]) => <div key={label} className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-bold uppercase tracking-widest text-rosette">{label}</p><p className="mt-1 font-bold text-navy">{value}</p></div>)}
+              ].map(([label, value]) => <div key={label} className="rounded-2xl bg-lightgrey p-4"><p className="text-xs font-bold uppercase tracking-widest text-info">{label}</p><p className="mt-1 font-bold text-navy">{value}</p></div>)}
             </div>
           </div>
         </div>
@@ -67,7 +69,7 @@ export default function DogProfilePage() {
 
     <Section eyebrow="Identity record areas" title="Structured records that can grow over time">
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {recordSections.map(([title, count, detail]) => <Card key={title}><p className="text-sm font-bold uppercase tracking-widest text-rosette">{count}</p><h3 className="mt-2 text-xl font-bold text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}
+        {recordSections.map(([title, count, detail]) => <Card key={title}><p className="text-sm font-bold uppercase tracking-widest text-info">{count}</p><h3 className="mt-2 text-xl font-bold text-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-charcoal/65">{detail}</p></Card>)}
       </div>
     </Section>
 

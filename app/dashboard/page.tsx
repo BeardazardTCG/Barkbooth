@@ -42,7 +42,7 @@ export default async function DashboardPage() {
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/55">Bark Booth Member</p>
               <h1 className="mt-1 text-3xl font-bold">{user.displayName}</h1>
-              <p className="font-bold text-biscuit">@{user.username}</p>
+              <p className="font-bold text-skysoft">@{user.username}</p>
             </div>
           </div>
           <div className="mt-6 grid gap-3 text-sm font-bold">
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-rosette">Your account</p>
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-info">Your account</p>
           <h2 className="mt-2 text-2xl font-bold text-navy">Community roles</h2>
           <p className="mt-2 leading-7 text-charcoal/65">Every account is a Bark Booth Member account. Pet Owner is self-declared; breeder, rescue, foster and professional labels become verified only after approval.</p>
           <div className="mt-5"><AccountRoleSummary ownerStatuses={account.ownerStatuses} applications={account.roleApplications} /></div>
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
     </Section>
 
     <Section eyebrow="My dogs" title="Registered canine identities">
-      {dogs.length ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{dogs.map((dog) => <Link key={dog.id} href={`/dogs/${dog.registryNumber}`} className="block"><Card><PawAvatar label={dog.name} className="h-24 w-24 text-4xl" /><h3 className="mt-4 text-2xl font-bold text-navy">{dog.name}</h3><p className="font-bold text-rosette">{dog.registryNumber}</p><p className="mt-2 text-sm font-bold text-charcoal/60">{dog.primaryRole}{dog.breed ? ` • ${dog.breed}` : ""}</p></Card></Link>)}</div> : <Card className="border-dashed border-cocoa/20 bg-white">
+      {dogs.length ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{dogs.map((dog) => <Link key={dog.id} href={`/dogs/${dog.registryNumber}`} className="block"><Card><PawAvatar label={dog.name} className="h-24 w-24 text-4xl" /><h3 className="mt-4 text-2xl font-bold text-navy">{dog.name}</h3><p className="font-bold text-info">{dog.registryNumber}</p><p className="mt-2 text-sm font-bold text-charcoal/60">{dog.primaryRole}{dog.breed ? ` • ${dog.breed}` : ""}</p></Card></Link>)}</div> : <Card className="border-dashed border-cocoa/20 bg-white">
         <div className="grid place-items-center py-10 text-center">
           <PawAvatar label="No registered dogs" className="h-32 w-32 text-5xl" />
           <h2 className="mt-5 text-3xl font-bold text-navy">No Dogs Currently Registered</h2>
