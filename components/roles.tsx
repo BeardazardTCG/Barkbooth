@@ -18,12 +18,12 @@ export function RoleBadge({ label, verified = false }: { label: string; verified
 export function VerificationBadge({ role }: { role: RequestedRole }) { return <RoleBadge label={verifiedRoleLabels[role]} verified />; }
 export function ApplicationStatusBadge({ status }: { status: RoleApplicationStatus }) { return <StatusBadge status={status} />; }
 
-export function AccountRoleSummary({ ownerStatuses, applications }: { ownerStatuses: { status: string }[]; applications: { requestedRole: RequestedRole; status: RoleApplicationStatus }[] }) {
+export function AccountRoleSummary({ ownerStatuses, applications }: { ownerStatuses: { status: string }[]; applications: { id: string; requestedRole: RequestedRole; status: RoleApplicationStatus }[] }) {
   const petOwner = ownerStatuses.some((s) => s.status === "PET_OWNER");
   const legacy = ownerStatuses.filter((s) => s.status !== "PET_OWNER");
   const approved = applications.filter((a) => a.status === "APPROVED");
   const nonApproved = applications.filter((a) => a.status !== "APPROVED");
-  return <div className="flex flex-wrap gap-2"><RoleBadge label="Bark Booth Member" />{petOwner && <RoleBadge label="Pet Owner" />}{approved.map((a) => <VerificationBadge key={a.requestedRole} role={a.requestedRole} />)}{legacy.map((status) => <RoleBadge key={status.status} label={`${formatRole(status.status as RequestedRole)} — legacy unverified`} />)}{nonApproved.map((app) => <span key={`${app.requestedRole}-${app.status}`} className="rounded-full bg-amber-100 px-4 py-2 text-sm font-bold text-amber-900">{formatRole(app.requestedRole)} application — {app.status.toLowerCase().replace(/_/g, " ")}</span>)}</div>;
+  return <div className="flex flex-wrap gap-2"><RoleBadge label="Bark Booth Member" />{petOwner && <RoleBadge label="Pet Owner" />}{approved.map((a) => <VerificationBadge key={a.id} role={a.requestedRole} />)}{legacy.map((status) => <RoleBadge key={status.status} label={`${formatRole(status.status as RequestedRole)} — legacy unverified`} />)}{nonApproved.map((app) => <span key={app.id} className="rounded-full bg-amber-100 px-4 py-2 text-sm font-bold text-amber-900">{formatRole(app.requestedRole)} application — {app.status.toLowerCase().replace(/_/g, " ")}</span>)}</div>;
 }
 
 export function RoleApplicationCard({ app }: { app: { id: string; requestedRole: RequestedRole; status: RoleApplicationStatus; submittedAt: Date | null; rejectionReason: string | null } }) {
