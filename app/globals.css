@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Outfit:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,18 +6,18 @@
 
 :root {
   color-scheme: light;
-  --registry-navy: #14213d;
-  --registry-navy-soft: #243451;
-  --off-white: #fbfaf6;
-  --cream: #f4efe6;
-  --warm-sand: #d8c3a5;
-  --slate: #475569;
-  --muted-grey: #e6e2da;
-  --rosette-coral: #b9655a;
-  --verification-green: #2f6f55;
-  --award-gold: #b88a2e;
-  --danger-red: #9f3a38;
-  --info-blue: #315f86;
+  --registry-navy: #08294a;
+  --registry-navy-soft: #143c61;
+  --off-white: #f8fbfe;
+  --very-light-blue: #f6fafd;
+  --powder-blue: #7facc7;
+  --slate: #425466;
+  --muted-grey: #e3eaf0;
+  --premium-blue: #2f6f91;
+  --verification-green: #256c55;
+  --warning-amber: #a77a22;
+  --danger-red: #9b2f2f;
+  --info-blue: #2f6f91;
   --radius-card: 1.35rem;
   --radius-control: 999px;
   --shadow-registry: 0 18px 48px rgba(20, 33, 61, 0.11);
@@ -30,15 +30,15 @@
   body {
     min-height: 100vh;
     background:
-      radial-gradient(circle at top left, rgba(216, 195, 165, 0.28), transparent 34rem),
-      linear-gradient(180deg, var(--off-white) 0%, #f7f3eb 100%);
+      radial-gradient(circle at top left, rgba(127, 172, 199, 0.22), transparent 34rem),
+      linear-gradient(180deg, var(--off-white) 0%, #eef6fb 100%);
     color: var(--registry-navy);
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4 {
-    font-family: Outfit, Manrope, Sora, Inter, ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: -0.035em;
+    font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
   a, button { transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
   button, [role="button"] { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 700; }
@@ -87,7 +87,7 @@
   textarea:disabled {
     cursor: not-allowed;
     border-color: rgba(20, 33, 61, 0.08);
-    background: rgba(230, 226, 218, 0.55);
+    background: rgba(227, 234, 240, 0.65);
     color: rgba(71, 85, 105, 0.68);
     box-shadow: none;
   }
@@ -96,7 +96,7 @@
 @layer components {
   .registry-card {
     border: 1px solid rgba(20, 33, 61, 0.12);
-    background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(251,250,246,.9));
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,250,253,.94));
     box-shadow: var(--shadow-card);
   }
   .registry-label {
