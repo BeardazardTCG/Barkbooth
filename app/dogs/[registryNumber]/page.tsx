@@ -10,6 +10,7 @@ import { updateBehaviourLifestyle } from "@/lib/dogs/actions";
 import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
 import { allRecordCategories, recordCategoryLabels } from "@/lib/records/catalog";
 import { prisma } from "@/lib/prisma";
+import { isDogAccessCurrentlyActive } from "@/lib/dog-access";
 
 function formatDate(date: Date | null, estimated = false) {
   if (!date) return "Not provided";
@@ -59,11 +60,12 @@ function indicatorState(records: DogRecord[], categories: DogRecordCategory[] | 
 export default async function DogIdentityPage({ params }: { params: { registryNumber: string } }) {
   const [dog, currentUser] = await Promise.all([prisma.dogIdentity.findUnique({
     where: { registryNumber: params.registryNumber },
-    include: { behaviourLifestyle: true, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
+    include: { behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
   }), getCurrentUser()]);
   if (!dog) notFound();
   const canManage = Boolean(currentUser && dog.ownerships.some((ownership) => ownership.userId === currentUser.id));
-  if (dog.visibility !== "PUBLIC" && !canManage) notFound();
+  const hasSharedView = Boolean(currentUser && dog.accessRequests.some((access) => access.requesterUserId === currentUser.id && isDogAccessCurrentlyActive(access)));
+  if (dog.visibility !== "PUBLIC" && !canManage && !hasSharedView) notFound();
 
   const primaryOwner = dog.ownerships[0];
   const owner = primaryOwner?.user;
@@ -97,7 +99,7 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
           <div className="mt-5 grid grid-cols-4 gap-2">{indicatorConfig.map((item) => { const state = indicatorState(dog.records, item.categories, behaviourState); return <a key={item.key} href={item.href} title={`${item.label}: ${state}`} className={`rounded-2xl px-2 py-3 text-center text-xs font-bold ${state === "verified" ? "bg-verified/10 text-navy" : state === "owner" ? "bg-skysoft text-navy" : "bg-white/10 text-white/45"}`}>{item.label}</a>; })}</div>
           <div id="awards" className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Awards Summary</p><p className="mt-1 font-bold text-white">{dog.records.filter((record) => ["ACTIVITIES_WORK", "WORKING_QUALIFICATIONS", "TITLES"].includes(record.category)).length} activities, work, or award records</p></div>
         </Card>
-        <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">The public card stays consistent and compact. Detailed identity, ownership, records, health, family tree, awards, behaviour, and history information remains inside this full profile.</p><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><a href="#history" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">History</a><ButtonLink href="/dashboard">Back to Dashboard</ButtonLink></div></Card>
+        <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">Information and documents shown on Bark Booth may be supplied by the account holder unless specifically marked as verified. Private documents are not publicly exposed.</p><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><a href="#history" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">History</a><ButtonLink href="/dashboard">Back to Dashboard</ButtonLink></div></Card>
       </div>
     </Section>
 
