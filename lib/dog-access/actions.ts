@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
-import { dogRelationships, professionalRelationships } from "@/lib/dog-access";
+import { dogRelationships, requiredVerifiedRoleForRelationship } from "@/lib/dog-access";
 import { prisma } from "@/lib/prisma";
 import type { DogRelationshipType } from "@prisma/client";
 
@@ -30,9 +30,10 @@ export async function requestDogAccess(formData: FormData) {
   if (dog.ownerships.some((ownership) => ownership.userId === user.id)) done("already-owner");
   const existing = await prisma.dogAccessRequest.findFirst({ where: { dogId: dog.id, requesterUserId: user.id, status: { in: ["PENDING", "APPROVED"] } } });
   if (existing) done("duplicate");
-  if (professionalRelationships.includes(relationship)) {
-    const approvedProfessional = await prisma.roleApplication.findFirst({ where: { userId: user.id, requestedRole: "PROFESSIONAL", status: "APPROVED" } });
-    if (!approvedProfessional) done("professional-required");
+  const requiredRole = requiredVerifiedRoleForRelationship(relationship);
+  if (requiredRole) {
+    const approvedRole = await prisma.roleApplication.findFirst({ where: { userId: user.id, requestedRole: requiredRole, status: "APPROVED" } });
+    if (!approvedRole) done(`verified-${requiredRole.toLowerCase()}-required`);
   }
   try {
     await prisma.dogAccessRequest.create({ data: {

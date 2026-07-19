@@ -10,6 +10,7 @@ import { updateBehaviourLifestyle } from "@/lib/dogs/actions";
 import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
 import { allRecordCategories, recordCategoryLabels } from "@/lib/records/catalog";
 import { prisma } from "@/lib/prisma";
+import { isDogAccessCurrentlyActive } from "@/lib/dog-access";
 
 function formatDate(date: Date | null, estimated = false) {
   if (!date) return "Not provided";
@@ -59,11 +60,11 @@ function indicatorState(records: DogRecord[], categories: DogRecordCategory[] | 
 export default async function DogIdentityPage({ params }: { params: { registryNumber: string } }) {
   const [dog, currentUser] = await Promise.all([prisma.dogIdentity.findUnique({
     where: { registryNumber: params.registryNumber },
-    include: { behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, select: { requesterUserId: true } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
+    include: { behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
   }), getCurrentUser()]);
   if (!dog) notFound();
   const canManage = Boolean(currentUser && dog.ownerships.some((ownership) => ownership.userId === currentUser.id));
-  const hasSharedView = Boolean(currentUser && dog.accessRequests.some((access) => access.requesterUserId === currentUser.id));
+  const hasSharedView = Boolean(currentUser && dog.accessRequests.some((access) => access.requesterUserId === currentUser.id && isDogAccessCurrentlyActive(access)));
   if (dog.visibility !== "PUBLIC" && !canManage && !hasSharedView) notFound();
 
   const primaryOwner = dog.ownerships[0];
