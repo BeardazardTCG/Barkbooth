@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSession, deleteCurrentSession } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/prisma";
+import { isSupportedLocation } from "@/lib/locations";
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -20,6 +21,7 @@ export async function signup(_prevState: string | null, formData: FormData) {
   const wantsPetOwner = formData.get("ownerStatuses") === "PET_OWNER";
 
   if (!email || !password || !displayName || !username || !country) return "Please complete all required fields.";
+  if (!isSupportedLocation(country)) return "Choose a supported location.";
   if (password.length < 8) return "Password must be at least 8 characters.";
   if (password !== passwordConfirm) return "Passwords do not match.";
   if (!over16) return "You must confirm you are over 16 to create an account.";

@@ -53,6 +53,34 @@ enum DogVisibility {
   LINK_ONLY
 }
 
+enum DogAccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  REVOKED
+}
+
+enum DogRelationshipType {
+  CO_OWNER
+  KEEPER
+  CONTRACT_HOLDER
+  FOSTER
+  RESCUE
+  BREEDER
+  VETERINARY
+  GROOMER
+  TRAINER
+  SITTER
+  OTHER_PROFESSIONAL
+}
+
+enum DogAccessLevel {
+  VIEW
+  CONTRIBUTE
+  MANAGE
+}
+
 enum DogRecordCategory {
   IDENTITY
   DNA
@@ -104,6 +132,10 @@ model User {
   roleApplications RoleApplication[]
   reviewedRoleApplications RoleApplication[] @relation("RoleApplicationReviewer")
   dogOwnerships DogOwnership[]
+  requestedDogAccess DogAccessRequest[] @relation("DogAccessRequester")
+  incomingDogAccess DogAccessRequest[] @relation("DogAccessTargetOwner")
+  reviewedDogAccess DogAccessRequest[] @relation("DogAccessReviewer")
+  revokedDogAccess DogAccessRequest[] @relation("DogAccessRevoker")
   sessions     Session[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -179,6 +211,7 @@ model DogIdentity {
   countryOfRegistration String?
   visibility            DogVisibility   @default(PUBLIC)
   ownerships            DogOwnership[]
+  accessRequests        DogAccessRequest[]
   records               DogRecord[]
   behaviourLifestyle    DogBehaviourLifestyle?
   createdAt             DateTime        @default(now())
@@ -244,6 +277,32 @@ model DogOwnership {
   createdAt DateTime    @default(now())
 
   @@unique([userId, dogId])
+}
+
+model DogAccessRequest {
+  id                    String                 @id @default(cuid())
+  dogId                 String
+  dog                   DogIdentity            @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  requesterUserId       String
+  requester             User                   @relation("DogAccessRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  targetOwnerUserId     String
+  targetOwner           User                   @relation("DogAccessTargetOwner", fields: [targetOwnerUserId], references: [id], onDelete: Cascade)
+  requestedRelationship DogRelationshipType
+  requestedAccessLevel  DogAccessLevel         @default(VIEW)
+  status                DogAccessRequestStatus @default(PENDING)
+  message               String?
+  reviewedAt            DateTime?
+  reviewedById          String?
+  reviewedBy            User?                  @relation("DogAccessReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  revokedAt             DateTime?
+  revokedById           String?
+  revokedBy             User?                  @relation("DogAccessRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([dogId, status])
+  @@index([requesterUserId, status])
+  @@index([targetOwnerUserId, status])
 }
 
 model Session {

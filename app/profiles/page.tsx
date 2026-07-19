@@ -23,6 +23,7 @@ export default function ProfilesPage() {
     </Section>
 
     <Section eyebrow="Public identity cards" title="Every card starts with identity, status, and latest record">
+      <Card className="mb-5"><p className="text-sm leading-6 text-charcoal/70">Information and documents shown on Bark Booth may be supplied by the account holder unless specifically marked as verified. Private documents are not publicly exposed.</p></Card>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{profileCards.map(dog => <Card key={dog.profileNumber} className={`flex flex-col ${dog.status === "Rainbow Bridge" ? "bg-gradient-to-br from-white to-skysoft/40" : ""}`}>
         <PawAvatar label={`${dog.name} profile image`} className="text-5xl" />
         <div className="mt-4 flex-1">
