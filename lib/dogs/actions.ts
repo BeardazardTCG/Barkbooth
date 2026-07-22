@@ -16,10 +16,29 @@ function registryNumber(sequence: number) {
 
 const neuteredSpayedAnswers = ["YES", "NO", "UNKNOWN"] as const;
 
+function hasOptionalUpload(value: FormDataEntryValue | null) {
+  return value !== null && value !== "" && (!(value instanceof File) || Boolean(value.name) || value.size > 0);
+}
+
+async function storeDogProfilePhoto(value: FormDataEntryValue | null, folder: string) {
+  const { file, bytes } = await validateUpload(value, imageContentTypes, MAX_PROFILE_PHOTO_BYTES);
+  const key = storageKey(folder, file.type);
+  await putObject(key, bytes, file.type);
+  return {
+    storageKey: key,
+    fileName: file.name,
+    contentType: file.type,
+    sizeBytes: file.size,
+  };
+}
+
 export async function registerDog(_prevState: string | null, formData: FormData) {
   const user = await requireUser();
   const name = asString(formData.get("name"));
   if (!name) return "Dog name is required.";
+
+  const photoValue = formData.get("photo");
+  const hasPhoto = hasOptionalUpload(photoValue);
 
   const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map((value) => asString(value)).filter(Boolean)));
   const primaryRole = dogTypes[0] ?? "Pet";
@@ -29,37 +48,50 @@ export async function registerDog(_prevState: string | null, formData: FormData)
   const visibilityValue = asString(formData.get("visibility"));
   const neuteredSpayedValue = asString(formData.get("neuteredSpayed"));
 
-  const dog = await prisma.$transaction(async (tx) => {
-    const created = await tx.dogIdentity.create({
-      data: {
-        registryNumber: "PENDING",
-        name,
-        primaryRole,
-        kennelClubName: asString(formData.get("kennelClubName")) || null,
-        breed: asString(formData.get("breed")) || null,
-        isMixedBreed: formData.get("isMixedBreed") === "on" || asString(formData.get("breed")) === "Mixed Breed",
-        breedMix: formData.getAll("breedMix").map((value) => asString(value)).filter(Boolean).join(", ") || null,
-        dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
-        dogTypes: dogTypes.join(", ") || null,
-        neuteredSpayed: neuteredSpayedAnswers.includes(neuteredSpayedValue as (typeof neuteredSpayedAnswers)[number]) ? neuteredSpayedValue : "UNKNOWN",
-        dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null,
-        estimatedDob: formData.get("estimatedDob") === "on",
-        sex: asString(formData.get("sex")) || null,
-        colour: asString(formData.get("colour")) || null,
-        countryOfRegistration: asString(formData.get("countryOfRegistration")) || null,
-        visibility: allowedVisibility.includes(visibilityValue as (typeof allowedVisibility)[number]) ? visibilityValue as (typeof allowedVisibility)[number] : "PUBLIC",
-      },
+  let uploadedPhotoKey: string | null = null;
+  let dog;
+  try {
+    const photo = hasPhoto ? await storeDogProfilePhoto(photoValue, "dogs/registrations/profile") : null;
+    uploadedPhotoKey = photo?.storageKey ?? null;
+    dog = await prisma.$transaction(async (tx) => {
+      const created = await tx.dogIdentity.create({
+        data: {
+          registryNumber: "PENDING",
+          name,
+          primaryRole,
+          kennelClubName: asString(formData.get("kennelClubName")) || null,
+          breed: asString(formData.get("breed")) || null,
+          isMixedBreed: formData.get("isMixedBreed") === "on" || asString(formData.get("breed")) === "Mixed Breed",
+          breedMix: formData.getAll("breedMix").map((value) => asString(value)).filter(Boolean).join(", ") || null,
+          dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
+          dogTypes: dogTypes.join(", ") || null,
+          neuteredSpayed: neuteredSpayedAnswers.includes(neuteredSpayedValue as (typeof neuteredSpayedAnswers)[number]) ? neuteredSpayedValue : "UNKNOWN",
+          dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null,
+          estimatedDob: formData.get("estimatedDob") === "on",
+          sex: asString(formData.get("sex")) || null,
+          colour: asString(formData.get("colour")) || null,
+          countryOfRegistration: asString(formData.get("countryOfRegistration")) || null,
+          visibility: allowedVisibility.includes(visibilityValue as (typeof allowedVisibility)[number]) ? visibilityValue as (typeof allowedVisibility)[number] : "PUBLIC",
+        },
+      });
+      await tx.ownerStatus.upsert({
+        where: { userId_status: { userId: user.id, status: "PET_OWNER" } },
+        create: { userId: user.id, status: "PET_OWNER" },
+        update: {},
+      });
+      const registeredDog = await tx.dogIdentity.update({
+        where: { id: created.id },
+        data: { registryNumber: registryNumber(created.registrySequence), ownerships: { create: { userId: user.id } } },
+      });
+      if (photo) {
+        await tx.dogProfilePhoto.create({ data: { dogId: created.id, uploadedById: user.id, ...photo } });
+      }
+      return registeredDog;
     });
-    await tx.ownerStatus.upsert({
-      where: { userId_status: { userId: user.id, status: "PET_OWNER" } },
-      create: { userId: user.id, status: "PET_OWNER" },
-      update: {},
-    });
-    return tx.dogIdentity.update({
-      where: { id: created.id },
-      data: { registryNumber: registryNumber(created.registrySequence), ownerships: { create: { userId: user.id } } },
-    });
-  });
+  } catch (error) {
+    if (uploadedPhotoKey) await cleanUpStoredObjects([uploadedPhotoKey], "rollbackDogRegistrationPhotoUpload");
+    throw error;
+  }
   redirect(`/dogs/${dog.registryNumber}`);
 }
 
@@ -148,22 +180,20 @@ export async function uploadDogProfilePhoto(formData: FormData) {
   const user = await requireUser();
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
-  const { file, bytes } = await validateUpload(formData.get("photo"), imageContentTypes, MAX_PROFILE_PHOTO_BYTES);
-  const key = storageKey(`dogs/${dogId}/profile`, file.type);
-  await putObject(key, bytes, file.type);
+  const photo = await storeDogProfilePhoto(formData.get("photo"), `dogs/${dogId}/profile`);
   let previous: { storageKey: string } | null = null;
   try {
     previous = await prisma.$transaction(async (tx) => {
       const old = await tx.dogProfilePhoto.findUnique({ where: { dogId }, select: { storageKey: true } });
       await tx.dogProfilePhoto.upsert({
         where: { dogId },
-        create: { dogId, uploadedById: user.id, storageKey: key, fileName: file.name, contentType: file.type, sizeBytes: file.size },
-        update: { uploadedById: user.id, storageKey: key, fileName: file.name, contentType: file.type, sizeBytes: file.size },
+        create: { dogId, uploadedById: user.id, ...photo },
+        update: { uploadedById: user.id, ...photo },
       });
       return old;
     });
   } catch (error) {
-    await cleanUpStoredObjects([key], "rollbackDogProfilePhotoUpload");
+    await cleanUpStoredObjects([photo.storageKey], "rollbackDogProfilePhotoUpload");
     throw error;
   }
   if (previous) await cleanUpStoredObjects([previous.storageKey], "replaceDogProfilePhoto");
