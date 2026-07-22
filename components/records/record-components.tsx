@@ -24,7 +24,7 @@ function RecordFields({ record }: { record?: DogRecord }) {
 }
 
 export function AddRecordForm({ dogId }: { dogId: string }) {
-  return <Card><h3 className="text-2xl font-bold text-navy">Add Record</h3><p className="mt-2 text-sm font-bold text-charcoal/60">State whether a record exists. Uploads and automated verification are intentionally not part of this foundation.</p><form action={addDogRecord} className="mt-4 grid gap-4"><input type="hidden" name="dogId" value={dogId} /><RecordFields /><button className="rounded-full bg-navy px-5 py-3 text-sm font-bold text-white" type="submit">Add Record</button></form></Card>;
+  return <Card><h3 className="text-2xl font-bold text-navy">Add Record</h3><p className="mt-2 text-sm font-bold text-charcoal/60">State whether a record exists. Record statements do not include file uploads; any verified status is assigned through Bark Booth review.</p><form action={addDogRecord} className="mt-4 grid gap-4"><input type="hidden" name="dogId" value={dogId} /><RecordFields /><button className="rounded-full bg-navy px-5 py-3 text-sm font-bold text-white" type="submit">Add Record</button></form></Card>;
 }
 
 export function RecordCard({ record, canManage }: { record: DogRecord; canManage: boolean }) {

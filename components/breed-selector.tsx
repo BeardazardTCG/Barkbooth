@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { dogBreeds } from "@/lib/dog-breeds";
 
-export const breedOptions = dogBreeds;
 
 type BreedSelectorProps = { mixedBreed?: boolean };
 
