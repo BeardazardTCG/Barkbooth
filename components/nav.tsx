@@ -10,7 +10,7 @@ type Viewer = { displayName: string; username: string } | null;
 const publicLinks = [["Registry", "/profiles"], ["Activities", "/competitions"], ["Directory", "/directory"], ["How it works", "/about"]];
 const appLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register Dog", "/register-dog", "plus"], ["Registry", "/profiles", "search"], ["Activities", "/competitions", "award"], ["Directory", "/directory", "directory"]];
 const mobileLinks = [["Home", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Registry", "/profiles", "search"], ["Account", "/account", "person"]];
-const footerLinks = [["Terms", "/legal/terms-and-conditions"], ["Privacy", "/legal/privacy-policy"], ["Cookies", "/legal/cookie-policy"], ["Image consent", "/legal/image-usage-consent"]];
+const footerLinks = [["Terms", "/legal/terms-and-conditions"], ["Privacy", "/legal/privacy-policy"], ["Cookies", "/legal/cookie-policy"], ["Image consent", "/legal/image-usage-consent"], ["Help", "/faq"]];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, ReactNode> = {

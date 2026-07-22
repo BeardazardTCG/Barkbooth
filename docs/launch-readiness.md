@@ -6,7 +6,7 @@ Accounts, sessions, dog registration, permanent registry numbers, ownership, dog
 
 ## Empty launch areas
 
-Competitions, individual competition routes, results, rewards and the retained activity routes render truthful empty states. They do not offer entry, uploads, payments, judging or fulfilment controls.
+The competitions route renders a truthful empty state and does not offer entry, uploads, payments, judging or fulfilment controls. Legacy detail, result, reward, upload and standalone activity routes have been removed until database-backed content exists. The competition and activity pillars remain explained on the competitions page and homepage.
 
 ## Minimum competition backend foundation
 
