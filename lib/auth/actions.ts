@@ -42,7 +42,7 @@ export async function signup(_prevState: string | null, formData: FormData) {
   } catch {
     return "That email or username is already registered.";
   }
-  redirect("/dashboard");
+  redirect("/register-dog");
 }
 
 export async function login(_prevState: string | null, formData: FormData) {
@@ -52,7 +52,7 @@ export async function login(_prevState: string | null, formData: FormData) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !verifyPassword(password, user.passwordHash)) return "Invalid email or password.";
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect("/dogs");
 }
 
 export async function logout() {
