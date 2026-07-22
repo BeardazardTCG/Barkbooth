@@ -8,7 +8,7 @@ export default async function MyDogsPage() {
   const user = await requireUser();
   const dogs = await prisma.dogIdentity.findMany({
     where: { ownerships: { some: { userId: user.id } } },
-    include: { accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } } },
+    include: { profilePhoto: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } } },
     orderBy: { createdAt: "desc" },
   });
 

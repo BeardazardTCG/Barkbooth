@@ -26,3 +26,7 @@ export function ButtonLink({ href, children, variant = "primary" }: { href: stri
 export function PawAvatar({ label, className = "" }: { label: string; className?: string }) {
   return <div className={`grid aspect-[4/3] place-items-center overflow-hidden rounded-registry border border-navy/10 bg-skysoft/55 text-navy shadow-registry ${className}`} role="img" aria-label={`${label}: dog identity icon`}><svg aria-hidden="true" viewBox="0 0 160 120" className="h-full w-full"><circle cx="80" cy="61" r="34" fill="#fff" opacity=".72"/><path d="M58 52 43 30c-4-6-11-2-10 5l4 31c1 8 5 13 12 16l12 5c5 2 8 6 8 11h22c0-7 3-12 9-16 8-5 13-14 13-24V38c0-7-7-10-11-4L91 49c-9-5-23-4-33 3Z" fill="currentColor" opacity=".82"/><circle cx="68" cy="61" r="2.5" fill="#fff"/><circle cx="92" cy="61" r="2.5" fill="#fff"/><path d="M75 72c3 3 7 3 10 0" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"/><path d="M47 103h66" stroke="currentColor" opacity=".25" strokeWidth="2"/></svg></div>;
 }
+
+export function DogProfileImage({ dogId, label, hasPhoto, version, className = "" }: { dogId: string; label: string; hasPhoto: boolean; version?: string; className?: string }) {
+  return hasPhoto ? <img src={`/api/dogs/${dogId}/profile-photo${version ? `?v=${encodeURIComponent(version)}` : ""}`} alt={`${label}: dog profile photo`} className={`aspect-[4/3] overflow-hidden rounded-registry border border-navy/10 object-cover shadow-registry ${className}`} /> : <PawAvatar label={label} className={className} />;
+}
