@@ -31,7 +31,7 @@ const indicatorConfig: { key: string; label: string; href: string; categories?: 
   { key: "health", label: "Health", href: "#records-health", categories: ["HEALTH", "CARE"] },
   { key: "pedigree", label: "Pedigree", href: "#records-pedigree", categories: ["PEDIGREE"] },
   { key: "insurance", label: "Insurance", href: "#records-insurance", categories: ["INSURANCE"] },
-  { key: "family", label: "Family", href: "#family", categories: ["PEDIGREE"] },
+  { key: "family", label: "Family", href: "#records-pedigree", categories: ["PEDIGREE"] },
   { key: "records", label: "Records", href: "#records", categories: ["IDENTITY", "IDENTIFICATION", "OTHER"] },
   { key: "awards", label: "Awards", href: "#awards", categories: ["ACTIVITIES_WORK", "WORKING_QUALIFICATIONS", "TITLES"] },
   { key: "behaviour", label: "Behaviour", href: "#behaviour" },
@@ -111,7 +111,7 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
           <div className="mt-5 grid grid-cols-4 gap-2">{indicatorConfig.map((item) => { const state = indicatorState(dog.records, item.categories, behaviourState); return <a key={item.key} href={item.href} title={`${item.label}: ${state}`} className={`rounded-2xl px-2 py-3 text-center text-xs font-bold ${state === "verified" ? "bg-verified/10 text-navy" : state === "owner" ? "bg-skysoft text-navy" : "bg-white/10 text-white/45"}`}>{item.label}</a>; })}</div>
           <div id="awards" className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Awards Summary</p><p className="mt-1 font-bold text-white">{dog.records.filter((record) => ["ACTIVITIES_WORK", "WORKING_QUALIFICATIONS", "TITLES"].includes(record.category)).length} activities, work, or award records</p></div>
         </Card>
-        <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">Information and documents shown on Bark Booth may be supplied by the account holder unless specifically marked as verified. Private documents are not publicly exposed.</p><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><a href="#history" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">History</a><ButtonLink href="/dogs">Back to My Dogs</ButtonLink></div></Card>
+        <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">Information and documents shown on Bark Booth may be supplied by the account holder unless specifically marked as verified. Private documents are not publicly exposed.</p><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><ButtonLink href="/dogs">Back to My Dogs</ButtonLink></div></Card>
       </div>
     </Section>
 
