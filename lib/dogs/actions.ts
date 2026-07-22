@@ -1,10 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { deleteObject, putObject } from "@/lib/storage";
 import { documentContentTypes, imageContentTypes, MAX_PROFILE_PHOTO_BYTES, MAX_RECORD_DOCUMENT_BYTES, storageKey, validateUpload } from "@/lib/uploads";
+import type { ActionResult } from "@/lib/forms/action-result";
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -32,10 +33,10 @@ async function storeDogProfilePhoto(value: FormDataEntryValue | null, folder: st
   };
 }
 
-export async function registerDog(_prevState: string | null, formData: FormData) {
+export async function registerDog(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const user = await requireUser();
   const name = asString(formData.get("name"));
-  if (!name) return "Dog name is required.";
+  if (!name) return { status: "error", message: "Dog name is required." };
 
   const photoValue = formData.get("photo");
   const hasPhoto = hasOptionalUpload(photoValue);
@@ -90,9 +91,9 @@ export async function registerDog(_prevState: string | null, formData: FormData)
     });
   } catch (error) {
     if (uploadedPhotoKey) await cleanUpStoredObjects([uploadedPhotoKey], "rollbackDogRegistrationPhotoUpload");
-    throw error;
+    return { status: "error", message: actionErrorMessage(error, "We could not register this pet. Please try again.") };
   }
-  redirect(`/dogs/${dog.registryNumber}`);
+  return { status: "success", message: "Pet details saved", redirectTo: `/dogs/${dog.registryNumber}` };
 }
 
 const recordCategories = ["IDENTITY", "DNA", "HEALTH", "CARE", "IDENTIFICATION", "INSURANCE", "PEDIGREE", "TITLES", "WORKING_QUALIFICATIONS", "ACTIVITIES_WORK", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS", "OTHER"] as const;
@@ -114,6 +115,33 @@ async function requireDogOwner(dogId: string) {
   return ownership.dog;
 }
 
+async function updatePetDetailsImpl(formData: FormData) {
+  const dogId = asString(formData.get("dogId"));
+  const dog = await requireDogOwner(dogId);
+  const name = asString(formData.get("name"));
+  if (!name) throw new Error("Dog name is required.");
+  const dateOfBirth = asString(formData.get("dateOfBirth"));
+  const visibility = asEnum(asString(formData.get("visibility")), ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const, dog.visibility);
+  const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map(asString).filter(Boolean)));
+  await prisma.dogIdentity.update({ where: { id: dogId }, data: {
+    name,
+    kennelClubName: asString(formData.get("kennelClubName")) || null,
+    breed: asString(formData.get("breed")) || null,
+    isMixedBreed: formData.get("isMixedBreed") === "on" || asString(formData.get("breed")) === "Mixed Breed",
+    breedMix: formData.getAll("breedMix").map(asString).filter(Boolean).join(", ") || null,
+    dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
+    dogTypes: dogTypes.join(", ") || null,
+    primaryRole: dogTypes[0] || dog.primaryRole,
+    dateOfBirth: asDate(dateOfBirth),
+    estimatedDob: formData.get("estimatedDob") === "on",
+    sex: asString(formData.get("sex")) || null,
+    colour: asString(formData.get("colour")) || null,
+    countryOfRegistration: asString(formData.get("countryOfRegistration")) || null,
+    visibility,
+  } });
+  revalidatePath(`/dogs/${dog.registryNumber}`);
+}
+
 async function cleanUpStoredObjects(keys: string[], operation: string) {
   const results = await Promise.allSettled(keys.map((key) => deleteObject(key)));
   results.forEach((result, index) => {
@@ -127,7 +155,12 @@ async function cleanUpStoredObjects(keys: string[], operation: string) {
   });
 }
 
-export async function addDogRecord(formData: FormData) {
+function actionErrorMessage(error: unknown, fallback: string) {
+  console.error(fallback, error);
+  return error instanceof Error && /required|supported|smaller|not found|only manage/i.test(error.message) ? error.message : fallback;
+}
+
+async function addDogRecordImpl(formData: FormData) {
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
   const recordType = asString(formData.get("recordType"));
@@ -144,10 +177,10 @@ export async function addDogRecord(formData: FormData) {
     expiryDate: asDate(asString(formData.get("expiryDate"))),
     notes: asString(formData.get("notes")) || null,
   } });
-  redirect(`/dogs/${dog.registryNumber}#records`);
+  revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
-export async function updateDogRecord(formData: FormData) {
+async function updateDogRecordImpl(formData: FormData) {
   const recordId = asString(formData.get("recordId"));
   const existing = await prisma.dogRecord.findUnique({ where: { id: recordId } });
   if (!existing) throw new Error("Record not found.");
@@ -163,20 +196,20 @@ export async function updateDogRecord(formData: FormData) {
     expiryDate: asDate(asString(formData.get("expiryDate"))),
     notes: asString(formData.get("notes")) || null,
   } });
-  redirect(`/dogs/${dog.registryNumber}#records`);
+  revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
-export async function removeDogRecord(formData: FormData) {
+async function removeDogRecordImpl(formData: FormData) {
   const recordId = asString(formData.get("recordId"));
   const existing = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true, documents: true } });
   if (!existing) throw new Error("Record not found.");
   const dog = await requireDogOwner(existing.dogId);
   await prisma.dogRecord.delete({ where: { id: recordId } });
   await cleanUpStoredObjects(existing.documents.map((document) => document.storageKey), "removeDogRecord");
-  redirect(`/dogs/${dog.registryNumber}#records`);
+  revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
-export async function uploadDogProfilePhoto(formData: FormData) {
+async function uploadDogProfilePhotoImpl(formData: FormData) {
   const user = await requireUser();
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
@@ -197,10 +230,10 @@ export async function uploadDogProfilePhoto(formData: FormData) {
     throw error;
   }
   if (previous) await cleanUpStoredObjects([previous.storageKey], "replaceDogProfilePhoto");
-  redirect(`/dogs/${dog.registryNumber}`);
+  revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
-export async function removeDogProfilePhoto(formData: FormData) {
+async function removeDogProfilePhotoImpl(formData: FormData) {
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
   const photo = await prisma.dogProfilePhoto.findUnique({ where: { dogId } });
@@ -208,10 +241,10 @@ export async function removeDogProfilePhoto(formData: FormData) {
     await prisma.dogProfilePhoto.delete({ where: { id: photo.id } });
     await cleanUpStoredObjects([photo.storageKey], "removeDogProfilePhoto");
   }
-  redirect(`/dogs/${dog.registryNumber}`);
+  revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
-export async function uploadRecordDocument(formData: FormData) {
+async function uploadRecordDocumentImpl(formData: FormData) {
   const user = await requireUser();
   const recordId = asString(formData.get("recordId"));
   const record = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true } });
@@ -226,21 +259,21 @@ export async function uploadRecordDocument(formData: FormData) {
     await cleanUpStoredObjects([key], "rollbackRecordDocumentUpload");
     throw error;
   }
-  redirect(`/dogs/${record.dog.registryNumber}#records`);
+  revalidatePath(`/dogs/${record.dog.registryNumber}`);
 }
 
-export async function removeRecordDocument(formData: FormData) {
+async function removeRecordDocumentImpl(formData: FormData) {
   const documentId = asString(formData.get("documentId"));
   const document = await prisma.dogRecordDocument.findUnique({ where: { id: documentId }, include: { record: { include: { dog: true } } } });
   if (!document) throw new Error("Document not found.");
   await requireDogOwner(document.record.dogId);
   await prisma.dogRecordDocument.delete({ where: { id: document.id } });
   await cleanUpStoredObjects([document.storageKey], "removeRecordDocument");
-  redirect(`/dogs/${document.record.dog.registryNumber}#records`);
+  revalidatePath(`/dogs/${document.record.dog.registryNumber}`);
 }
 
 
-export async function updateBehaviourLifestyle(formData: FormData) {
+async function updateBehaviourLifestyleImpl(formData: FormData) {
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
   const answer = (name: string) => asEnum(asString(formData.get(name)), behaviourAnswers, "UNKNOWN");
@@ -288,5 +321,24 @@ export async function updateBehaviourLifestyle(formData: FormData) {
     },
   });
   await prisma.dogIdentity.update({ where: { id: dogId }, data: { neuteredSpayed } });
-  redirect(`/dogs/${dog.registryNumber}#behaviour`);
+  revalidatePath(`/dogs/${dog.registryNumber}`);
 }
+
+async function runPetAction(operation: () => Promise<void>, success: string, reset = false): Promise<ActionResult> {
+  try {
+    await operation();
+    return { status: "success", message: success, reset };
+  } catch (error) {
+    return { status: "error", message: actionErrorMessage(error, "Something went wrong. Your changes were not saved. Please try again.") };
+  }
+}
+
+export async function addDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => addDogRecordImpl(formData), "Record added", true); }
+export async function updateDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => updateDogRecordImpl(formData), "Record saved"); }
+export async function removeDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeDogRecordImpl(formData), "Record removed"); }
+export async function uploadDogProfilePhoto(_previous: ActionResult, formData: FormData) { return runPetAction(() => uploadDogProfilePhotoImpl(formData), formData.get("replacing") === "true" ? "Photo replaced" : "Photo uploaded", true); }
+export async function removeDogProfilePhoto(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeDogProfilePhotoImpl(formData), "Photo removed"); }
+export async function uploadRecordDocument(_previous: ActionResult, formData: FormData) { return runPetAction(() => uploadRecordDocumentImpl(formData), "Document uploaded", true); }
+export async function removeRecordDocument(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeRecordDocumentImpl(formData), "Document removed"); }
+export async function updateBehaviourLifestyle(_previous: ActionResult, formData: FormData) { return runPetAction(() => updateBehaviourLifestyleImpl(formData), "Behaviour and lifestyle saved"); }
+export async function updatePetDetails(_previous: ActionResult, formData: FormData) { return runPetAction(() => updatePetDetailsImpl(formData), "Pet details saved"); }
