@@ -34,3 +34,5 @@ Dog profile photos and record documents are stored in a private S3-compatible bu
 - `S3_SECRET_ACCESS_KEY`: matching secret key.
 
 Create the bucket before deployment, keep public access disabled, and apply a lifecycle policy for incomplete multipart uploads if required by your provider. Files are uploaded and read only by the server; no browser CORS policy or public bucket URL is required.
+
+Upload validation enforces the declared MIME allowlist, byte-size limit, and expected leading file signature. It does not decode images, validate image dimensions, or guarantee full-file image/PDF integrity.
