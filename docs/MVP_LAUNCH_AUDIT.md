@@ -1,9 +1,7 @@
 # Bark Booth MVP launch audit
 
 **Audit date:** 22 July 2026  
-**Launch recommendation:** **No-go until the remaining Critical checklist is complete.**
-
-**Remediation update:** The launch surface is now registry-first: public search uses real public database records, mock activity routes redirect away from launch, primary navigation is simplified, new accounts continue to first-dog registration, returning users land on My Dogs, and public dog pages no longer expose records, behaviour, or ownership details.
+**Launch recommendation:** **No-go until the Critical checklist is complete.**
 
 This audit treats Bark Booth as a lifelong canine identity registry. Competitions, prizes, adoption, social mechanics, and professional promotion are not part of the first public MVP. The repository has a credible identity, authentication, ownership, record, behaviour, role-application, and access-control foundation, but the public experience still mixes that product with a static competition concept. Several public claims describe capabilities that do not exist.
 
@@ -32,15 +30,15 @@ This audit treats Bark Booth as a lifelong canine identity registry. Competition
 
 ### Critical — launch blockers
 
-- [x] **Replace the public concept with the registry MVP.** Remove all static/fake datasets from public surfaces and hide the activity routes listed in the navigation audit. Rewrite `/`, `/about`, `/faq`, and the footer around identity, records, privacy, ownership, and sharing.
-- [x] **Make registry search real.** The registry now queries real public database records by name or exact registry number, provides an empty result state, caps results, and links every result to its canonical profile.
-- [x] **Remove the dead adoption button.** The static adoption result and its button have been removed from the public registry; adoption remains outside the product definition.
+- [ ] **Replace the public concept with the registry MVP.** Remove all static/fake datasets from public surfaces and hide the activity routes listed in the navigation audit. Rewrite `/`, `/about`, `/faq`, and the footer around identity, records, privacy, ownership, and sharing.
+- [ ] **Make registry search real.** The `/profiles` input currently has no form action or query handling and every non-adoption result opens the same static `/dog-profile`. Query public database records, provide no-result/error states, and link each result to its canonical profile.
+- [ ] **Remove the dead adoption button.** “Enquire to Adopt” is a button with no handler and adoption is outside the product definition.
 - [ ] **Publish approved legal documents.** Every linked policy is explicitly a placeholder. Obtain owner/legal approval for terms, privacy, cookies, and image consent; remove refund/prize links until those products exist. Define lawful basis, processors, retention/deletion, data-subject requests, minors, and public-profile consent.
 - [ ] **Add account recovery and lifecycle controls.** There is no forgotten-password flow, email verification, change password/email, session management, account deletion, or data export. At minimum, recovery, verified email, delete/export request, and operational support contact are required.
 - [ ] **Add dog identity management.** Owners cannot edit a dog after registration, correct visibility, upload/change a profile image, archive/memorialise a profile, or initiate a transfer. A registry that preserves incorrect data without a correction path is not launchable.
 - [ ] **Resolve image handling.** The only public asset is the Bark Booth logo; every dog is a paw placeholder. Either deliver a secure, consented photo upload flow with file validation/storage/deletion, or remove all claims and labels promising public/official photos from MVP copy.
 - [ ] **Define visibility and sharing.** `LINK_ONLY` is not accessible merely with its URL; it behaves like private content unless the viewer owns it or has approved access. Implement intended semantics, a copy-link action, public preview, and field-level privacy explanation—or remove `LINK_ONLY` from the form.
-- [x] **Protect sensitive dog and owner data on the public profile.** Public profiles currently expose owner display name/username, ownership timestamp, behaviour answers, record references/notes/dates, and health/care categories whenever the identity is public. Decide and enforce a minimal public schema; keep contact, reference numbers, detailed health/care, and risky behaviour notes private by default.
+- [ ] **Protect sensitive dog and owner data.** Public profiles currently expose owner display name/username, ownership timestamp, behaviour answers, record references/notes/dates, and health/care categories whenever the identity is public. Decide and enforce a minimal public schema; keep contact, reference numbers, detailed health/care, and risky behaviour notes private by default.
 - [ ] **Correct trust language.** “Official,” “trusted,” “registered,” and verification summaries can imply external validation while most content is owner-declared and there is no user-facing evidence submission. Establish plain definitions for registered, owner-declared, submitted, and verified, and never imply Kennel Club/veterinary endorsement.
 - [ ] **Harden input and mutations.** Validate email and username formats/lengths, dog name/date (including future dates), sex, country, URLs, phone, record dates, and text lengths on the server. Add friendly action errors rather than thrown framework errors. Add confirmation/interstitials for record removal, access revocation/rejection, application withdrawal, and other destructive actions.
 - [ ] **Add abuse/security controls.** Rate-limit sign-up, login, registry lookup, and access requests; add CSRF/origin review for server actions, brute-force protection, audit logging, security headers/CSP, secret/config documentation, session cleanup/revocation, and a security/privacy review.
@@ -50,7 +48,7 @@ This audit treats Bark Booth as a lifelong canine identity registry. Competition
 
 ### Important — complete before broad promotion
 
-- [x] Redirect a newly created owner with no dogs to `/register-dog`; otherwise land signed-in users on `/dogs`. Retire `/dashboard` as the generic home or make it a compact conditional overview.
+- [ ] Redirect a newly created owner with no dogs to `/register-dog`; otherwise land signed-in users on `/dogs`. Retire `/dashboard` as the generic home or make it a compact conditional overview.
 - [ ] Remove the optional “Pet Owner” checkbox from sign-up. Registration of a dog already grants that status; asking users to understand internal roles creates unnecessary choice.
 - [ ] Reduce registration to required identity fields, explain why each is collected, make dog type single/primary or clearly explain multi-select ordering, and use controlled values for sex and country.
 - [ ] Let owners preview public visibility before saving and place privacy choices beside sensitive sections rather than relying only on whole-profile visibility.
