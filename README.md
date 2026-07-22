@@ -1,9 +1,24 @@
 # Bark Booth
 
-Bark Booth is a frontend-only concept for a registry-first dog identity platform. The permanent Bark Booth profile is the foundation: a calm place for a dog’s registry number, identity details, life chapters, memories, care-note placeholders, and optional achievements.
+Bark Booth is a lifelong canine identity platform. A registered dog receives a permanent Bark Booth registry number and one canonical profile for identity details, ownership, records, behaviour information, privacy controls and authorised access.
 
-The product direction is intentionally inclusive. Pedigree dogs, crossbreeds, rescues, working dogs, show dogs, fosters, retired dogs, memorial profiles, and dogs with unknown backgrounds should all feel welcome.
+The application includes account and dog registration, owner and shared-dog workspaces, database-backed public registry search, approved professional listings, role applications and privacy-aware dog profiles. Competitions and activities remain part of Bark Booth: when operational events are published, genuine entries, results, badges and rosettes will connect to registered dog profiles.
 
-Competitions and activity modules are optional profile add-ons. They can contribute badges, rosettes, calendar memories, training records, or results to a dog’s profile, but Bark Booth is not primarily a competition website.
+## Local development
 
-This build intentionally uses static mock data only. There is no auth, database, payments, upload storage, API integration, verification, messaging, likes, comments, followers, live search, or real user system.
+Set `DATABASE_URL` to a PostgreSQL database, then run:
+
+```bash
+npm ci
+npx prisma migrate deploy
+npm run dev
+```
+
+## Checks
+
+```bash
+npm run typecheck
+npm run lint
+node --test tests/*.test.mjs
+npm run build
+```

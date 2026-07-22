@@ -12,7 +12,6 @@ const badgeStyles: Record<string, string> = {
   DO_NOT_HAVE: "border-muted bg-white text-slate",
   COMING_SOON: "border-muted bg-lightgrey text-slate",
   FOUNDATION: "border-skysoft bg-skysoft/50 text-navy",
-  PREVIEW: "border-info/25 bg-info/10 text-info",
   AWARD: "border-award/25 bg-award/10 text-award",
   CHAMPION: "border-award/25 bg-award/10 text-award",
   LEGACY: "border-muted bg-lightgrey text-slate",

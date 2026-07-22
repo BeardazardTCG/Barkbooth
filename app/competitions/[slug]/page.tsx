@@ -1,9 +1,6 @@
-import { notFound } from "next/navigation";
-import { competitions } from "@/lib/data";
-import { ButtonLink, Card, Section } from "@/components/ui";
+import { EmptyState } from "@/components/empty-state";
+import { ButtonLink, Section } from "@/components/ui";
 
-export default function CompetitionDetailPage({ params }: { params: { slug: string } }) {
-  const comp = competitions.find(c => c.slug === params.slug);
-  if (!comp) notFound();
-  return <><section className={`mx-5 mt-6 rounded-[2.5rem] bg-gradient-to-br ${comp.color} p-7 sm:mx-8 md:p-12`}><p className="text-sm font-bold uppercase tracking-widest text-navy/60">Optional profile activity · {comp.month}</p><h1 className="mt-2 text-5xl font-bold tracking-tight">{comp.title}</h1><p className="mt-4 max-w-2xl text-lg text-navy/70">{comp.description} Entries are treated as profile chapters that can add memories, badges, rosettes, or records to a dog’s Bark Booth profile.</p><div className="mt-5 grid gap-3 text-sm font-bold sm:grid-cols-4"><span className="rounded-2xl bg-white/70 p-3">Profile activity</span><span className="rounded-2xl bg-white/70 p-3">Closes {comp.closes}</span><span className="rounded-2xl bg-white/70 p-3">{comp.entries} mock entries</span><span className="rounded-2xl bg-white/70 p-3">{comp.price} preview</span></div><div className="mt-6 flex flex-wrap gap-3"><ButtonLink href="/upload">Enter Dog</ButtonLink><ButtonLink href="/results" variant="secondary">View profile achievements</ButtonLink></div></section><Section eyebrow="Pick an activity class" title="Classes become optional profile records"><div className="grid gap-4 md:grid-cols-4">{comp.classes.map(cls => <Card key={cls}><h3 className="text-xl font-bold">{cls}</h3><p className="mt-2 text-sm text-navy/65">Can add a finalist badge, digital rosette eligibility, and profile history if enabled later.</p><div className="mt-4"><ButtonLink href="/upload">Add activity to profile</ButtonLink></div></Card>)}</div></Section></>;
+export default function CompetitionDetailPage() {
+  return <Section eyebrow="Competitions" title="Competition unavailable"><EmptyState title="This competition is not open">Only published, operational competitions can be shown. Return to the competition list for current opportunities.<span className="mt-5 block"><ButtonLink href="/competitions">View competitions</ButtonLink></span></EmptyState></Section>;
 }
