@@ -3,8 +3,7 @@
 import { BreedSelector } from "@/components/breed-selector";
 import { FileField, FormSubmitButton, ManagedForm } from "@/components/forms/managed-form";
 import { registerDog } from "@/lib/dogs/actions";
-
-const dogTypes = ["Companion", "Working", "Showing", "Breeding", "Rescue", "Foster", "Retired", "Memorial", "Other"];
+import { dogTypes } from "@/lib/dogs/profile-options";
 
 export function RegisterDogForm() {
   return <ManagedForm action={registerDog} encType="multipart/form-data" className="grid gap-5">
@@ -23,6 +22,6 @@ export function RegisterDogForm() {
       <FileField name="photo" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" maxBytes={5 * 1024 * 1024} />
     </div>
     <fieldset className="rounded-[1.5rem] border border-navy/10 bg-white/70 p-4"><legend className="px-2 font-bold text-navy">Dog Type</legend><p className="text-sm font-bold text-charcoal/55">Select every type that applies.</p><div className="mt-3 flex flex-wrap gap-3">{dogTypes.map((type) => <label key={type} className="rounded-full bg-lightgrey px-4 py-2 text-sm font-bold text-navy"><input type="checkbox" name="dogTypes" value={type} className="mr-2" />{type}</label>)}</div></fieldset>
-    <FormSubmitButton label="Save pet details" pendingLabel="Saving…" />
+    <FormSubmitButton label="Create pet profile" pendingLabel="Creating…" />
   </ManagedForm>;
 }

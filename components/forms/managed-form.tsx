@@ -5,19 +5,21 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { initialActionResult, type ActionResult } from "@/lib/forms/action-result";
 
-type ContextValue = { dirty: boolean };
-const ManagedFormContext = createContext<ContextValue>({ dirty: false });
+type ContextValue = { dirty: boolean; resetVersion: number };
+const ManagedFormContext = createContext<ContextValue>({ dirty: false, resetVersion: 0 });
 
-export function ManagedForm({ action, children, className = "", encType, warnOnLeave = true, resetOnSuccess = false }: {
+export function ManagedForm({ action, children, className = "", encType, warnOnLeave = true, resetOnSuccess = false, focusSuccess = false }: {
   action: (previous: ActionResult, data: FormData) => Promise<ActionResult>;
   children: ReactNode;
   className?: string;
   encType?: "multipart/form-data";
   warnOnLeave?: boolean;
   resetOnSuccess?: boolean;
+  focusSuccess?: boolean;
 }) {
   const [state, formAction] = useFormState(action, initialActionResult);
   const [dirty, setDirty] = useState(false);
+  const [resetVersion, setResetVersion] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -31,21 +33,29 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
 
   useEffect(() => {
     if (state.status === "idle") return;
-    statusRef.current?.focus();
+    if (state.status === "error" || (state.status === "success" && focusSuccess)) statusRef.current?.focus();
     if (state.status === "success") {
       setDirty(false);
-      if (resetOnSuccess || state.reset) formRef.current?.reset();
+      if (resetOnSuccess || state.reset) {
+        formRef.current?.reset();
+        setResetVersion((version) => version + 1);
+      }
       if (state.redirectTo) router.push(state.redirectTo);
-      else router.refresh();
+      else {
+        // Let the live success region render long enough to be perceived before
+        // merging refreshed server data into the current client tree.
+        const refreshTimer = window.setTimeout(() => router.refresh(), 1500);
+        return () => window.clearTimeout(refreshTimer);
+      }
     }
-  }, [resetOnSuccess, router, state]);
+  }, [focusSuccess, resetOnSuccess, router, state]);
 
   const markDirty = (event: FormEvent<HTMLFormElement>) => {
     const target = event.target as HTMLInputElement;
     if (target.type !== "hidden") setDirty(true);
   };
 
-  return <ManagedFormContext.Provider value={{ dirty }}>
+  return <ManagedFormContext.Provider value={{ dirty, resetVersion }}>
     <form ref={formRef} action={formAction} encType={encType} className={className} onInput={markDirty} onChange={markDirty}>
       {children}
       <FormStatusMessage state={state} statusRef={statusRef} />
@@ -53,10 +63,10 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
   </ManagedFormContext.Provider>;
 }
 
-export function FormSubmitButton({ label, pendingLabel = "Saving…", requireDirty = true, className = "" }: { label: string; pendingLabel?: string; requireDirty?: boolean; className?: string }) {
+export function FormSubmitButton({ label, pendingLabel = "Saving…", requireDirty = true, className = "", confirmMessage }: { label: string; pendingLabel?: string; requireDirty?: boolean; className?: string; confirmMessage?: string }) {
   const { pending } = useFormStatus();
   const { dirty } = useContext(ManagedFormContext);
-  return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} className={`min-h-11 rounded-full bg-navy px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
+  return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} onClick={(event) => { if (confirmMessage && !window.confirm(confirmMessage)) event.preventDefault(); }} className={`min-h-11 rounded-full bg-navy px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
     {pending ? pendingLabel : label}
   </button>;
 }
@@ -74,12 +84,20 @@ function FormStatusMessage({ state, statusRef }: { state: ActionResult; statusRe
 export function FileField({ name, label, accept, maxBytes, required = false }: { name: string; label: string; accept: string; maxBytes: number; required?: boolean }) {
   const [filename, setFilename] = useState("No file selected");
   const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { resetVersion } = useContext(ManagedFormContext);
+  useEffect(() => {
+    setFilename("No file selected");
+    setError("");
+    inputRef.current?.setCustomValidity("");
+  }, [resetVersion]);
   return <label className="grid min-w-0 gap-2 font-bold text-navy">{label}
-    <input type="file" name={name} accept={accept} required={required} className="block w-full min-w-0 text-sm text-charcoal file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-skysoft file:px-4 file:font-bold file:text-navy" aria-describedby={`${name}-selection ${name}-error`} onChange={(event) => {
+    <input ref={inputRef} type="file" name={name} accept={accept} required={required} className="block w-full min-w-0 text-sm text-charcoal file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-skysoft file:px-4 file:font-bold file:text-navy" aria-describedby={`${name}-selection ${name}-error`} onChange={(event) => {
       const file = event.currentTarget.files?.[0];
       setFilename(file?.name || "No file selected");
-      const allowed = accept.split(",");
-      const nextError = file && !allowed.includes(file.type) ? "Choose a supported file type." : file && file.size > maxBytes ? `File must be smaller than ${Math.round(maxBytes / 1024 / 1024)} MB.` : "";
+      // Browsers may omit or vary File.type, so only size is enforced here.
+      // The server remains authoritative for MIME type and file signatures.
+      const nextError = file && file.size > maxBytes ? `File must be smaller than ${Math.round(maxBytes / 1024 / 1024)} MB.` : "";
       setError(nextError);
       event.currentTarget.setCustomValidity(nextError);
     }} />

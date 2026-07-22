@@ -23,7 +23,7 @@ test("submit controls prevent duplicates and stay disabled until dirty", () => {
 });
 
 test("all pet sections have explicit, specific save semantics", () => {
-  assert.match(register, /label="Save pet details"/);
+  assert.match(register, /label="Create pet profile"/);
   assert.match(profile, /label="Save pet details"/);
   assert.match(profile, /label="Save behaviour and lifestyle"/);
   assert.match(profile, /"Replace photo" : "Upload photo"/);
@@ -38,6 +38,39 @@ test("files show selection, validate before upload, and fit narrow layouts", () 
   assert.match(managed, /File must be smaller/);
   assert.match(managed, /className="block w-full min-w-0/);
   assert.match(profile, /className="mt-3 grid min-w-0 gap-3"/);
+});
+
+test("profile edits preserve fields omitted from FormData", () => {
+  const updateStart = actions.indexOf("async function updatePetDetailsImpl");
+  const updateEnd = actions.indexOf("async function cleanUpStoredObjects", updateStart);
+  const update = actions.slice(updateStart, updateEnd);
+  for (const field of ["dogTypesPresent", "breedFieldsPresent", "estimatedDobPresent", "dnaConfirmed", "dateOfBirth", "sex", "colour", "countryOfRegistration", "visibility"]) {
+    assert.match(update, new RegExp(`formData\\.has\\("${field}"\\)`), `${field} is only changed when its control is submitted`);
+  }
+  assert.match(update, /if \(dogTypes\.length\) data\.primaryRole = dogTypes\[0\]/, "name-only edits preserve dogTypes and primaryRole");
+  assert.match(update, /if \(formData\.has\("breedFieldsPresent"\)\) \{[\s\S]*data\.isMixedBreed[\s\S]*data\.breedMix/, "unrelated edits preserve mixed breed metadata");
+  assert.match(update, /if \(formData\.has\("estimatedDobPresent"\)\) data\.estimatedDob/, "unrelated edits preserve estimated DOB");
+});
+
+test("success remains visible without focus theft and errors receive focus", () => {
+  assert.match(managed, /state\.status === "error" \|\| \(state\.status === "success" && focusSuccess\)/);
+  assert.match(managed, /setTimeout\(\(\) => router\.refresh\(\), 1500\)/);
+  assert.doesNotMatch(managed, /if \(state\.status === "idle"\) return;\s*statusRef\.current\?\.focus/);
+});
+
+test("file UI state resets with successful reset and MIME validation remains authoritative on the server", () => {
+  assert.match(managed, /setResetVersion\(\(version\) => version \+ 1\)/);
+  assert.match(managed, /setFilename\("No file selected"\)/);
+  assert.match(managed, /setError\(""\)/);
+  assert.match(managed, /inputRef\.current\?\.setCustomValidity\(""\)/);
+  assert.match(managed, /Browsers may omit or vary File\.type/);
+});
+
+test("destructive pet actions require explicit confirmation", () => {
+  assert.match(managed, /window\.confirm\(confirmMessage\)/);
+  assert.match(profile, /confirmMessage="Remove this profile photo\?/);
+  assert.match(records, /confirmMessage=\{`Remove \$\{document\.fileName\}/);
+  assert.match(records, /Remove this record and its \$\{record\.documents\.length\} attached document/);
 });
 
 test("pet actions return structured success and server failure results", () => {

@@ -118,27 +118,31 @@ async function requireDogOwner(dogId: string) {
 async function updatePetDetailsImpl(formData: FormData) {
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
-  const name = asString(formData.get("name"));
-  if (!name) throw new Error("Dog name is required.");
-  const dateOfBirth = asString(formData.get("dateOfBirth"));
-  const visibility = asEnum(asString(formData.get("visibility")), ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const, dog.visibility);
-  const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map(asString).filter(Boolean)));
-  await prisma.dogIdentity.update({ where: { id: dogId }, data: {
-    name,
-    kennelClubName: asString(formData.get("kennelClubName")) || null,
-    breed: asString(formData.get("breed")) || null,
-    isMixedBreed: formData.get("isMixedBreed") === "on" || asString(formData.get("breed")) === "Mixed Breed",
-    breedMix: formData.getAll("breedMix").map(asString).filter(Boolean).join(", ") || null,
-    dnaConfirmed: asString(formData.get("dnaConfirmed")) || null,
-    dogTypes: dogTypes.join(", ") || null,
-    primaryRole: dogTypes[0] || dog.primaryRole,
-    dateOfBirth: asDate(dateOfBirth),
-    estimatedDob: formData.get("estimatedDob") === "on",
-    sex: asString(formData.get("sex")) || null,
-    colour: asString(formData.get("colour")) || null,
-    countryOfRegistration: asString(formData.get("countryOfRegistration")) || null,
-    visibility,
-  } });
+  const data: Parameters<typeof prisma.dogIdentity.update>[0]["data"] = {};
+  if (formData.has("name")) {
+    const name = asString(formData.get("name"));
+    if (!name) throw new Error("Dog name is required.");
+    data.name = name;
+  }
+  if (formData.has("kennelClubName")) data.kennelClubName = asString(formData.get("kennelClubName")) || null;
+  if (formData.has("breedFieldsPresent")) {
+    data.breed = asString(formData.get("breed")) || null;
+    data.isMixedBreed = formData.get("isMixedBreed") === "on" || asString(formData.get("breed")) === "Mixed Breed";
+    data.breedMix = formData.getAll("breedMix").map(asString).filter(Boolean).join(", ") || null;
+  }
+  if (formData.has("dnaConfirmed")) data.dnaConfirmed = asString(formData.get("dnaConfirmed")) || null;
+  if (formData.has("dogTypesPresent")) {
+    const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map(asString).filter(Boolean)));
+    data.dogTypes = dogTypes.join(", ") || null;
+    if (dogTypes.length) data.primaryRole = dogTypes[0];
+  }
+  if (formData.has("dateOfBirth")) data.dateOfBirth = asDate(asString(formData.get("dateOfBirth")));
+  if (formData.has("estimatedDobPresent")) data.estimatedDob = formData.get("estimatedDob") === "on";
+  if (formData.has("sex")) data.sex = asString(formData.get("sex")) || null;
+  if (formData.has("colour")) data.colour = asString(formData.get("colour")) || null;
+  if (formData.has("countryOfRegistration")) data.countryOfRegistration = asString(formData.get("countryOfRegistration")) || null;
+  if (formData.has("visibility")) data.visibility = asEnum(asString(formData.get("visibility")), ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const, dog.visibility);
+  await prisma.dogIdentity.update({ where: { id: dogId }, data });
   revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
