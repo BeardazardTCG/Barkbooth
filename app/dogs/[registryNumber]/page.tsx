@@ -5,8 +5,9 @@ import { ButtonLink, Card, DogProfileImage, Section } from "@/components/ui";
 import { CategorySection, AddRecordForm } from "@/components/records/record-components";
 import { StatusBadge } from "@/components/status-badge";
 import { ProfileCompletionCard } from "@/components/profile-completion-card";
+import { DogProfilePhotoManager } from "@/components/dog-profile-photo-manager";
 import { getCurrentUser } from "@/lib/auth/session";
-import { removeDogProfilePhoto, updateBehaviourLifestyle, uploadDogProfilePhoto } from "@/lib/dogs/actions";
+import { updateBehaviourLifestyle } from "@/lib/dogs/actions";
 import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
 import { allRecordCategories, recordCategoryLabels } from "@/lib/records/catalog";
 import { prisma } from "@/lib/prisma";
@@ -111,7 +112,7 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
           <div className="mt-5 grid grid-cols-4 gap-2">{indicatorConfig.map((item) => { const state = indicatorState(dog.records, item.categories, behaviourState); return <a key={item.key} href={item.href} title={`${item.label}: ${state}`} className={`rounded-2xl px-2 py-3 text-center text-xs font-bold ${state === "verified" ? "bg-verified/10 text-navy" : state === "owner" ? "bg-skysoft text-navy" : "bg-white/10 text-white/45"}`}>{item.label}</a>; })}</div>
           <div id="awards" className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Awards Summary</p><p className="mt-1 font-bold text-white">{dog.records.filter((record) => ["ACTIVITIES_WORK", "WORKING_QUALIFICATIONS", "TITLES"].includes(record.category)).length} activities, work, or award records</p></div>
         </Card>
-        <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">Information and documents shown on Bark Booth may be supplied by the account holder unless specifically marked as verified. Private documents are not publicly exposed.</p><div className="mt-5 rounded-2xl bg-lightgrey p-4"><p className="text-sm font-bold text-navy">Profile photo</p>{canManage && <><form action={uploadDogProfilePhoto} className="mt-3 grid gap-3" encType="multipart/form-data"><input type="hidden" name="dogId" value={dog.id} /><input type="file" name="photo" required accept="image/jpeg,image/png,image/webp" className="text-sm text-charcoal" /><button type="submit" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">{dog.profilePhoto ? "Replace photo" : "Upload photo"}</button></form>{dog.profilePhoto && <form action={removeDogProfilePhoto} className="mt-2"><input type="hidden" name="dogId" value={dog.id} /><button type="submit" className="text-sm font-bold text-red-700">Remove photo</button></form>}</>}</div><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><ButtonLink href="/dogs">Back to My Dogs</ButtonLink></div></Card>
+        <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">Information and documents shown on Bark Booth may be supplied by the account holder unless specifically marked as verified. Private documents are not publicly exposed.</p><div className="mt-5 rounded-2xl bg-lightgrey p-4"><p className="text-sm font-bold text-navy">Profile photo</p>{canManage && <DogProfilePhotoManager dogId={dog.id} hasPhoto={Boolean(dog.profilePhoto)} />}</div><div className="mt-5 flex flex-wrap gap-2"><a href="#records" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><ButtonLink href="/dogs">Back to My Dogs</ButtonLink></div></Card>
       </div>
     </Section>
 
@@ -128,6 +129,5 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
     <Section eyebrow="Identity history" title="Ownership record">
       <div id="history"><Card><h3 className="text-2xl font-bold text-navy">Ownership</h3>{primaryOwner ? <div className="mt-4 rounded-2xl bg-lightgrey p-4"><p className="text-sm font-bold uppercase tracking-widest text-charcoal/45">Current owner</p><p className="mt-1 font-bold text-navy">{owner?.displayName} (@{owner?.username})</p><p className="mt-1 text-sm font-bold text-charcoal/60">Recorded {formatDate(primaryOwner.createdAt)}</p></div> : <p className="mt-3 text-charcoal/65">No ownership record is available.</p>}</Card></div>
     </Section>
-
   </>;
 }
