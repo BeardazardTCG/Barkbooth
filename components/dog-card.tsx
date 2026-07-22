@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { PawAvatar } from "./ui";
 
-type DogCardProps = { dog: { name: string; registryNumber: string; breed?: string | null; primaryRole?: string | null; imageUrl?: string | null }; dualOwnership?: boolean; contractedCare?: boolean; relationship?: string; verified?: boolean; compact?: boolean };
+type DogCardProps = { dog: { id: string; name: string; registryNumber: string; breed?: string | null; primaryRole?: string | null; profilePhoto?: { updatedAt: Date } | null }; dualOwnership?: boolean; contractedCare?: boolean; relationship?: string; verified?: boolean; compact?: boolean };
 
 export function DogCard({ dog, dualOwnership, contractedCare, relationship, verified, compact }: DogCardProps) {
   return <article className={`group overflow-hidden rounded-registry border border-navy/10 bg-white shadow-registry ${compact ? "grid grid-cols-[7rem_1fr]" : ""}`}>
-    {/* TODO: DogIdentity currently has no image field. Pass imageUrl here when the existing schema gains one. */}
-    {dog.imageUrl ? <img src={dog.imageUrl} alt={`${dog.name} registry portrait`} className={`${compact ? "aspect-square" : "aspect-[16/9]"} h-full w-full object-cover`}/> : <PawAvatar label={dog.name} className={compact ? "!aspect-square rounded-none border-0 shadow-none" : "!aspect-[16/9] rounded-none border-0 shadow-none"}/>}
+    {dog.profilePhoto ? <img src={`/api/dogs/${dog.id}/profile-photo?v=${encodeURIComponent(dog.profilePhoto.updatedAt.toISOString())}`} alt={`${dog.name} registry portrait`} className={`${compact ? "aspect-square" : "aspect-[16/9]"} h-full w-full object-cover`}/> : <PawAvatar label={dog.name} className={compact ? "!aspect-square rounded-none border-0 shadow-none" : "!aspect-[16/9] rounded-none border-0 shadow-none"}/>}
     <div className="p-5">
       <div className="flex flex-wrap items-center gap-2"><span className="registry-label !text-info">{dog.registryNumber}</span>{verified && <span className="identity-chip !bg-verified/10 !text-verified">Verified</span>}</div>
       <h3 className="mt-2 text-2xl font-extrabold text-navy">{dog.name}</h3>

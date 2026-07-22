@@ -16,7 +16,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
   const user = await requireUser();
   const [account, dogs, incoming, outgoing, sharedDogs, connections] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: user.id }, include: { ownerStatuses: true, roleApplications: true } }),
-    prisma.dogIdentity.findMany({ where: { ownerships: { some: { userId: user.id } } }, include: { accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } } }, orderBy: { createdAt: "desc" } }),
+    prisma.dogIdentity.findMany({ where: { ownerships: { some: { userId: user.id } } }, include: { profilePhoto: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } } }, orderBy: { createdAt: "desc" } }),
     prisma.dogAccessRequest.findMany({ where: { status: "PENDING", dog: { ownerships: { some: { userId: user.id } } } }, include: { dog: true, requester: true }, orderBy: { createdAt: "desc" } }),
     prisma.dogAccessRequest.findMany({ where: { requesterUserId: user.id }, include: { dog: true }, orderBy: { createdAt: "desc" } }),
     prisma.dogAccessRequest.findMany({ where: { requesterUserId: user.id, status: "APPROVED" }, include: { dog: true, requester: { include: { roleApplications: true } }, reviewedBy: true }, orderBy: { reviewedAt: "desc" } }),

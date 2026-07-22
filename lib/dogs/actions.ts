@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { deleteObject, putObject } from "@/lib/storage";
+import { documentContentTypes, imageContentTypes, MAX_PROFILE_PHOTO_BYTES, MAX_RECORD_DOCUMENT_BYTES, storageKey, validateUpload } from "@/lib/uploads";
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -80,6 +82,19 @@ async function requireDogOwner(dogId: string) {
   return ownership.dog;
 }
 
+async function cleanUpStoredObjects(keys: string[], operation: string) {
+  const results = await Promise.allSettled(keys.map((key) => deleteObject(key)));
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      console.error("Object storage cleanup failed after database mutation", {
+        operation,
+        storageKey: keys[index],
+        error: result.reason,
+      });
+    }
+  });
+}
+
 export async function addDogRecord(formData: FormData) {
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
@@ -121,11 +136,77 @@ export async function updateDogRecord(formData: FormData) {
 
 export async function removeDogRecord(formData: FormData) {
   const recordId = asString(formData.get("recordId"));
-  const existing = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true } });
+  const existing = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true, documents: true } });
   if (!existing) throw new Error("Record not found.");
   const dog = await requireDogOwner(existing.dogId);
   await prisma.dogRecord.delete({ where: { id: recordId } });
+  await cleanUpStoredObjects(existing.documents.map((document) => document.storageKey), "removeDogRecord");
   redirect(`/dogs/${dog.registryNumber}#records`);
+}
+
+export async function uploadDogProfilePhoto(formData: FormData) {
+  const user = await requireUser();
+  const dogId = asString(formData.get("dogId"));
+  const dog = await requireDogOwner(dogId);
+  const { file, bytes } = await validateUpload(formData.get("photo"), imageContentTypes, MAX_PROFILE_PHOTO_BYTES);
+  const key = storageKey(`dogs/${dogId}/profile`, file.type);
+  await putObject(key, bytes, file.type);
+  let previous: { storageKey: string } | null = null;
+  try {
+    previous = await prisma.$transaction(async (tx) => {
+      const old = await tx.dogProfilePhoto.findUnique({ where: { dogId }, select: { storageKey: true } });
+      await tx.dogProfilePhoto.upsert({
+        where: { dogId },
+        create: { dogId, uploadedById: user.id, storageKey: key, fileName: file.name, contentType: file.type, sizeBytes: file.size },
+        update: { uploadedById: user.id, storageKey: key, fileName: file.name, contentType: file.type, sizeBytes: file.size },
+      });
+      return old;
+    });
+  } catch (error) {
+    await cleanUpStoredObjects([key], "rollbackDogProfilePhotoUpload");
+    throw error;
+  }
+  if (previous) await cleanUpStoredObjects([previous.storageKey], "replaceDogProfilePhoto");
+  redirect(`/dogs/${dog.registryNumber}`);
+}
+
+export async function removeDogProfilePhoto(formData: FormData) {
+  const dogId = asString(formData.get("dogId"));
+  const dog = await requireDogOwner(dogId);
+  const photo = await prisma.dogProfilePhoto.findUnique({ where: { dogId } });
+  if (photo) {
+    await prisma.dogProfilePhoto.delete({ where: { id: photo.id } });
+    await cleanUpStoredObjects([photo.storageKey], "removeDogProfilePhoto");
+  }
+  redirect(`/dogs/${dog.registryNumber}`);
+}
+
+export async function uploadRecordDocument(formData: FormData) {
+  const user = await requireUser();
+  const recordId = asString(formData.get("recordId"));
+  const record = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true } });
+  if (!record) throw new Error("Record not found.");
+  await requireDogOwner(record.dogId);
+  const { file, bytes } = await validateUpload(formData.get("document"), documentContentTypes, MAX_RECORD_DOCUMENT_BYTES);
+  const key = storageKey(`dogs/${record.dogId}/records/${record.id}`, file.type);
+  await putObject(key, bytes, file.type);
+  try {
+    await prisma.dogRecordDocument.create({ data: { recordId, uploadedById: user.id, storageKey: key, fileName: file.name, contentType: file.type, sizeBytes: file.size } });
+  } catch (error) {
+    await cleanUpStoredObjects([key], "rollbackRecordDocumentUpload");
+    throw error;
+  }
+  redirect(`/dogs/${record.dog.registryNumber}#records`);
+}
+
+export async function removeRecordDocument(formData: FormData) {
+  const documentId = asString(formData.get("documentId"));
+  const document = await prisma.dogRecordDocument.findUnique({ where: { id: documentId }, include: { record: { include: { dog: true } } } });
+  if (!document) throw new Error("Document not found.");
+  await requireDogOwner(document.record.dogId);
+  await prisma.dogRecordDocument.delete({ where: { id: document.id } });
+  await cleanUpStoredObjects([document.storageKey], "removeRecordDocument");
+  redirect(`/dogs/${document.record.dog.registryNumber}#records`);
 }
 
 

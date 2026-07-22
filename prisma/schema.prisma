@@ -136,6 +136,8 @@ model User {
   incomingDogAccess DogAccessRequest[] @relation("DogAccessTargetOwner")
   reviewedDogAccess DogAccessRequest[] @relation("DogAccessReviewer")
   revokedDogAccess DogAccessRequest[] @relation("DogAccessRevoker")
+  uploadedDogPhotos DogProfilePhoto[]
+  uploadedRecordDocuments DogRecordDocument[]
   sessions     Session[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -213,6 +215,7 @@ model DogIdentity {
   ownerships            DogOwnership[]
   accessRequests        DogAccessRequest[]
   records               DogRecord[]
+  profilePhoto          DogProfilePhoto?
   behaviourLifestyle    DogBehaviourLifestyle?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
@@ -258,6 +261,7 @@ model DogRecord {
   issueDate          DateTime?
   expiryDate         DateTime?
   notes              String?
+  documents          DogRecordDocument[]
   createdAt          DateTime                    @default(now())
   updatedAt          DateTime                    @updatedAt
 
@@ -265,6 +269,38 @@ model DogRecord {
   @@index([dogId, verificationStatus])
   @@index([category, recordType])
   @@index([provider])
+}
+
+model DogProfilePhoto {
+  id           String      @id @default(cuid())
+  dogId        String      @unique
+  dog          DogIdentity @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User        @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  storageKey   String      @unique
+  fileName     String
+  contentType  String
+  sizeBytes    Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([uploadedById])
+}
+
+model DogRecordDocument {
+  id           String    @id @default(cuid())
+  recordId     String
+  record       DogRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  storageKey   String    @unique
+  fileName     String
+  contentType  String
+  sizeBytes    Int
+  createdAt    DateTime  @default(now())
+
+  @@index([recordId])
+  @@index([uploadedById])
 }
 
 model DogOwnership {
