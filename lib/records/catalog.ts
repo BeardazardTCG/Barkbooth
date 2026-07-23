@@ -1,54 +1,36 @@
 import type { DogRecordCategory } from "@prisma/client";
 
-export type RecordDefinition = { category: DogRecordCategory; recordType: string; provider?: string; verificationAware?: boolean };
+export type RecordDefinition = { category: DogRecordCategory; recordType: string; verificationAware?: boolean };
 
 export const recordCategoryLabels: Record<DogRecordCategory, string> = {
-  IDENTITY: "Identity",
-  DNA: "DNA",
-  HEALTH: "Health",
-  CARE: "Care",
-  IDENTIFICATION: "Identification",
-  INSURANCE: "Insurance",
-  PEDIGREE: "Pedigree",
-  TITLES: "Awards (legacy)",
-  WORKING_QUALIFICATIONS: "Activities & Work",
-  ACTIVITIES_WORK: "Activities & Work",
-  TEMPERAMENT_TESTS: "Behaviour (legacy)",
-  BREEDING_APPROVALS: "Breeding (legacy)",
-  OTHER: "Other",
+  IDENTITY: "Identity (legacy)", DNA: "DNA & genetic testing", HEALTH: "Health screening", CARE: "Everyday care",
+  IDENTIFICATION: "Identification (legacy)", INSURANCE: "Insurance", PEDIGREE: "Pedigree", TITLES: "Awards (legacy)",
+  WORKING_QUALIFICATIONS: "Activities & Work (legacy)", ACTIVITIES_WORK: "Activities & Work",
+  TEMPERAMENT_TESTS: "Behaviour (legacy)", BREEDING_APPROVALS: "Breeding (legacy)", OTHER: "Other",
 };
 
-export const deprecatedRecordCategories: DogRecordCategory[] = ["TITLES", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS"];
+export const deprecatedRecordCategories: DogRecordCategory[] = ["IDENTITY", "IDENTIFICATION", "TITLES", "WORKING_QUALIFICATIONS", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS"];
+
+const definitions = (category: DogRecordCategory, names: string[]): RecordDefinition[] => names.map((recordType) => ({ category, recordType, verificationAware: true }));
 
 export const initialRecordTypes: RecordDefinition[] = [
-  { category: "IDENTITY", recordType: "Kennel Club registration", provider: "Kennel Club", verificationAware: true },
-  { category: "IDENTITY", recordType: "Breed Club membership", verificationAware: true },
-  { category: "IDENTITY", recordType: "IKC", provider: "IKC", verificationAware: true },
-  { category: "IDENTITY", recordType: "FCI", provider: "FCI", verificationAware: true },
-  { category: "IDENTITY", recordType: "Other Registry", verificationAware: true },
-  { category: "DNA", recordType: "DNA Test", verificationAware: true },
-  { category: "DNA", recordType: "Genetic Testing", verificationAware: true },
-  { category: "DNA", recordType: "Embark", provider: "Embark", verificationAware: true },
-  { category: "DNA", recordType: "Wisdom Panel", provider: "Wisdom Panel", verificationAware: true },
-  { category: "HEALTH", recordType: "Veterinary Treatments", verificationAware: true },
-  { category: "HEALTH", recordType: "Health Screening", verificationAware: true },
-  { category: "HEALTH", recordType: "Hip Score", verificationAware: true },
-  { category: "HEALTH", recordType: "Elbow Score", verificationAware: true },
-  { category: "HEALTH", recordType: "Eye Test", verificationAware: true },
-  { category: "HEALTH", recordType: "Heart Test", verificationAware: true },
-  { category: "CARE", recordType: "Vaccination Records", verificationAware: true },
-  { category: "CARE", recordType: "Flea Treatment" },
-  { category: "CARE", recordType: "Worm Treatment" },
-  { category: "IDENTIFICATION", recordType: "Microchip" },
-  { category: "INSURANCE", recordType: "Insurance", verificationAware: true },
-  { category: "PEDIGREE", recordType: "Pedigree Certificate", verificationAware: true },
-  { category: "ACTIVITIES_WORK", recordType: "Competition Titles", verificationAware: true },
-  { category: "ACTIVITIES_WORK", recordType: "Professional Qualifications", verificationAware: true },
-  { category: "ACTIVITIES_WORK", recordType: "Activities & Work" },
-  { category: "OTHER", recordType: "Breeding Licence", verificationAware: true },
-  { category: "OTHER", recordType: "Breeding History", verificationAware: true },
-  { category: "OTHER", recordType: "Other" },
+  ...definitions("ACTIVITIES_WORK", [
+    "The Kennel Club – Agility", "The Kennel Club – Bloodhound Trials", "The Kennel Club – Canicross", "The Kennel Club – Dog Showing", "The Kennel Club – Flyball",
+    "The Kennel Club – Gundog Working Tests", "The Kennel Club – Field Trials", "The Kennel Club – Heelwork to Music", "The Kennel Club – Obedience", "The Kennel Club – Rally",
+    "The Kennel Club – Scentwork", "The Kennel Club – Working Trials", "Tracking", "Search and Rescue", "Assistance Dog work", "Therapy Dog work", "Detection Dog work",
+    "Police Dog work", "Military Working Dog", "Sheepdog Trials", "Canicross", "Sled Dog sport", "British Flyball Association", "British Association for Shooting and Conservation",
+    "International Sheep Dog Society", "British Sleddog Sports Federation", "Breed club activity", "Sporting organisation activity", "Other recognised UK organisation or activity",
+  ]),
+  ...definitions("HEALTH", [
+    "The Kennel Club Health Standard / Health Test Results Finder", "Kennel Club/BVA Hip Dysplasia Scheme", "Kennel Club/BVA Elbow Dysplasia Scheme",
+    "Kennel Club/BVA/ISDS Eye Scheme", "Official eye examination", "Hip score", "Elbow score", "Kennel Club DNA Testing Services", "Breed-specific DNA health scheme",
+    "Canine Health Schemes (CHS)", "Embark DNA health test", "Wisdom Panel health test", "LABOKLIN genetic test", "Animal Genetics UK test", "Other recognised UK health provider or scheme",
+  ]),
+  ...definitions("DNA", ["Embark DNA test", "Wisdom Panel DNA test", "LABOKLIN DNA test", "Animal Genetics UK DNA test", "Kennel Club DNA test", "Breed-specific DNA test", "Other DNA test"]),
+  ...definitions("INSURANCE", ["Pet insurance policy"]),
+  ...definitions("PEDIGREE", ["Kennel Club pedigree certificate", "Breed registry pedigree"]),
+  ...definitions("OTHER", ["Breeding licence", "Breeding history", "Other record"]),
 ];
 
-export const recordCategories = (Object.keys(recordCategoryLabels) as DogRecordCategory[]).filter((category) => !deprecatedRecordCategories.includes(category));
-export const allRecordCategories = Object.keys(recordCategoryLabels) as DogRecordCategory[];
+export const recordCategories = (Object.keys(recordCategoryLabels) as DogRecordCategory[]).filter((category) => !deprecatedRecordCategories.includes(category) && category !== "CARE");
+export const allRecordCategories = recordCategories;

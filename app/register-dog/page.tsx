@@ -4,15 +4,8 @@ import { RegisterDogForm } from "./register-dog-form";
 
 export default async function RegisterDogPage() {
   await requireUser();
-  return <>
-    <Section eyebrow="Register a dog" title="Create a Bark Booth Identity">
-      <Card className="bg-gradient-to-br from-white via-offwhite to-skysoft/60">
-        <p className="max-w-3xl text-lg leading-8 text-charcoal/70">Start your dog’s lifelong Bark Booth Identity with the basic details. You can add records, behaviour information and authorised relationships after registration.</p>
-        <p className="mt-3 font-bold text-navy">The owner has the account. The dog has the identity.</p>
-      </Card>
-    </Section>
-    <Section eyebrow="Dog identity" title="Basic registration details">
-      <Card><RegisterDogForm /></Card>
-    </Section>
-  </>;
+  return <Section eyebrow="Register a dog" title="Create your dog’s identity">
+    <p className="mb-4 max-w-2xl text-charcoal/70">Add the essentials now. Everything else can be completed later from the profile.</p>
+    <Card className="bg-gradient-to-br from-white via-offwhite to-skysoft/40"><RegisterDogForm /></Card>
+  </Section>;
 }

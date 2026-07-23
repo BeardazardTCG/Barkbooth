@@ -73,7 +73,7 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
 export function FormSubmitButton({ label, pendingLabel = "Saving…", requireDirty = true, className = "", confirmMessage }: { label: string; pendingLabel?: string; requireDirty?: boolean; className?: string; confirmMessage?: string }) {
   const { pending } = useFormStatus();
   const { dirty } = useContext(ManagedFormContext);
-  return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} onClick={(event) => { if (!confirmDestructiveAction(confirmMessage, window.confirm)) event.preventDefault(); }} className={`min-h-11 rounded-full bg-navy px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
+  return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} onClick={(event) => { if (!confirmDestructiveAction(confirmMessage, window.confirm)) event.preventDefault(); }} className={`min-h-11 rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
     {pending ? pendingLabel : label}
   </button>;
 }
