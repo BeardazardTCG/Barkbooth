@@ -7,12 +7,13 @@ const register = await readFile(new URL("../app/register-dog/register-dog-form.t
 const profile = await readFile(new URL("../app/dogs/[registryNumber]/page.tsx", import.meta.url), "utf8");
 const records = await readFile(new URL("../components/records/record-components.tsx", import.meta.url), "utf8");
 const actions = await readFile(new URL("../lib/dogs/actions.ts", import.meta.url), "utf8");
-const { confirmDestructiveAction, visibleActionResult } = await import("../lib/forms/action-result.ts");
-const { selectedDogTypes } = await import("../lib/dogs/profile-options.ts");
+const actionResults = await readFile(new URL("../lib/forms/action-result.ts", import.meta.url), "utf8");
+const { confirmDestructiveAction, emptyFileFieldState, fileFieldState, formStatusMessage, visibleActionResult } = await import("../lib/forms/action-result.ts");
+const { selectedDogTypes, selectedSex } = await import("../lib/dogs/profile-options.ts");
 const { breedSelectionFromProps } = await import("../lib/dogs/breed-selection.ts");
 
 test("shared form system exposes dirty, pending, success, and error states", () => {
-  assert.match(managed, /Unsaved changes/);
+  assert.match(actionResults, /Unsaved changes/);
   assert.match(managed, /useFormStatus/);
   assert.match(managed, /state\.status === "success"/);
   assert.match(managed, /role=\{isError \? "alert" : "status"\}/);
@@ -36,9 +37,9 @@ test("all pet sections have explicit, specific save semantics", () => {
 });
 
 test("files show selection, validate before upload, and fit narrow layouts", () => {
-  assert.match(managed, /Selected: \{filename\}/);
+  assert.match(managed, /Selected: \{fileState\.filename\}/);
   assert.match(managed, /setCustomValidity/);
-  assert.match(managed, /File must be smaller/);
+  assert.match(actionResults, /File must be smaller/);
   assert.match(managed, /className="block w-full min-w-0/);
   assert.match(profile, /className="mt-3 grid min-w-0 gap-3"/);
 });
@@ -73,6 +74,17 @@ test("a successful save becomes unsaved after the next edit", () => {
 test("empty dog types fail rather than leaving a contradictory primary role", () => {
   assert.throws(() => selectedDogTypes([]), /Select at least one dog type/);
   assert.deepEqual(selectedDogTypes(["Companion", "Companion", "Working"]), ["Companion", "Working"]);
+  assert.throws(() => selectedDogTypes(["Injected role"]), /Select at least one dog type/);
+  assert.match(actions, /dogTypes = selectedDogTypes\(formData\.getAll\("dogTypes"\)\)/, "registration enforces the same non-empty rule");
+});
+
+test("registration and editing share validated sex options", () => {
+  assert.equal(selectedSex("Male"), "Male");
+  assert.equal(selectedSex(""), null);
+  assert.equal(selectedSex("Legacy value", "Legacy value"), "Legacy value");
+  assert.throws(() => selectedSex("Injected value"), /supported sex option/);
+  assert.match(register, /sexOptions\.map/);
+  assert.match(profile, /sexOptions\.map/);
 });
 
 test("breed selection derives fresh controlled state when server props change", async () => {
@@ -85,8 +97,11 @@ test("breed selection derives fresh controlled state when server props change", 
 
 test("file UI state resets with successful reset and MIME validation remains authoritative on the server", () => {
   assert.match(managed, /setResetVersion\(\(version\) => version \+ 1\)/);
-  assert.match(managed, /setFilename\("No file selected"\)/);
-  assert.match(managed, /setError\(""\)/);
+  const selected = fileFieldState({ name: "too-large.pdf", size: 11 * 1024 * 1024 }, 10 * 1024 * 1024);
+  assert.equal(selected.filename, "too-large.pdf");
+  assert.match(selected.error, /smaller than 10 MB/);
+  assert.deepEqual(emptyFileFieldState, { filename: "No file selected", error: "" });
+  assert.match(managed, /setFileState\(emptyFileFieldState\)/);
   assert.match(managed, /inputRef\.current\?\.setCustomValidity\(""\)/);
   assert.match(managed, /Browsers may omit or vary File\.type/);
 });
@@ -108,7 +123,9 @@ test("pending announcements are action-specific and success is outside the refre
   assert.match(profile, /pendingMessage="Removing…"/);
   assert.match(records, /pendingMessage="Adding…"/);
   assert.match(records, /pendingMessage="Uploading…"/);
-  assert.match(managed, /pending \? pendingMessage/);
+  assert.equal(formStatusMessage(true, "Uploading…", { status: "idle" }, true), "Uploading…");
+  assert.equal(formStatusMessage(false, "Saving…", { status: "idle" }, true), "Unsaved changes");
+  assert.match(managed, /formStatusMessage\(pending, pendingMessage, state, dirty\)/);
   assert.match(await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"), /<FormFeedbackProvider><SiteChrome/);
 });
 

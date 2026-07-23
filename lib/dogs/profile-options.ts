@@ -2,7 +2,14 @@ export const dogTypes = ["Companion", "Working", "Showing", "Breeding", "Rescue"
 export const sexOptions = ["Male", "Female", "Unknown"] as const;
 
 export function selectedDogTypes(values: FormDataEntryValue[]) {
-  const selected = Array.from(new Set(values.map((value) => typeof value === "string" ? value.trim() : "").filter(Boolean)));
+  const selected = Array.from(new Set(values.map((value) => typeof value === "string" ? value.trim() : "").filter((value): value is (typeof dogTypes)[number] => dogTypes.includes(value as (typeof dogTypes)[number]))));
   if (!selected.length) throw new Error("Select at least one dog type.");
   return selected;
+}
+
+export function selectedSex(value: FormDataEntryValue | null, existing?: string | null) {
+  const sex = typeof value === "string" ? value.trim() : "";
+  if (!sex) return null;
+  if (sexOptions.includes(sex as (typeof sexOptions)[number]) || sex === existing) return sex;
+  throw new Error("Select a supported sex option.");
 }

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { deleteObject, putObject } from "@/lib/storage";
 import { documentContentTypes, imageContentTypes, MAX_PROFILE_PHOTO_BYTES, MAX_RECORD_DOCUMENT_BYTES, storageKey, validateUpload } from "@/lib/uploads";
 import type { ActionResult } from "@/lib/forms/action-result";
-import { selectedDogTypes } from "@/lib/dogs/profile-options";
+import { selectedDogTypes, selectedSex } from "@/lib/dogs/profile-options";
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -42,8 +42,13 @@ export async function registerDog(_prevState: ActionResult, formData: FormData):
   const photoValue = formData.get("photo");
   const hasPhoto = hasOptionalUpload(photoValue);
 
-  const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map((value) => asString(value)).filter(Boolean)));
-  const primaryRole = dogTypes[0] ?? "Pet";
+  let dogTypes: string[];
+  try {
+    dogTypes = selectedDogTypes(formData.getAll("dogTypes"));
+  } catch (error) {
+    return { status: "error", message: actionErrorMessage(error, "Select at least one dog type.") };
+  }
+  const primaryRole = dogTypes[0];
 
   const dateOfBirth = asString(formData.get("dateOfBirth"));
   const allowedVisibility = ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const;
@@ -70,7 +75,7 @@ export async function registerDog(_prevState: ActionResult, formData: FormData):
           neuteredSpayed: neuteredSpayedAnswers.includes(neuteredSpayedValue as (typeof neuteredSpayedAnswers)[number]) ? neuteredSpayedValue : "UNKNOWN",
           dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null,
           estimatedDob: formData.get("estimatedDob") === "on",
-          sex: asString(formData.get("sex")) || null,
+          sex: selectedSex(formData.get("sex")),
           colour: asString(formData.get("colour")) || null,
           countryOfRegistration: asString(formData.get("countryOfRegistration")) || null,
           visibility: allowedVisibility.includes(visibilityValue as (typeof allowedVisibility)[number]) ? visibilityValue as (typeof allowedVisibility)[number] : "PUBLIC",
@@ -139,7 +144,7 @@ async function updatePetDetailsImpl(formData: FormData) {
   }
   if (formData.has("dateOfBirth")) data.dateOfBirth = asDate(asString(formData.get("dateOfBirth")));
   if (formData.has("estimatedDobPresent")) data.estimatedDob = formData.get("estimatedDob") === "on";
-  if (formData.has("sex")) data.sex = asString(formData.get("sex")) || null;
+  if (formData.has("sex")) data.sex = selectedSex(formData.get("sex"), dog.sex);
   if (formData.has("colour")) data.colour = asString(formData.get("colour")) || null;
   if (formData.has("countryOfRegistration")) data.countryOfRegistration = asString(formData.get("countryOfRegistration")) || null;
   if (formData.has("visibility")) data.visibility = asEnum(asString(formData.get("visibility")), ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const, dog.visibility);
