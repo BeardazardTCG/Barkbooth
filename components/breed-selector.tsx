@@ -1,17 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { dogBreeds } from "@/lib/dog-breeds";
+import { breedSelectionFromProps } from "@/lib/dogs/breed-selection";
 
 
 type BreedSelectorProps = { mixedBreed?: boolean; initialBreed?: string | null; initialBreedMix?: string | null };
 
 export function BreedSelector({ mixedBreed = false, initialBreed = "", initialBreedMix = "" }: BreedSelectorProps) {
-  const [isMixed, setIsMixed] = useState(mixedBreed);
-  const [primaryBreed, setPrimaryBreed] = useState(initialBreed || (mixedBreed ? "Mixed Breed" : ""));
+  const initial = breedSelectionFromProps({ mixedBreed, initialBreed, initialBreedMix });
+  const [isMixed, setIsMixed] = useState(initial.isMixed);
+  const [primaryBreed, setPrimaryBreed] = useState(initial.primaryBreed);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string[]>(initialBreedMix?.split(",").map((breed) => breed.trim()).filter(Boolean) ?? []);
+  const [selected, setSelected] = useState<string[]>(initial.selected);
   const mixOptions = useMemo(() => dogBreeds.filter((breed) => !["Mixed Breed", "Other"].includes(breed) && breed.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())), [query]);
+
+  useEffect(() => {
+    const next = breedSelectionFromProps({ mixedBreed, initialBreed, initialBreedMix });
+    setIsMixed(next.isMixed);
+    setPrimaryBreed(next.primaryBreed);
+    setSelected(next.selected);
+    setQuery("");
+  }, [initialBreed, initialBreedMix, mixedBreed]);
 
   function toggleBreed(breed: string) {
     setSelected((current) => current.includes(breed) ? current.filter((item) => item !== breed) : [...current, breed]);

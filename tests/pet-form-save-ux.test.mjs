@@ -7,6 +7,9 @@ const register = await readFile(new URL("../app/register-dog/register-dog-form.t
 const profile = await readFile(new URL("../app/dogs/[registryNumber]/page.tsx", import.meta.url), "utf8");
 const records = await readFile(new URL("../components/records/record-components.tsx", import.meta.url), "utf8");
 const actions = await readFile(new URL("../lib/dogs/actions.ts", import.meta.url), "utf8");
+const { confirmDestructiveAction, visibleActionResult } = await import("../lib/forms/action-result.ts");
+const { selectedDogTypes } = await import("../lib/dogs/profile-options.ts");
+const { breedSelectionFromProps } = await import("../lib/dogs/breed-selection.ts");
 
 test("shared form system exposes dirty, pending, success, and error states", () => {
   assert.match(managed, /Unsaved changes/);
@@ -47,15 +50,37 @@ test("profile edits preserve fields omitted from FormData", () => {
   for (const field of ["dogTypesPresent", "breedFieldsPresent", "estimatedDobPresent", "dnaConfirmed", "dateOfBirth", "sex", "colour", "countryOfRegistration", "visibility"]) {
     assert.match(update, new RegExp(`formData\\.has\\("${field}"\\)`), `${field} is only changed when its control is submitted`);
   }
-  assert.match(update, /if \(dogTypes\.length\) data\.primaryRole = dogTypes\[0\]/, "name-only edits preserve dogTypes and primaryRole");
+  assert.match(update, /data\.primaryRole = dogTypes\[0\]/, "name-only edits preserve dogTypes and primaryRole");
   assert.match(update, /if \(formData\.has\("breedFieldsPresent"\)\) \{[\s\S]*data\.isMixedBreed[\s\S]*data\.breedMix/, "unrelated edits preserve mixed breed metadata");
   assert.match(update, /if \(formData\.has\("estimatedDobPresent"\)\) data\.estimatedDob/, "unrelated edits preserve estimated DOB");
 });
 
 test("success remains visible without focus theft and errors receive focus", () => {
   assert.match(managed, /state\.status === "error" \|\| \(state\.status === "success" && focusSuccess\)/);
-  assert.match(managed, /setTimeout\(\(\) => router\.refresh\(\), 1500\)/);
+  assert.match(managed, /if \(state\.message\) notify\(state\.message\)/);
+  assert.match(managed, /else router\.refresh\(\)/);
   assert.doesNotMatch(managed, /if \(state\.status === "idle"\) return;\s*statusRef\.current\?\.focus/);
+});
+
+test("a successful save becomes unsaved after the next edit", () => {
+  const success = { status: "success", message: "Pet details saved" };
+  assert.deepEqual(visibleActionResult(success, false), success);
+  assert.deepEqual(visibleActionResult(success, true), { status: "idle" });
+  assert.match(managed, /setEditedAfterSuccess\(true\)/);
+  assert.match(managed, /setEditedAfterSuccess\(true\);\s*dismiss\(\)/);
+});
+
+test("empty dog types fail rather than leaving a contradictory primary role", () => {
+  assert.throws(() => selectedDogTypes([]), /Select at least one dog type/);
+  assert.deepEqual(selectedDogTypes(["Companion", "Companion", "Working"]), ["Companion", "Working"]);
+});
+
+test("breed selection derives fresh controlled state when server props change", async () => {
+  const before = breedSelectionFromProps({ initialBreed: "Labrador Retriever" });
+  const after = breedSelectionFromProps({ mixedBreed: true, initialBreed: "Mixed Breed", initialBreedMix: "Poodle, Spaniel" });
+  assert.notDeepEqual(after, before);
+  assert.deepEqual(after, { isMixed: true, primaryBreed: "Mixed Breed", selected: ["Poodle", "Spaniel"] });
+  assert.match(await readFile(new URL("../components/breed-selector.tsx", import.meta.url), "utf8"), /useEffect\(\(\) => \{[\s\S]*breedSelectionFromProps/);
 });
 
 test("file UI state resets with successful reset and MIME validation remains authoritative on the server", () => {
@@ -67,10 +92,24 @@ test("file UI state resets with successful reset and MIME validation remains aut
 });
 
 test("destructive pet actions require explicit confirmation", () => {
-  assert.match(managed, /window\.confirm\(confirmMessage\)/);
+  let called = false;
+  assert.equal(confirmDestructiveAction("Remove?", () => false), false);
+  assert.equal(confirmDestructiveAction("Remove?", () => { called = true; return true; }), true);
+  assert.equal(called, true);
+  assert.match(managed, /confirmDestructiveAction\(confirmMessage, window\.confirm\)/);
   assert.match(profile, /confirmMessage="Remove this profile photo\?/);
   assert.match(records, /confirmMessage=\{`Remove \$\{document\.fileName\}/);
   assert.match(records, /Remove this record and its \$\{record\.documents\.length\} attached document/);
+});
+
+test("pending announcements are action-specific and success is outside the refreshed subtree", async () => {
+  assert.match(register, /pendingMessage="Creating…"/);
+  assert.match(profile, /pendingMessage="Uploading…"/);
+  assert.match(profile, /pendingMessage="Removing…"/);
+  assert.match(records, /pendingMessage="Adding…"/);
+  assert.match(records, /pendingMessage="Uploading…"/);
+  assert.match(managed, /pending \? pendingMessage/);
+  assert.match(await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"), /<FormFeedbackProvider><SiteChrome/);
 });
 
 test("pet actions return structured success and server failure results", () => {

@@ -3,12 +3,13 @@
 import { createContext, type FormEvent, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { initialActionResult, type ActionResult } from "@/lib/forms/action-result";
+import { confirmDestructiveAction, initialActionResult, visibleActionResult, type ActionResult } from "@/lib/forms/action-result";
+import { useFormFeedback } from "@/components/forms/form-feedback-provider";
 
 type ContextValue = { dirty: boolean; resetVersion: number };
 const ManagedFormContext = createContext<ContextValue>({ dirty: false, resetVersion: 0 });
 
-export function ManagedForm({ action, children, className = "", encType, warnOnLeave = true, resetOnSuccess = false, focusSuccess = false }: {
+export function ManagedForm({ action, children, className = "", encType, warnOnLeave = true, resetOnSuccess = false, focusSuccess = false, pendingMessage = "Saving…" }: {
   action: (previous: ActionResult, data: FormData) => Promise<ActionResult>;
   children: ReactNode;
   className?: string;
@@ -16,13 +17,16 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
   warnOnLeave?: boolean;
   resetOnSuccess?: boolean;
   focusSuccess?: boolean;
+  pendingMessage?: string;
 }) {
   const [state, formAction] = useFormState(action, initialActionResult);
   const [dirty, setDirty] = useState(false);
+  const [editedAfterSuccess, setEditedAfterSuccess] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { dismiss, notify } = useFormFeedback();
 
   useEffect(() => {
     if (!warnOnLeave || !dirty) return;
@@ -33,32 +37,35 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
 
   useEffect(() => {
     if (state.status === "idle") return;
+    setEditedAfterSuccess(false);
     if (state.status === "error" || (state.status === "success" && focusSuccess)) statusRef.current?.focus();
     if (state.status === "success") {
       setDirty(false);
+      if (state.message) notify(state.message);
       if (resetOnSuccess || state.reset) {
         formRef.current?.reset();
         setResetVersion((version) => version + 1);
       }
       if (state.redirectTo) router.push(state.redirectTo);
-      else {
-        // Let the live success region render long enough to be perceived before
-        // merging refreshed server data into the current client tree.
-        const refreshTimer = window.setTimeout(() => router.refresh(), 1500);
-        return () => window.clearTimeout(refreshTimer);
-      }
+      else router.refresh();
     }
-  }, [focusSuccess, resetOnSuccess, router, state]);
+  }, [focusSuccess, notify, resetOnSuccess, router, state]);
 
   const markDirty = (event: FormEvent<HTMLFormElement>) => {
     const target = event.target as HTMLInputElement;
-    if (target.type !== "hidden") setDirty(true);
+    if (target.type !== "hidden") {
+      setDirty(true);
+      if (state.status === "success") {
+        setEditedAfterSuccess(true);
+        dismiss();
+      }
+    }
   };
 
   return <ManagedFormContext.Provider value={{ dirty, resetVersion }}>
     <form ref={formRef} action={formAction} encType={encType} className={className} onInput={markDirty} onChange={markDirty}>
       {children}
-      <FormStatusMessage state={state} statusRef={statusRef} />
+      <FormStatusMessage state={visibleActionResult(state, editedAfterSuccess)} statusRef={statusRef} pendingMessage={pendingMessage} />
     </form>
   </ManagedFormContext.Provider>;
 }
@@ -66,15 +73,15 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
 export function FormSubmitButton({ label, pendingLabel = "Saving…", requireDirty = true, className = "", confirmMessage }: { label: string; pendingLabel?: string; requireDirty?: boolean; className?: string; confirmMessage?: string }) {
   const { pending } = useFormStatus();
   const { dirty } = useContext(ManagedFormContext);
-  return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} onClick={(event) => { if (confirmMessage && !window.confirm(confirmMessage)) event.preventDefault(); }} className={`min-h-11 rounded-full bg-navy px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
+  return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} onClick={(event) => { if (!confirmDestructiveAction(confirmMessage, window.confirm)) event.preventDefault(); }} className={`min-h-11 rounded-full bg-navy px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
     {pending ? pendingLabel : label}
   </button>;
 }
 
-function FormStatusMessage({ state, statusRef }: { state: ActionResult; statusRef: React.RefObject<HTMLDivElement> }) {
+function FormStatusMessage({ state, statusRef, pendingMessage }: { state: ActionResult; statusRef: React.RefObject<HTMLDivElement>; pendingMessage: string }) {
   const { pending } = useFormStatus();
   const { dirty } = useContext(ManagedFormContext);
-  const message = pending ? "Saving…" : state.message || (dirty ? "Unsaved changes" : "No unsaved changes");
+  const message = pending ? pendingMessage : state.message || (dirty ? "Unsaved changes" : "No unsaved changes");
   const isError = state.status === "error";
   return <div ref={statusRef} tabIndex={isError ? -1 : undefined} role={isError ? "alert" : "status"} aria-live={isError ? "assertive" : "polite"} aria-atomic="true" className={`rounded-2xl px-4 py-3 text-sm font-bold ${isError ? "bg-red-50 text-red-800" : state.status === "success" ? "bg-green-50 text-green-800" : dirty || pending ? "bg-amber-50 text-amber-900" : "text-charcoal/60"}`}>
     {message}

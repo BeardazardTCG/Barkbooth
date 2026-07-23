@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { deleteObject, putObject } from "@/lib/storage";
 import { documentContentTypes, imageContentTypes, MAX_PROFILE_PHOTO_BYTES, MAX_RECORD_DOCUMENT_BYTES, storageKey, validateUpload } from "@/lib/uploads";
 import type { ActionResult } from "@/lib/forms/action-result";
+import { selectedDogTypes } from "@/lib/dogs/profile-options";
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -132,9 +133,9 @@ async function updatePetDetailsImpl(formData: FormData) {
   }
   if (formData.has("dnaConfirmed")) data.dnaConfirmed = asString(formData.get("dnaConfirmed")) || null;
   if (formData.has("dogTypesPresent")) {
-    const dogTypes = Array.from(new Set(formData.getAll("dogTypes").map(asString).filter(Boolean)));
-    data.dogTypes = dogTypes.join(", ") || null;
-    if (dogTypes.length) data.primaryRole = dogTypes[0];
+    const dogTypes = selectedDogTypes(formData.getAll("dogTypes"));
+    data.dogTypes = dogTypes.join(", ");
+    data.primaryRole = dogTypes[0];
   }
   if (formData.has("dateOfBirth")) data.dateOfBirth = asDate(asString(formData.get("dateOfBirth")));
   if (formData.has("estimatedDobPresent")) data.estimatedDob = formData.get("estimatedDob") === "on";
@@ -161,7 +162,7 @@ async function cleanUpStoredObjects(keys: string[], operation: string) {
 
 function actionErrorMessage(error: unknown, fallback: string) {
   console.error(fallback, error);
-  return error instanceof Error && /required|supported|smaller|not found|only manage/i.test(error.message) ? error.message : fallback;
+  return error instanceof Error && /required|select|supported|smaller|not found|only manage/i.test(error.message) ? error.message : fallback;
 }
 
 async function addDogRecordImpl(formData: FormData) {
