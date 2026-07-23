@@ -102,7 +102,7 @@ export async function registerDog(_prevState: ActionResult, formData: FormData):
   return { status: "success", message: "Pet details saved", redirectTo: `/dogs/${dog.registryNumber}` };
 }
 
-const recordCategories = ["IDENTITY", "DNA", "HEALTH", "CARE", "IDENTIFICATION", "INSURANCE", "PEDIGREE", "TITLES", "WORKING_QUALIFICATIONS", "ACTIVITIES_WORK", "TEMPERAMENT_TESTS", "BREEDING_APPROVALS", "OTHER"] as const;
+const recordCategories = ["DNA", "HEALTH", "INSURANCE", "PEDIGREE", "ACTIVITIES_WORK", "OTHER"] as const;
 const behaviourAnswers = neuteredSpayedAnswers;
 const recordStatuses = ["HAVE_RECORD", "DO_NOT_HAVE"] as const;
 
@@ -179,12 +179,11 @@ async function addDogRecordImpl(formData: FormData) {
     dogId,
     category: asEnum(asString(formData.get("category")), recordCategories, "OTHER"),
     recordType,
-    provider: asString(formData.get("provider")) || null,
     status: asEnum(asString(formData.get("status")), recordStatuses, "HAVE_RECORD"),
     verificationStatus: "NOT_SUBMITTED",
     referenceNumber: asString(formData.get("referenceNumber")) || null,
-    issueDate: asDate(asString(formData.get("issueDate"))),
-    expiryDate: asDate(asString(formData.get("expiryDate"))),
+    issueDate: null,
+    expiryDate: null,
     notes: asString(formData.get("notes")) || null,
   } });
   revalidatePath(`/dogs/${dog.registryNumber}`);
@@ -197,13 +196,12 @@ async function updateDogRecordImpl(formData: FormData) {
   const dog = await requireDogOwner(existing.dogId);
   const recordType = asString(formData.get("recordType"));
   await prisma.dogRecord.update({ where: { id: recordId }, data: {
-    category: asEnum(asString(formData.get("category")), recordCategories, existing.category),
+    category: asEnum(asString(formData.get("category")), recordCategories, recordCategories.includes(existing.category as (typeof recordCategories)[number]) ? existing.category as (typeof recordCategories)[number] : "OTHER"),
     recordType: recordType || existing.recordType,
-    provider: asString(formData.get("provider")) || null,
     status: asEnum(asString(formData.get("status")), recordStatuses, existing.status),
     referenceNumber: asString(formData.get("referenceNumber")) || null,
-    issueDate: asDate(asString(formData.get("issueDate"))),
-    expiryDate: asDate(asString(formData.get("expiryDate"))),
+    issueDate: null,
+    expiryDate: null,
     notes: asString(formData.get("notes")) || null,
   } });
   revalidatePath(`/dogs/${dog.registryNumber}`);
@@ -334,6 +332,17 @@ async function updateBehaviourLifestyleImpl(formData: FormData) {
   revalidatePath(`/dogs/${dog.registryNumber}`);
 }
 
+async function updateOwnerEssentialsImpl(formData: FormData) {
+  const dogId = asString(formData.get("dogId"));
+  const dog = await requireDogOwner(dogId);
+  await prisma.dogIdentity.update({ where: { id: dogId }, data: {
+    microchipNumber: asString(formData.get("microchipNumber")) || null,
+    vaccinated: asEnum(asString(formData.get("vaccinated")), behaviourAnswers, dog.vaccinated),
+    lastVaccinationDate: asDate(asString(formData.get("lastVaccinationDate"))),
+  } });
+  revalidatePath(`/dogs/${dog.registryNumber}`);
+}
+
 async function runPetAction(operation: () => Promise<void>, success: string, reset = false): Promise<ActionResult> {
   try {
     await operation();
@@ -345,6 +354,7 @@ async function runPetAction(operation: () => Promise<void>, success: string, res
 
 export async function addDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => addDogRecordImpl(formData), "Record added", true); }
 export async function updateDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => updateDogRecordImpl(formData), "Record saved"); }
+export async function updateOwnerEssentials(_previous: ActionResult, formData: FormData) { return runPetAction(() => updateOwnerEssentialsImpl(formData), "Identification and vaccination details saved"); }
 export async function removeDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeDogRecordImpl(formData), "Record removed"); }
 export async function uploadDogProfilePhoto(_previous: ActionResult, formData: FormData) { return runPetAction(() => uploadDogProfilePhotoImpl(formData), formData.get("replacing") === "true" ? "Photo replaced" : "Photo uploaded", true); }
 export async function removeDogProfilePhoto(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeDogProfilePhotoImpl(formData), "Photo removed"); }

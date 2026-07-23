@@ -210,6 +210,9 @@ model DogIdentity {
   estimatedDob          Boolean         @default(false)
   sex                   String?
   colour                String?
+  microchipNumber       String?
+  vaccinated            BehaviourAnswer       @default(UNKNOWN)
+  lastVaccinationDate   DateTime?
   countryOfRegistration String?
   visibility            DogVisibility   @default(PUBLIC)
   ownerships            DogOwnership[]
