@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 type Feedback = { id: number; message: string } | null;
 type FeedbackActions = { notify: (message: string) => void; dismiss: () => void };
@@ -15,6 +15,9 @@ export function FormFeedbackProvider({ children }: { children: ReactNode }) {
     timerRef.current = setTimeout(() => setFeedback(null), 6000);
   }, []);
   const dismiss = useCallback(() => setFeedback(null), []);
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
 
   return <FeedbackContext.Provider value={{ notify, dismiss }}>
     {children}

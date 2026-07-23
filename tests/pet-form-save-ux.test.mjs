@@ -74,7 +74,8 @@ test("a successful save becomes unsaved after the next edit", () => {
 test("empty dog types fail rather than leaving a contradictory primary role", () => {
   assert.throws(() => selectedDogTypes([]), /Select at least one dog type/);
   assert.deepEqual(selectedDogTypes(["Companion", "Companion", "Working"]), ["Companion", "Working"]);
-  assert.throws(() => selectedDogTypes(["Injected role"]), /Select at least one dog type/);
+  assert.throws(() => selectedDogTypes(["Injected role"]), /supported dog types/);
+  assert.throws(() => selectedDogTypes(["Companion", "Injected role"]), /supported dog types/);
   assert.match(actions, /dogTypes = selectedDogTypes\(formData\.getAll\("dogTypes"\)\)/, "registration enforces the same non-empty rule");
 });
 
