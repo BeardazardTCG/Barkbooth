@@ -1,23 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { dogBreeds } from "@/lib/dog-breeds";
+import { breedSelectionFromProps } from "@/lib/dogs/breed-selection";
 
 
-type BreedSelectorProps = { mixedBreed?: boolean };
+type BreedSelectorProps = { mixedBreed?: boolean; initialBreed?: string | null; initialBreedMix?: string | null };
 
-export function BreedSelector({ mixedBreed = false }: BreedSelectorProps) {
-  const [isMixed, setIsMixed] = useState(mixedBreed);
-  const [primaryBreed, setPrimaryBreed] = useState(mixedBreed ? "Mixed Breed" : "");
+export function BreedSelector({ mixedBreed = false, initialBreed = "", initialBreedMix = "" }: BreedSelectorProps) {
+  const initial = breedSelectionFromProps({ mixedBreed, initialBreed, initialBreedMix });
+  const [isMixed, setIsMixed] = useState(initial.isMixed);
+  const [primaryBreed, setPrimaryBreed] = useState(initial.primaryBreed);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(initial.selected);
   const mixOptions = useMemo(() => dogBreeds.filter((breed) => !["Mixed Breed", "Other"].includes(breed) && breed.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())), [query]);
+
+  useEffect(() => {
+    const next = breedSelectionFromProps({ mixedBreed, initialBreed, initialBreedMix });
+    setIsMixed(next.isMixed);
+    setPrimaryBreed(next.primaryBreed);
+    setSelected(next.selected);
+    setQuery("");
+  }, [initialBreed, initialBreedMix, mixedBreed]);
 
   function toggleBreed(breed: string) {
     setSelected((current) => current.includes(breed) ? current.filter((item) => item !== breed) : [...current, breed]);
   }
 
   return <div className="grid gap-4 rounded-[1.5rem] border border-navy/10 bg-white/70 p-4 md:col-span-2">
+    <input type="hidden" name="breedFieldsPresent" value="true" />
     <div>
       <label className="font-bold text-navy" htmlFor="breed">Primary breed</label>
       <input id="breed" name="breed" list="dog-breed-options" required value={primaryBreed} onChange={(event) => { setPrimaryBreed(event.target.value); if (event.target.value === "Mixed Breed") setIsMixed(true); }} placeholder="Start typing to search breeds…" className="mt-2 w-full rounded-2xl border border-navy/10 bg-white px-4 py-3" />

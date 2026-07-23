@@ -15,14 +15,14 @@ function section(startText, endText) {
 
 const storePhoto = section("async function storeDogProfilePhoto", "export async function registerDog");
 const registration = section("export async function registerDog", "const recordCategories");
-const replacement = section("export async function uploadDogProfilePhoto", "export async function removeDogProfilePhoto");
-const cleanup = section("async function cleanUpStoredObjects", "export async function addDogRecord");
+const replacement = section("async function uploadDogProfilePhotoImpl", "async function removeDogProfilePhotoImpl");
+const cleanup = section("async function cleanUpStoredObjects", "function actionErrorMessage");
 
 test("registration form keeps an optional multipart profile photo field", () => {
   assert.match(form, /encType="multipart\/form-data"/);
-  assert.match(form, /type="file" name="photo"/);
+  assert.match(form, /<FileField name="photo"/);
   assert.match(form, /accept="image\/jpeg,image\/png,image\/webp"/);
-  assert.doesNotMatch(form, /type="file" name="photo"[^>]*required/);
+  assert.doesNotMatch(form, /<FileField name="photo"[^>]*required/);
 });
 
 test("registration without a photo bypasses photo storage and row creation", () => {
@@ -55,8 +55,8 @@ test("the photo row and dog are committed together after upload succeeds", () =>
 
 test("a database failure rolls the uploaded object back without hiding its error", () => {
   assert.match(registration, /uploadedPhotoKey = photo\?\.storageKey \?\? null/);
-  assert.match(registration, /catch \(error\) \{[\s\S]*cleanUpStoredObjects\(\[uploadedPhotoKey\], "rollbackDogRegistrationPhotoUpload"\)[\s\S]*throw error/);
-  assert.match(registration, /redirect\(`\/dogs\/\$\{dog\.registryNumber\}`\)/);
+  assert.match(registration, /catch \(error\) \{[\s\S]*cleanUpStoredObjects\(\[uploadedPhotoKey\], "rollbackDogRegistrationPhotoUpload"\)[\s\S]*status: "error"/);
+  assert.match(registration, /redirectTo: `\/dogs\/\$\{dog\.registryNumber\}`/);
 });
 
 test("registration rollback uses the all-settled logged cleanup implementation", () => {

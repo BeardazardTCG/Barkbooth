@@ -5,8 +5,8 @@ import test from "node:test";
 const actions = await readFile(new URL("../lib/dogs/actions.ts", import.meta.url), "utf8");
 
 function actionBody(name, nextName) {
-  const start = actions.indexOf(`export async function ${name}`);
-  const end = nextName ? actions.indexOf(`export async function ${nextName}`, start) : actions.length;
+  const start = actions.indexOf(`async function ${name}Impl`);
+  const end = nextName ? actions.indexOf(`async function ${nextName}Impl`, start) : actions.length;
   assert.notEqual(start, -1, `${name} exists`);
   assert.notEqual(end, -1, `${nextName} exists after ${name}`);
   return actions.slice(start, end);
@@ -26,7 +26,7 @@ test("destructive actions commit database deletion before object cleanup", () =>
 
 test("replacement and deletion cleanup failures are logged and absorbed", () => {
   const helperStart = actions.indexOf("async function cleanUpStoredObjects");
-  const helperEnd = actions.indexOf("export async function addDogRecord", helperStart);
+  const helperEnd = actions.indexOf("function actionErrorMessage", helperStart);
   const helper = actions.slice(helperStart, helperEnd);
   assert.match(helper, /Promise\.allSettled/);
   assert.match(helper, /console\.error\("Object storage cleanup failed after database mutation"/);
