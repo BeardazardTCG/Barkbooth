@@ -3,7 +3,6 @@ import { addDogRecord, removeDogRecord, removeRecordDocument, updateDogRecord, u
 import { recordCategories, recordCategoryLabels, initialRecordTypes } from "@/lib/records/catalog";
 import { Card } from "@/components/ui";
 import { StatusBadge } from "@/components/status-badge";
-import { EmptyState } from "@/components/empty-state";
 import { FileField, FormSubmitButton, ManagedForm } from "@/components/forms/managed-form";
 
 function RecordFields({ record }: { record?: DogRecord }) {
@@ -19,7 +18,7 @@ function RecordFields({ record }: { record?: DogRecord }) {
 }
 
 export function AddRecordForm({ dogId }: { dogId: string }) {
-  return <Card><h3 className="text-2xl font-bold text-navy">Add record</h3><p className="mt-2 text-sm font-bold text-charcoal/60">Choose a recognised suggestion or enter another record. Documents can be attached afterward and stay private unless you deliberately share access.</p><ManagedForm action={addDogRecord} pendingMessage="Adding…" resetOnSuccess className="mt-4 grid gap-4"><input type="hidden" name="dogId" value={dogId} /><RecordFields /><FormSubmitButton label="Add record" pendingLabel="Adding…" requireDirty={false} /></ManagedForm></Card>;
+  return <Card><details><summary className="cursor-pointer text-xl font-bold text-navy">Add a record</summary><p className="mt-2 text-sm text-charcoal/60">Choose a recognised suggestion or enter another record. Documents stay private unless you deliberately share access.</p><ManagedForm action={addDogRecord} pendingMessage="Adding…" resetOnSuccess className="mt-4 grid gap-4"><input type="hidden" name="dogId" value={dogId} /><RecordFields /><FormSubmitButton label="Add record" pendingLabel="Adding…" requireDirty={false} /></ManagedForm></details></Card>;
 }
 
 type RecordWithDocuments = DogRecord & { documents: DogRecordDocument[] };
@@ -31,5 +30,6 @@ export function RecordCard({ record, canManage }: { record: RecordWithDocuments;
 }
 
 export function CategorySection({ category, records, canManage }: { category: DogRecordCategory; records: RecordWithDocuments[]; canManage: boolean }) {
-  return <div><h3 className="text-2xl font-bold text-navy">{recordCategoryLabels[category]}</h3><div className="mt-3 grid gap-4 md:grid-cols-2">{records.length ? records.map((record) => <RecordCard key={record.id} record={record} canManage={canManage} />) : <EmptyState title={`No ${recordCategoryLabels[category]} records yet`}>Owners can add statements for this category when they are ready.</EmptyState>}</div></div>;
+  if (!records.length) return null;
+  return <div><h3 className="text-xl font-bold text-navy sm:text-2xl">{recordCategoryLabels[category]}</h3><div className="mt-3 grid gap-4 md:grid-cols-2">{records.map((record) => <RecordCard key={record.id} record={record} canManage={canManage} />)}</div></div>;
 }

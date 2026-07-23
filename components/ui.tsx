@@ -2,11 +2,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export function Section({ eyebrow, title, children }: { eyebrow?: string; title: string; children: ReactNode }) {
-  return <section className="px-5 py-7 sm:px-8 md:py-9">{eyebrow && <p className="registry-label text-info">{eyebrow}</p>}<h2 className="mt-2 max-w-4xl font-heading text-3xl font-extrabold tracking-tight text-navy md:text-4xl">{title}</h2><div className="mt-5">{children}</div></section>;
+  return <section className="px-4 py-5 sm:px-6 md:px-8 md:py-7">{eyebrow && <p className="registry-label text-info">{eyebrow}</p>}<h2 className="mt-1.5 max-w-4xl font-heading text-2xl font-extrabold tracking-tight text-navy sm:text-3xl md:text-4xl">{title}</h2><div className="mt-4">{children}</div></section>;
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`registry-card rounded-registry p-5 backdrop-blur ${className}`}>{children}</div>;
+  return <div className={`registry-card rounded-registry p-4 backdrop-blur sm:p-5 ${className}`}>{children}</div>;
 }
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "ghost";
@@ -20,7 +20,7 @@ export const buttonStyles: Record<ButtonVariant, string> = {
 };
 
 export function ButtonLink({ href, children, variant = "primary" }: { href: string; children: ReactNode; variant?: ButtonVariant }) {
-  return <Link href={href} className={`inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info ${buttonStyles[variant]}`}>{children}</Link>;
+  return <Link href={href} className={`inline-flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info ${buttonStyles[variant]}`}>{children}</Link>;
 }
 
 export function PawAvatar({ label, className = "" }: { label: string; className?: string }) {

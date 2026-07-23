@@ -5,7 +5,7 @@ import { signup } from "@/lib/auth/actions";
 import { supportedLocations } from "@/lib/locations";
 export function SignupForm() {
   const [error, action] = useFormState(signup, null);
-  return <form action={action} className="grid gap-4 rounded-[2rem] bg-white/85 p-6 shadow-soft">
+  return <form action={action} className="grid gap-4">
     <div className="rounded-2xl bg-skysoft/50 p-4 text-sm font-bold leading-6 text-navy">Everyone joins as a Bark Booth Member. You can apply for additional verified roles from your account after signing up.</div>
     <label className="grid gap-1 text-sm font-bold text-navy">Email<input name="email" type="email" required className="rounded-2xl border border-navy/10 p-3" /></label>
     <div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-1 text-sm font-bold text-navy">Password<input name="password" type="password" required minLength={8} className="rounded-2xl border border-navy/10 p-3" /></label><label className="grid gap-1 text-sm font-bold text-navy">Confirm password<input name="passwordConfirm" type="password" required minLength={8} className="rounded-2xl border border-navy/10 p-3" /></label></div>
