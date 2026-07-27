@@ -72,11 +72,67 @@ test("stale and network action failures execute a mutation once and remain recov
 
 test("password verification preserves exact characters and rejects malformed historical hashes safely", async () => {
   const passwords = await loadTypescriptModule("../lib/auth/password.ts");
+  const ordinaryHash = passwords.hashPassword("password123");
+  assert.equal(passwords.passwordHashStatus("password123", ordinaryHash), "match");
+  assert.equal(passwords.passwordHashStatus(" password123", ordinaryHash), "mismatch");
+  assert.equal(passwords.passwordHashStatus("password123 ", ordinaryHash), "mismatch");
   const exact = "  intentional spaces  ";
   const hash = passwords.hashPassword(exact);
   assert.equal(passwords.passwordHashStatus(exact, hash), "match");
   assert.equal(passwords.passwordHashStatus(exact.trim(), hash), "mismatch");
   assert.equal(passwords.passwordHashStatus("anything", "legacy-or-malformed"), "invalid");
+});
+
+test("login accepts only the exact password and never updates a hash after mismatches", async () => {
+  const passwords = await loadTypescriptModule("../lib/auth/password.ts");
+  let storedHash = passwords.hashPassword("password123");
+  const updates = [];
+  const sessions = [];
+  const actions = await loadTypescriptModule("../lib/auth/actions.ts", {
+    "next/navigation": { redirect() {} },
+    "@/lib/auth/session": { createSession: async (id) => sessions.push(id), deleteCurrentSession: async () => {} },
+    "@/lib/auth/password": passwords,
+    "@/lib/prisma": { prisma: { user: {
+      findUnique: async ({ where }) => ({ id: "user-1", email: where.email, passwordHash: storedHash }),
+      update: async (args) => updates.push(args),
+    } } },
+    "@/lib/locations": { isSupportedLocation: () => true },
+  });
+
+  const attempt = (password) => {
+    const data = new FormData();
+    data.set("email", "  OWNER@EXAMPLE.COM  ");
+    data.set("password", password);
+    return actions.login({ status: "idle" }, data);
+  };
+
+  for (const candidate of [" password123", "password123 "]) {
+    const result = await attempt(candidate);
+    assert.deepEqual({ ...result }, { status: "error", message: "Invalid email or password." });
+  }
+  assert.equal(updates.length, 0, "failed login never rewrites a password hash");
+  assert.equal(sessions.length, 0, "whitespace alternatives never create a session");
+
+  const exact = await attempt("password123");
+  assert.deepEqual({ ...exact }, { status: "success", message: "Welcome back", redirectTo: "/dogs" });
+  assert.deepEqual(sessions, ["user-1"]);
+  assert.equal(updates.length, 0, "valid login also does not rewrite the password hash");
+
+  storedHash = passwords.hashPassword(" intentional spaces ");
+  sessions.length = 0;
+  const missingSpaces = await attempt("intentional spaces");
+  assert.deepEqual({ ...missingSpaces }, { status: "error", message: "Invalid email or password." });
+  const exactSpaces = await attempt(" intentional spaces ");
+  assert.deepEqual({ ...exactSpaces }, { status: "success", message: "Welcome back", redirectTo: "/dogs" });
+  assert.deepEqual(sessions, ["user-1"], "an intentionally spaced password authenticates only exactly");
+  assert.equal(updates.length, 0);
+
+  storedHash = "malformed-historical-hash";
+  sessions.length = 0;
+  const malformed = await attempt("password123");
+  assert.deepEqual({ ...malformed }, { status: "error", message: "Invalid email or password." });
+  assert.equal(sessions.length, 0);
+  assert.equal(updates.length, 0);
 });
 
 test("authentication normalizes email but preserves submitted password characters", async () => {

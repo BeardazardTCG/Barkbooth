@@ -79,20 +79,10 @@ export async function login(_prevState: ActionResult, formData: FormData): Promi
     return { status: "error", message: "Invalid email or password." };
   }
   if (status === "mismatch") {
-    // Accounts created before exact-password handling hashed a silently trimmed value.
-    // Accept that legacy value once and migrate it to the exact submitted password.
-    const legacyPassword = password.trim();
-    if (legacyPassword === password || passwordHashStatus(legacyPassword, user.passwordHash) !== "match") {
-      logAuthDiagnostic("login", "password_mismatch");
-      return { status: "error", message: "Invalid email or password." };
-    }
-    try {
-      await prisma.user.update({ where: { id: user.id }, data: { passwordHash: hashPassword(password) } });
-    } catch {
-      logAuthDiagnostic("login", "legacy_password_migration_failed");
-      return { status: "error", message: "We could not sign you in. Please try again." };
-    }
-    logAuthDiagnostic("login", "legacy_trimmed_password_migrated");
+    // Never guess a legacy credential by trimming or otherwise changing it. Users
+    // affected by historical trimming must use password recovery/reset instead.
+    logAuthDiagnostic("login", "password_mismatch");
+    return { status: "error", message: "Invalid email or password." };
   }
   try {
     await createSession(user.id);
