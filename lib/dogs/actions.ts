@@ -25,8 +25,25 @@ function revalidateDogSurfaces(registry: string) {
 
 const neuteredSpayedAnswers = ["YES", "NO", "UNKNOWN"] as const;
 
-function hasOptionalUpload(value: FormDataEntryValue | null) {
-  return value !== null && value !== "" && (!(value instanceof File) || Boolean(value.name) || value.size > 0);
+function optionalProfilePhoto(value: FormDataEntryValue | null) {
+  if (value === null) {
+    console.info("Optional dog registration photo omitted", { reason: "field-absent" });
+    return null;
+  }
+  if (value === "") {
+    console.info("Optional dog registration photo omitted", { reason: "selection-cancelled" });
+    return null;
+  }
+  if (!(value instanceof File)) throw new Error("Invalid profile photo upload.");
+  if (!value.name) {
+    console.info("Optional dog registration photo omitted", { reason: "empty-file-name" });
+    return null;
+  }
+  if (value.size === 0) {
+    console.info("Optional dog registration photo omitted", { reason: "zero-byte-file" });
+    return null;
+  }
+  return value;
 }
 
 async function storeDogProfilePhoto(value: FormDataEntryValue | null, folder: string) {
@@ -46,8 +63,12 @@ export async function registerDog(_prevState: ActionResult, formData: FormData):
   const name = asString(formData.get("name"));
   if (!name) return { status: "error", message: "Dog name is required." };
 
-  const photoValue = formData.get("photo");
-  const hasPhoto = hasOptionalUpload(photoValue);
+  let photoValue: File | null;
+  try {
+    photoValue = optionalProfilePhoto(formData.get("photo"));
+  } catch (error) {
+    return { status: "error", message: actionErrorMessage(error, "We could not register this pet. Please try again.") };
+  }
 
   let dogTypes: string[];
   try {
@@ -65,7 +86,7 @@ export async function registerDog(_prevState: ActionResult, formData: FormData):
   let uploadedPhotoKey: string | null = null;
   let dog;
   try {
-    const photo = hasPhoto ? await storeDogProfilePhoto(photoValue, "dogs/registrations/profile") : null;
+    const photo = photoValue ? await storeDogProfilePhoto(photoValue, "dogs/registrations/profile") : null;
     uploadedPhotoKey = photo?.storageKey ?? null;
     dog = await prisma.$transaction(async (tx) => {
       const created = await tx.dogIdentity.create({
