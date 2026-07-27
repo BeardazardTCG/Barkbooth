@@ -16,6 +16,13 @@ function registryNumber(sequence: number) {
   return `BB-${sequence.toString().padStart(6, "0")}`;
 }
 
+function revalidateDogSurfaces(registry: string) {
+  revalidatePath("/dashboard");
+  revalidatePath("/dogs");
+  revalidatePath(`/dogs/${registry}`);
+  revalidatePath("/profiles");
+}
+
 const neuteredSpayedAnswers = ["YES", "NO", "UNKNOWN"] as const;
 
 function hasOptionalUpload(value: FormDataEntryValue | null) {
@@ -99,6 +106,7 @@ export async function registerDog(_prevState: ActionResult, formData: FormData):
     if (uploadedPhotoKey) await cleanUpStoredObjects([uploadedPhotoKey], "rollbackDogRegistrationPhotoUpload");
     return { status: "error", message: actionErrorMessage(error, "We could not register this pet. Please try again.") };
   }
+  revalidateDogSurfaces(dog.registryNumber);
   return { status: "success", message: "Pet details saved", redirectTo: `/dogs/${dog.registryNumber}` };
 }
 
@@ -149,7 +157,7 @@ async function updatePetDetailsImpl(formData: FormData) {
   if (formData.has("countryOfRegistration")) data.countryOfRegistration = asString(formData.get("countryOfRegistration")) || null;
   if (formData.has("visibility")) data.visibility = asEnum(asString(formData.get("visibility")), ["PUBLIC", "PRIVATE", "LINK_ONLY"] as const, dog.visibility);
   await prisma.dogIdentity.update({ where: { id: dogId }, data });
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function cleanUpStoredObjects(keys: string[], operation: string) {
@@ -186,7 +194,7 @@ async function addDogRecordImpl(formData: FormData) {
     expiryDate: null,
     notes: asString(formData.get("notes")) || null,
   } });
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function updateDogRecordImpl(formData: FormData) {
@@ -204,7 +212,7 @@ async function updateDogRecordImpl(formData: FormData) {
     expiryDate: null,
     notes: asString(formData.get("notes")) || null,
   } });
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function removeDogRecordImpl(formData: FormData) {
@@ -214,7 +222,7 @@ async function removeDogRecordImpl(formData: FormData) {
   const dog = await requireDogOwner(existing.dogId);
   await prisma.dogRecord.delete({ where: { id: recordId } });
   await cleanUpStoredObjects(existing.documents.map((document) => document.storageKey), "removeDogRecord");
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function uploadDogProfilePhotoImpl(formData: FormData) {
@@ -238,7 +246,7 @@ async function uploadDogProfilePhotoImpl(formData: FormData) {
     throw error;
   }
   if (previous) await cleanUpStoredObjects([previous.storageKey], "replaceDogProfilePhoto");
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function removeDogProfilePhotoImpl(formData: FormData) {
@@ -249,7 +257,7 @@ async function removeDogProfilePhotoImpl(formData: FormData) {
     await prisma.dogProfilePhoto.delete({ where: { id: photo.id } });
     await cleanUpStoredObjects([photo.storageKey], "removeDogProfilePhoto");
   }
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function uploadRecordDocumentImpl(formData: FormData) {
@@ -267,7 +275,7 @@ async function uploadRecordDocumentImpl(formData: FormData) {
     await cleanUpStoredObjects([key], "rollbackRecordDocumentUpload");
     throw error;
   }
-  revalidatePath(`/dogs/${record.dog.registryNumber}`);
+  revalidateDogSurfaces(record.dog.registryNumber);
 }
 
 async function removeRecordDocumentImpl(formData: FormData) {
@@ -277,7 +285,7 @@ async function removeRecordDocumentImpl(formData: FormData) {
   await requireDogOwner(document.record.dogId);
   await prisma.dogRecordDocument.delete({ where: { id: document.id } });
   await cleanUpStoredObjects([document.storageKey], "removeRecordDocument");
-  revalidatePath(`/dogs/${document.record.dog.registryNumber}`);
+  revalidateDogSurfaces(document.record.dog.registryNumber);
 }
 
 
@@ -329,7 +337,7 @@ async function updateBehaviourLifestyleImpl(formData: FormData) {
     },
   });
   await prisma.dogIdentity.update({ where: { id: dogId }, data: { neuteredSpayed } });
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function updateOwnerEssentialsImpl(formData: FormData) {
@@ -340,7 +348,7 @@ async function updateOwnerEssentialsImpl(formData: FormData) {
     vaccinated: asEnum(asString(formData.get("vaccinated")), behaviourAnswers, dog.vaccinated),
     lastVaccinationDate: asDate(asString(formData.get("lastVaccinationDate"))),
   } });
-  revalidatePath(`/dogs/${dog.registryNumber}`);
+  revalidateDogSurfaces(dog.registryNumber);
 }
 
 async function runPetAction(operation: () => Promise<void>, success: string, reset = false): Promise<ActionResult> {
