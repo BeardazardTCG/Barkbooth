@@ -42,8 +42,16 @@ export async function getCurrentUser() {
   }
   if (!session) return null;
   if (session.expiresAt < new Date()) {
-    await prisma.session.deleteMany({ where: { token } });
-    cookies().delete(SESSION_COOKIE);
+    try {
+      await prisma.session.deleteMany({ where: { token } });
+    } catch (error) {
+      logAuthDiagnostic("session_validation", "expired_session_cleanup_failed", error);
+    }
+    try {
+      cookies().delete(SESSION_COOKIE);
+    } catch (error) {
+      logAuthDiagnostic("session_validation", "cookie_delete_failed", error);
+    }
     return null;
   }
   return session.user;

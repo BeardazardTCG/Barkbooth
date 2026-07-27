@@ -93,10 +93,10 @@ test("login accepts only the exact password and never updates a hash after misma
     "@/lib/auth/session": { createSession: async (id) => sessions.push(id), deleteCurrentSession: async () => {} },
     "@/lib/auth/password": passwords,
     "@/lib/auth/password-reset": { createPasswordResetToken() {}, hashPasswordResetToken() {} },
-    "@/lib/auth/email": { sendPasswordResetEmail: async () => {} },
+    "@/lib/auth/email": { passwordResetEmailConfiguration: () => null, sendPasswordResetEmail: async () => {} },
     "@/lib/auth/diagnostics": { logAuthDiagnostic() {} },
     "@/lib/prisma": { prisma: { user: {
-      findUnique: async ({ where }) => ({ id: "user-1", email: where.email, passwordHash: storedHash, failedLoginAttempts: 0, lockedUntil: null }),
+      findUnique: async ({ where }) => ({ id: "user-1", email: where.email, passwordHash: storedHash }),
       update: async (args) => updates.push(args),
     } } },
     "@/lib/locations": { isSupportedLocation: () => true },
@@ -113,14 +113,13 @@ test("login accepts only the exact password and never updates a hash after misma
     const result = await attempt(candidate);
     assert.deepEqual({ ...result }, { status: "error", message: "Invalid email or password." });
   }
-  assert.equal(updates.length, 2, "failed login records attempt counters");
-  assert.ok(updates.every((update) => !("passwordHash" in update.data)), "failed login never rewrites a password hash");
+  assert.equal(updates.length, 0, "failed login never mutates the account");
   assert.equal(sessions.length, 0, "whitespace alternatives never create a session");
 
   const exact = await attempt("password123");
   assert.deepEqual({ ...exact }, { status: "success", message: "Welcome back", redirectTo: "/dogs" });
   assert.deepEqual(sessions, ["user-1"]);
-  assert.ok(updates.every((update) => !("passwordHash" in update.data)), "valid login also does not rewrite the password hash");
+  assert.equal(updates.length, 0, "valid login also does not rewrite the password hash");
 
   storedHash = passwords.hashPassword(" intentional spaces ");
   sessions.length = 0;

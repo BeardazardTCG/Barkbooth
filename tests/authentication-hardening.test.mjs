@@ -21,10 +21,10 @@ test("signup distinguishes success, duplicate email, and duplicate username path
   assert.match(actions, /status: "success", message: "Account created"/);
 });
 
-test("login distinguishes success, wrong password, unknown account, and lockout", () => {
+test("login distinguishes success, wrong password, and unknown account without account lockout", () => {
   assert.match(actions, /"user_not_found"/);
   assert.match(actions, /"password_mismatch"/);
-  assert.match(actions, /"account_locked"/);
+  assert.doesNotMatch(actions, /lockedUntil|MAX_FAILED_LOGINS|account_locked/);
   assert.match(actions, /await createSession\(user\.id, remember\)/);
 });
 
@@ -43,10 +43,24 @@ test("reset tokens are random, hashed at rest, expiring, and single use", () => 
   assert.match(actions, /"reused_token"/);
 });
 
-test("password reset changes the hash, unlocks the account, and invalidates sessions", () => {
-  assert.match(actions, /passwordHash: hashPassword\(password\), failedLoginAttempts: 0, lockedUntil: null/);
+test("password reset changes the hash and invalidates sessions", () => {
+  assert.match(actions, /passwordHash: hashPassword\(password\)/);
   assert.match(actions, /tx\.session\.deleteMany\(\{ where: \{ userId \} \}\)/);
   assert.match(actions, /tx\.passwordResetToken\.updateMany\(\{ where: \{ userId, usedAt: null \}/);
+});
+
+test("missing password-reset email configuration fails closed with the normal response", async () => {
+  const emailSource = await readFile(new URL("../lib/auth/email.ts", import.meta.url), "utf8");
+  assert.match(emailSource, /process\.env\.APP_URL/);
+  assert.match(emailSource, /process\.env\.RESEND_API_KEY/);
+  assert.match(emailSource, /process\.env\.AUTH_EMAIL_FROM/);
+  assert.match(actions, /if \(!emailConfiguration\) \{[\s\S]*"configuration_error"[\s\S]*return generic/);
+});
+
+test("expired session cleanup cannot escape session validation", () => {
+  assert.match(sessions, /"expired_session_cleanup_failed"/);
+  assert.match(sessions, /"cookie_delete_failed"/);
+  assert.match(sessions, /catch \(error\)[\s\S]*return null/);
 });
 
 test("logout deletes the server session and browser cookie", () => {

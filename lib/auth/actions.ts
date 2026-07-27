@@ -5,14 +5,11 @@ import { Prisma } from "@prisma/client";
 import { createSession, deleteCurrentSession, SessionError } from "@/lib/auth/session";
 import { hashPassword, passwordHashStatus } from "@/lib/auth/password";
 import { createPasswordResetToken, hashPasswordResetToken } from "@/lib/auth/password-reset";
-import { sendPasswordResetEmail } from "@/lib/auth/email";
+import { passwordResetEmailConfiguration, sendPasswordResetEmail } from "@/lib/auth/email";
 import { logAuthDiagnostic } from "@/lib/auth/diagnostics";
 import { prisma } from "@/lib/prisma";
 import { isSupportedLocation } from "@/lib/locations";
 import type { ActionResult } from "@/lib/forms/action-result";
-
-const MAX_FAILED_LOGINS = 5;
-const LOCKOUT_MS = 15 * 60 * 1000;
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -102,24 +99,12 @@ export async function login(_prevState: ActionResult, formData: FormData): Promi
     logAuthDiagnostic("login", "user_not_found");
     return { status: "error", message: "Invalid email or password." };
   }
-  if (user.lockedUntil && user.lockedUntil > new Date()) {
-    logAuthDiagnostic("login", "account_locked");
-    return { status: "error", message: "Too many unsuccessful attempts. Reset your password or try again later." };
-  }
   const status = passwordHashStatus(password, user.passwordHash);
   if (status !== "match") {
-    const failedLoginAttempts = user.failedLoginAttempts + 1;
-    try {
-      await prisma.user.update({ where: { id: user.id }, data: { failedLoginAttempts, lockedUntil: failedLoginAttempts >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCKOUT_MS) : null } });
-    } catch (error) {
-      logAuthDiagnostic("login", "database_error", error);
-      return { status: "error", message: "We could not log you in right now. Please try again." };
-    }
     logAuthDiagnostic("login", status === "invalid" ? "password_reset_required" : "password_mismatch");
     return { status: "error", message: status === "invalid" ? "This account needs a password reset before it can log in." : "Invalid email or password." };
   }
   try {
-    await prisma.user.update({ where: { id: user.id }, data: { failedLoginAttempts: 0, lockedUntil: null } });
     await createSession(user.id, remember);
   } catch (error) {
     if (error instanceof SessionError) sessionFailure("login", error);
@@ -133,6 +118,11 @@ export async function requestPasswordReset(_prevState: ActionResult, formData: F
   const email = asString(formData.get("email")).toLowerCase();
   const generic = { status: "success", message: "If an account exists for that email, a reset link has been sent.", reset: true } as const;
   if (!email) return generic;
+  const emailConfiguration = passwordResetEmailConfiguration();
+  if (!emailConfiguration) {
+    logAuthDiagnostic("password_reset_request", "configuration_error");
+    return generic;
+  }
   let user;
   try {
     user = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true } });
@@ -147,9 +137,7 @@ export async function requestPasswordReset(_prevState: ActionResult, formData: F
       prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } }),
       prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: reset.tokenHash, expiresAt: reset.expiresAt } }),
     ]);
-    const baseUrl = process.env.APP_URL;
-    if (!baseUrl) throw new Error("APP_URL is not configured.");
-    await sendPasswordResetEmail(user.email, `${baseUrl.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(reset.token)}`);
+    await sendPasswordResetEmail(emailConfiguration, user.email, `${emailConfiguration.appUrl}/reset-password?token=${encodeURIComponent(reset.token)}`);
   } catch (error) {
     await prisma.passwordResetToken.deleteMany({ where: { tokenHash: reset.tokenHash } }).catch(() => undefined);
     logAuthDiagnostic("password_reset_request", "delivery_failed", error);
@@ -178,7 +166,7 @@ export async function resetPassword(_prevState: ActionResult, formData: FormData
     const used = await prisma.$transaction(async (tx) => {
       const claimed = await tx.passwordResetToken.updateMany({ where: { id: reset.id, usedAt: null, expiresAt: { gt: new Date() } }, data: { usedAt: new Date() } });
       if (claimed.count !== 1) return false;
-      await tx.user.update({ where: { id: userId }, data: { passwordHash: hashPassword(password), failedLoginAttempts: 0, lockedUntil: null } });
+      await tx.user.update({ where: { id: userId }, data: { passwordHash: hashPassword(password) } });
       await tx.session.deleteMany({ where: { userId } });
       await tx.passwordResetToken.updateMany({ where: { userId, usedAt: null }, data: { usedAt: new Date() } });
       return true;
