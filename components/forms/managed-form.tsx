@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, type FormEvent, type ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { confirmDestructiveAction, emptyFileFieldState, fileFieldState, formStatusMessage, initialActionResult, visibleActionResult, type ActionResult } from "@/lib/forms/action-result";
 import { useFormFeedback } from "@/components/forms/form-feedback-provider";
+import { runActionOnce } from "@/lib/forms/transport-recovery";
 
-type ContextValue = { dirty: boolean; resetVersion: number };
-const ManagedFormContext = createContext<ContextValue>({ dirty: false, resetVersion: 0 });
+type ContextValue = { dirty: boolean; pending: boolean; resetVersion: number };
+const ManagedFormContext = createContext<ContextValue>({ dirty: false, pending: false, resetVersion: 0 });
 
 export function ManagedForm({ action, children, className = "", encType, warnOnLeave = true, resetOnSuccess = false, focusSuccess = false, pendingMessage = "Saving…" }: {
   action: (previous: ActionResult, data: FormData) => Promise<ActionResult>;
@@ -19,7 +19,8 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
   focusSuccess?: boolean;
   pendingMessage?: string;
 }) {
-  const [state, formAction] = useFormState(action, initialActionResult);
+  const [state, setState] = useState<ActionResult>(initialActionResult);
+  const [pending, setPending] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [editedAfterSuccess, setEditedAfterSuccess] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
@@ -27,6 +28,28 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
   const statusRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { dismiss, notify } = useFormFeedback();
+
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const key = `bb-form-draft:${window.location.pathname}`;
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw) as { signature: string; values: [string, string][] };
+      const controls = Array.from(form.elements).filter((element): element is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement => element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement);
+      const signature = controls.map((control) => control.name).filter(Boolean).sort().join("|");
+      if (draft.signature !== signature) return;
+      for (const [name, value] of draft.values) {
+        const control = controls.find((candidate) => candidate.name === name && candidate.type !== "password" && candidate.type !== "file" && candidate.type !== "hidden");
+        if (control) control.value = value;
+      }
+      sessionStorage.removeItem(key);
+      setDirty(true);
+    } catch {
+      sessionStorage.removeItem(key);
+    }
+  }, []);
 
   useEffect(() => {
     if (!warnOnLeave || !dirty) return;
@@ -62,8 +85,34 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
     }
   };
 
-  return <ManagedFormContext.Provider value={{ dirty, resetVersion }}>
-    <form ref={formRef} action={formAction} encType={encType} className={className} onInput={markDirty} onChange={markDirty}>
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (pending) return;
+    setPending(true);
+    const outcome = await runActionOnce(() => action(state, new FormData(event.currentTarget)));
+    if (outcome.error) {
+      console.error("Server Action transport failure", {
+        staleDeployment: outcome.reload,
+        buildId: process.env.NEXT_PUBLIC_RENDER_GIT_COMMIT ?? "unknown",
+        route: window.location.pathname,
+      });
+      setState({ status: "error", message: outcome.error });
+      if (outcome.reload) {
+        const form = event.currentTarget;
+        const controls = Array.from(form.elements).filter((element): element is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement => element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement);
+        const signature = controls.map((control) => control.name).filter(Boolean).sort().join("|");
+        const values = controls.filter((control) => control.name && !["password", "file", "hidden", "checkbox", "radio"].includes(control.type)).map((control) => [control.name, control.value]);
+        sessionStorage.setItem(`bb-form-draft:${window.location.pathname}`, JSON.stringify({ signature, values }));
+        window.setTimeout(() => window.location.reload(), 1600);
+      }
+    } else {
+      setState(outcome.result);
+    }
+    setPending(false);
+  };
+
+  return <ManagedFormContext.Provider value={{ dirty, pending, resetVersion }}>
+    <form ref={formRef} encType={encType} className={className} onSubmit={submit} onInput={markDirty} onChange={markDirty}>
       {children}
       <FormStatusMessage state={visibleActionResult(state, editedAfterSuccess)} statusRef={statusRef} pendingMessage={pendingMessage} />
     </form>
@@ -71,16 +120,14 @@ export function ManagedForm({ action, children, className = "", encType, warnOnL
 }
 
 export function FormSubmitButton({ label, pendingLabel = "Saving…", requireDirty = true, className = "", confirmMessage }: { label: string; pendingLabel?: string; requireDirty?: boolean; className?: string; confirmMessage?: string }) {
-  const { pending } = useFormStatus();
-  const { dirty } = useContext(ManagedFormContext);
+  const { dirty, pending } = useContext(ManagedFormContext);
   return <button type="submit" disabled={pending || (requireDirty && !dirty)} aria-disabled={pending || (requireDirty && !dirty)} onClick={(event) => { if (!confirmDestructiveAction(confirmMessage, window.confirm)) event.preventDefault(); }} className={`min-h-11 rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
     {pending ? pendingLabel : label}
   </button>;
 }
 
 function FormStatusMessage({ state, statusRef, pendingMessage }: { state: ActionResult; statusRef: React.RefObject<HTMLDivElement>; pendingMessage: string }) {
-  const { pending } = useFormStatus();
-  const { dirty } = useContext(ManagedFormContext);
+  const { dirty, pending } = useContext(ManagedFormContext);
   const message = formStatusMessage(pending, pendingMessage, state, dirty);
   const isError = state.status === "error";
   return <div ref={statusRef} tabIndex={isError ? -1 : undefined} role={isError ? "alert" : "status"} aria-live={isError ? "assertive" : "polite"} aria-atomic="true" className={`rounded-2xl px-4 py-3 text-sm font-bold ${isError ? "bg-red-50 text-red-800" : state.status === "success" ? "bg-green-50 text-green-800" : dirty || pending ? "bg-amber-50 text-amber-900" : "text-charcoal/60"}`}>

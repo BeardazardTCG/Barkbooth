@@ -11,9 +11,17 @@ export function hashPassword(password: string) {
 }
 
 export function verifyPassword(password: string, storedHash: string) {
+  return passwordHashStatus(password, storedHash) === "match";
+}
+
+export type PasswordHashStatus = "match" | "mismatch" | "invalid";
+
+export function passwordHashStatus(password: string, storedHash: string | null | undefined): PasswordHashStatus {
+  if (typeof storedHash !== "string") return "invalid";
   const [iterations, salt, hash] = storedHash.split(":");
-  if (!iterations || !salt || !hash) return false;
-  const candidate = pbkdf2Sync(password, salt, Number(iterations), KEY_LENGTH, DIGEST);
+  const iterationCount = Number(iterations);
+  if (!iterations || !salt || !hash || !Number.isSafeInteger(iterationCount) || iterationCount < 1 || iterationCount > 1_000_000 || !/^[a-f\d]+$/i.test(salt) || !/^[a-f\d]+$/i.test(hash) || hash.length !== KEY_LENGTH * 2) return "invalid";
+  const candidate = pbkdf2Sync(password, salt, iterationCount, KEY_LENGTH, DIGEST);
   const original = Buffer.from(hash, "hex");
-  return original.length === candidate.length && timingSafeEqual(original, candidate);
+  return original.length === candidate.length && timingSafeEqual(original, candidate) ? "match" : "mismatch";
 }

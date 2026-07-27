@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { FormFeedbackProvider } from "@/components/forms/form-feedback-provider";
 
 export const metadata: Metadata = { title: "Bark Booth", description: "Create a lifelong Bark Booth Identity for your dog with a unique registry number and structured canine record." };
+// Session-aware and management pages must always be rendered for the current request.
+export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getCurrentUser();

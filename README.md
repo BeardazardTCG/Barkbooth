@@ -36,3 +36,9 @@ Dog profile photos and record documents are stored in a private S3-compatible bu
 Create the bucket before deployment, keep public access disabled, and apply a lifecycle policy for incomplete multipart uploads if required by your provider. Files are uploaded and read only by the server; no browser CORS policy or public bucket URL is required.
 
 Upload validation enforces the declared MIME allowlist, byte-size limit, and expected leading file signature. It does not decode images, validate image dimensions, or guarantee full-file image/PDF integrity.
+
+## Deployment and caching
+
+The root layout is request-rendered because it reads the signed-in session, and authenticated, login, signup, registration, and dog-management HTML must not be stored by a CDN. Render or any proxy in front of Bark Booth should pass Next.js cache headers through unchanged and must not add cache rules for HTML responses, `POST` requests, or Server Action responses. Static files under `/_next/static` may use their fingerprinted immutable caching. Bark Booth does not install a service worker.
+
+An open browser tab can contain a Server Action identifier from the previous release. Managed forms detect that transport failure, explain that Bark Booth was updated, and reload the current GET page without repeating the mutation. The application error boundary offers the same safe manual recovery for native action forms. Set `NEXT_PUBLIC_RENDER_GIT_COMMIT` at build time (and `RENDER_GIT_COMMIT` at runtime) to include a non-sensitive release identifier in diagnostics; logs never include submitted form values, credentials, tokens, or files.

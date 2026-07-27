@@ -14,7 +14,8 @@ const { breedSelectionFromProps } = await import("../lib/dogs/breed-selection.ts
 
 test("shared form system exposes dirty, pending, success, and error states", () => {
   assert.match(actionResults, /Unsaved changes/);
-  assert.match(managed, /useFormStatus/);
+  assert.match(managed, /const \[pending, setPending\] = useState\(false\)/);
+  assert.match(managed, /runActionOnce/);
   assert.match(managed, /state\.status === "success"/);
   assert.match(managed, /role=\{isError \? "alert" : "status"\}/);
   assert.match(managed, /aria-live=\{isError \? "assertive" : "polite"\}/);

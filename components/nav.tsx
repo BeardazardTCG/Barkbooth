@@ -8,8 +8,9 @@ import { isNavigationRouteActive, isOwnerWorkspaceRoute } from "@/lib/app-routes
 
 type Viewer = { displayName: string; username: string } | null;
 const publicLinks = [["Registry", "/profiles"], ["Activities", "/competitions"], ["Directory", "/directory"], ["How it works", "/about"]];
-const appLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register Dog", "/register-dog", "plus"], ["Registry", "/profiles", "search"], ["Activities", "/competitions", "award"], ["Directory", "/directory", "directory"]];
-const mobileLinks = [["Home", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Registry", "/profiles", "search"], ["Account", "/account", "person"]];
+const appLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register Dog", "/register-dog", "plus"]];
+const discoveryLinks = [["Public homepage", "/", "globe"], ["Registry", "/profiles", "search"], ["Activities", "/competitions", "award"], ["Directory", "/directory", "directory"]];
+const mobileLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Bark Booth", "/", "globe"], ["Account", "/account", "person"]];
 const footerLinks = [["Terms", "/legal/terms-and-conditions"], ["Privacy", "/legal/privacy-policy"], ["Cookies", "/legal/cookie-policy"], ["Image consent", "/legal/image-usage-consent"], ["Help", "/faq"]];
 
 function Icon({ name }: { name: string }) {
@@ -18,7 +19,7 @@ function Icon({ name }: { name: string }) {
     dogs: <><circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="5" cy="13" r="2"/><circle cx="19" cy="13" r="2"/><path d="M8 18c0-3 2-5 4-5s4 2 4 5c0 2-2 3-4 3s-4-1-4-3Z"/></>,
     plus: <><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></>, search: <><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></>,
     award: <><circle cx="12" cy="9" r="6"/><path d="m8 14-2 7 6-3 6 3-2-7"/></>, directory: <><path d="M4 21V5l8-3 8 3v16M8 8h1m6 0h1M8 12h1m6 0h1M8 16h8"/></>,
-    person: <><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></>, logout: <><path d="M10 4H4v16h6M14 8l4 4-4 4m4-4H9"/></>
+    person: <><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></>, globe: <><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></>, logout: <><path d="M10 4H4v16h6M14 8l4 4-4 4m4-4H9"/></>
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
@@ -34,7 +35,7 @@ function PublicHeader({ viewer }: { viewer: Viewer }) {
 }
 
 function AppSidebar({ viewer, pathname }: { viewer: NonNullable<Viewer>; pathname: string }) {
-  return <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-navy px-4 py-5 text-white lg:flex"><Link href="/dashboard" className="px-2"><BarkBoothLogo inverse /></Link><nav aria-label="Owner workspace" className="mt-9 grid gap-1">{appLinks.map(([label, href, icon]) => { const active = isNavigationRouteActive(pathname, href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`app-nav-link ${active ? "bg-white/[0.12] text-white" : "text-skysoft/75 hover:bg-white/[0.08] hover:text-white"}`}><Icon name={icon}/>{label}</Link>; })}</nav><div className="mt-auto border-t border-white/10 pt-4"><Link href="/account" aria-current={pathname.startsWith("/account") ? "page" : undefined} className={`app-nav-link ${pathname.startsWith("/account") ? "bg-white/[0.12]" : ""}`}><Initials viewer={viewer}/><span className="min-w-0"><span className="block truncate text-sm font-bold">{viewer.displayName}</span><span className="block truncate text-xs text-skysoft/60">Account & settings</span></span></Link><form action={logout}><button className="app-nav-link mt-1 w-full text-skysoft/70"><Icon name="logout"/>Log out</button></form></div></aside>;
+  return <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-navy px-4 py-5 text-white lg:flex"><Link href="/" className="px-2" aria-label="Visit Bark Booth public homepage"><BarkBoothLogo inverse /></Link><nav aria-label="Owner workspace" className="mt-9 grid gap-1"><p className="registry-label px-3 pb-2 !text-skysoft/50">Owner workspace</p>{appLinks.map(([label, href, icon]) => { const active = isNavigationRouteActive(pathname, href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`app-nav-link ${active ? "bg-white/[0.12] text-white" : "text-skysoft/75 hover:bg-white/[0.08] hover:text-white"}`}><Icon name={icon}/>{label}</Link>; })}<p className="registry-label mt-6 px-3 pb-2 !text-skysoft/50">Discover Bark Booth</p>{discoveryLinks.map(([label, href, icon]) => <Link key={href} href={href} className="app-nav-link text-skysoft/75 hover:bg-white/[0.08] hover:text-white"><Icon name={icon}/>{label}</Link>)}</nav><div className="mt-auto border-t border-white/10 pt-4"><Link href="/account" aria-current={pathname.startsWith("/account") ? "page" : undefined} className={`app-nav-link ${pathname.startsWith("/account") ? "bg-white/[0.12]" : ""}`}><Initials viewer={viewer}/><span className="min-w-0"><span className="block truncate text-sm font-bold">{viewer.displayName}</span><span className="block truncate text-xs text-skysoft/60">Account & settings</span></span></Link><form action={logout}><button className="app-nav-link mt-1 w-full text-skysoft/70"><Icon name="logout"/>Log out</button></form></div></aside>;
 }
 
 function MobileAppNav({ pathname }: { pathname: string }) { return <nav aria-label="Mobile owner navigation" className="mobile-app-nav lg:hidden">{mobileLinks.map(([label, href, icon]) => { const active = isNavigationRouteActive(pathname, href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`mobile-app-link ${active ? "text-navy" : "text-slate"}`}><Icon name={icon}/><span>{label}</span></Link>; })}</nav>; }
@@ -44,6 +45,6 @@ function PublicFooter() { return <footer className="border-t border-navy/10 bg-n
 export function SiteChrome({ viewer, children }: { viewer: Viewer; children: ReactNode }) {
   const pathname = usePathname();
   const isApp = !!viewer && isOwnerWorkspaceRoute(pathname);
-  if (isApp) return <><AppSidebar viewer={viewer} pathname={pathname}/><div className="min-h-screen lg:pl-64"><header className="flex h-16 items-center border-b border-navy/10 bg-white px-5 lg:hidden"><Link href="/dashboard"><BarkBoothLogo /></Link></header><main className="app-main">{children}</main><footer className="app-footer">Bark Booth Canine Registry · <Link href="/legal/privacy-policy">Privacy</Link> · <Link href="/legal/terms-and-conditions">Terms</Link></footer></div><MobileAppNav pathname={pathname}/></>;
+  if (isApp) return <><AppSidebar viewer={viewer} pathname={pathname}/><div className="min-h-screen lg:pl-64"><header className="flex h-16 items-center border-b border-navy/10 bg-white px-5 lg:hidden"><Link href="/" aria-label="Visit Bark Booth public homepage"><BarkBoothLogo /></Link></header><main className="app-main">{children}</main><footer className="app-footer">Bark Booth Canine Registry · <Link href="/legal/privacy-policy">Privacy</Link> · <Link href="/legal/terms-and-conditions">Terms</Link></footer></div><MobileAppNav pathname={pathname}/></>;
   return <><PublicHeader viewer={viewer}/><main className="public-main">{children}</main><PublicFooter/></>;
 }
