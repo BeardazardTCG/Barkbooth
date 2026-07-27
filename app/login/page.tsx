@@ -8,6 +8,7 @@ export default function LoginPage() {
     <Card className="max-w-xl">
       <div className="mb-4 border-b border-navy/10 pb-4"><BarkBoothLogo /></div>
       <LoginForm />
+      <p className="mt-4 text-sm font-bold"><Link href="/forgot-password" className="text-info">Forgot your password?</Link></p>
       <p className="mt-5 text-sm font-bold text-charcoal/60">Need an account? <Link href="/signup" className="text-info">Sign up</Link>.</p>
     </Card>
   </Section>;

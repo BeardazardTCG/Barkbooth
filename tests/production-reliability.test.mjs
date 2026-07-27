@@ -92,6 +92,9 @@ test("login accepts only the exact password and never updates a hash after misma
     "next/navigation": { redirect() {} },
     "@/lib/auth/session": { createSession: async (id) => sessions.push(id), deleteCurrentSession: async () => {} },
     "@/lib/auth/password": passwords,
+    "@/lib/auth/password-reset": { createPasswordResetToken() {}, hashPasswordResetToken() {} },
+    "@/lib/auth/email": { passwordResetEmailConfiguration: () => null, sendPasswordResetEmail: async () => {} },
+    "@/lib/auth/diagnostics": { logAuthDiagnostic() {} },
     "@/lib/prisma": { prisma: { user: {
       findUnique: async ({ where }) => ({ id: "user-1", email: where.email, passwordHash: storedHash }),
       update: async (args) => updates.push(args),
@@ -110,7 +113,7 @@ test("login accepts only the exact password and never updates a hash after misma
     const result = await attempt(candidate);
     assert.deepEqual({ ...result }, { status: "error", message: "Invalid email or password." });
   }
-  assert.equal(updates.length, 0, "failed login never rewrites a password hash");
+  assert.equal(updates.length, 0, "failed login never mutates the account");
   assert.equal(sessions.length, 0, "whitespace alternatives never create a session");
 
   const exact = await attempt("password123");
@@ -125,14 +128,14 @@ test("login accepts only the exact password and never updates a hash after misma
   const exactSpaces = await attempt(" intentional spaces ");
   assert.deepEqual({ ...exactSpaces }, { status: "success", message: "Welcome back", redirectTo: "/dogs" });
   assert.deepEqual(sessions, ["user-1"], "an intentionally spaced password authenticates only exactly");
-  assert.equal(updates.length, 0);
+  assert.ok(updates.every((update) => !("passwordHash" in update.data)));
 
   storedHash = "malformed-historical-hash";
   sessions.length = 0;
   const malformed = await attempt("password123");
-  assert.deepEqual({ ...malformed }, { status: "error", message: "Invalid email or password." });
+  assert.deepEqual({ ...malformed }, { status: "error", message: "This account needs a password reset before it can log in." });
   assert.equal(sessions.length, 0);
-  assert.equal(updates.length, 0);
+  assert.ok(updates.every((update) => !("passwordHash" in update.data)));
 });
 
 test("authentication normalizes email but preserves submitted password characters", async () => {
