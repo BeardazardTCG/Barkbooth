@@ -4,6 +4,9 @@ export function validateEvidenceUrl(value: string) {
   let url: URL; try { url = new URL(value); } catch { throw new Error("Enter a valid evidence URL."); }
   if (url.protocol !== "https:" || url.username || url.password) throw new Error("Evidence links must use HTTPS.");
   const host = url.hostname.toLowerCase();
-  if (blockedHosts.test(host) || host === "0.0.0.0" || host === "::1" || host === "[::1]" || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) throw new Error("Private or local network URLs are not allowed.");
+  const privateIpv4 = /^(0\.|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  const bracketless = host.replace(/^\[|\]$/g, "");
+  const privateIpv6 = bracketless === "::1" || /^(f[cd]|fe[89ab])/i.test(bracketless) || /^::ffff:(0\.|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(bracketless);
+  if (blockedHosts.test(host) || privateIpv4 || privateIpv6) throw new Error("Private or local network URLs are not allowed.");
   return url.toString();
 }

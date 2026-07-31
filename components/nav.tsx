@@ -11,7 +11,7 @@ type Viewer = { displayName: string; username: string } | null;
 const publicLinks = [["Registry", "/profiles"], ["Activities", "/competitions"], ["Directory", "/directory"], ["How it works", "/about"], ["Support", "/support"]];
 const appLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register Dog", "/register-dog", "plus"], ["Competitions", "/competitions", "award"], ["Support", "/support", "person"]];
 const discoveryLinks = [["Public homepage", "/", "globe"], ["Registry", "/profiles", "search"], ["Activities", "/competitions", "award"], ["Directory", "/directory", "directory"]];
-const mobileLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Bark Booth", "/", "globe"], ["Account", "/account", "person"]];
+const mobileLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Competitions", "/competitions", "award"], ["Account", "/account", "person"]];
 const footerLinks = [["Terms", "/legal/terms-and-conditions"], ["Privacy", "/legal/privacy-policy"], ["Cookies", "/legal/cookie-policy"], ["Image consent", "/legal/image-usage-consent"], ["Help", "/faq"], ["Support", "/support"]];
 
 function Icon({ name }: { name: string }) {
