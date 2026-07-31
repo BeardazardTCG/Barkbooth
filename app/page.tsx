@@ -1,4 +1,6 @@
 import { BarkBoothLogo } from "@/components/nav";
+import { LaunchStatusBanner } from "@/components/launch-status-banner";
+import { launchConfig } from "@/lib/launch-config";
 import { ButtonLink, Card, Section } from "@/components/ui";
 
 const identityAreas = [
@@ -16,7 +18,7 @@ const journeys = [
 ];
 
 export default function HomePage() {
-  return <>
+  return <><div className="mx-auto max-w-7xl px-5 pt-6"><LaunchStatusBanner /></div>
     <section className="px-5 pb-8 pt-8 sm:px-8 md:grid md:grid-cols-[1fr_0.85fr] md:items-center md:gap-8 md:py-14">
       <div>
         <p className="inline-flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm font-bold text-info shadow-sm"><BarkBoothLogo iconOnly /> Bark Booth · Canine Identity</p>
@@ -28,7 +30,7 @@ export default function HomePage() {
     </section>
     <Section eyebrow="The lifelong record" title="Everything important stays connected"><div className="grid gap-4 md:grid-cols-4">{identityAreas.map(([title, detail]) => <Card key={title}><h2 className="text-xl font-bold text-navy">{title}</h2><p className="mt-2 leading-7 text-charcoal/65">{detail}</p></Card>)}</div></Section>
     <Section eyebrow="Every dog’s journey" title="Built for the many people and chapters in a dog’s life"><div className="grid gap-4 md:grid-cols-4">{journeys.map(([title, detail]) => <Card key={title}><h2 className="text-xl font-bold text-navy">{title}</h2><p className="mt-2 leading-7 text-charcoal/65">{detail}</p></Card>)}</div></Section>
-    <Section eyebrow="Activities and competitions" title="Grow the identity through genuine achievements"><Card className="bg-gradient-to-br from-white to-skysoft/60"><p className="text-lg leading-8 text-charcoal/70">Bark Booth competitions and activities connect to registered dog identities. When live events open, genuine entries, results, badges and rosettes will attach to the participating dog’s profile—never to an invented profile or result.</p><div className="mt-5"><ButtonLink href="/competitions">Explore competitions</ButtonLink></div></Card></Section>
+    <Section eyebrow="Activities and competitions" title="Grow the identity through genuine achievements"><Card className="bg-gradient-to-br from-white to-skysoft/60"><p className="mb-3 font-bold text-navy">{launchConfig.copy.competition}</p><p className="text-lg leading-8 text-charcoal/70">Bark Booth competitions and activities connect to registered dog identities. When live events open, genuine entries, results, badges and rosettes will attach to the participating dog’s profile—never to an invented profile or result.</p><div className="mt-5"><ButtonLink href="/competitions">Explore competitions</ButtonLink></div></Card></Section>
     <Section eyebrow="Roles and trusted care" title="Support for breeders, rescues, fosters and professionals"><Card><p className="text-lg leading-8 text-charcoal/70">Members can apply for supported roles, and approved dog professionals can appear in the public directory. Controlled sharing lets owners give the right level of access to people involved in a dog’s care without making private information public.</p><div className="mt-5 flex flex-wrap gap-3"><ButtonLink href="/directory">Explore the directory</ButtonLink><ButtonLink href="/about" variant="secondary">How Bark Booth works</ButtonLink></div></Card></Section>
   </>;
 }

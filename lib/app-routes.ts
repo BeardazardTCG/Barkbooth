@@ -1,5 +1,5 @@
 /** Routes that belong to the signed-in owner workspace when a viewer is present. */
-const ownerRoutePrefixes = ["/account", "/dashboard", "/dogs", "/register-dog"] as const;
+const ownerRoutePrefixes = ["/account", "/admin", "/dashboard", "/dogs", "/register-dog", "/support"] as const;
 const publicRoutePrefixes = ["/", "/profiles", "/competitions", "/directory", "/about"] as const;
 
 export function isOwnerWorkspaceRoute(pathname: string) {

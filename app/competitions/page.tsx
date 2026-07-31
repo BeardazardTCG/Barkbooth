@@ -1,10 +1,30 @@
-import { EmptyState } from "@/components/empty-state";
 import { ButtonLink, Card, Section } from "@/components/ui";
+import { competitionAcceptsEntries, realEntrantCount } from "@/lib/competitions";
+import { launchConfig } from "@/lib/launch-config";
+import { prisma } from "@/lib/prisma";
 
-export default function CompetitionsPage() {
+export default async function CompetitionsPage() {
+  const competitions = await prisma.competition.findMany({
+    where: { status: { in: ["PUBLISHED", "OPEN", "CLOSED", "JUDGING", "COMPLETED"] } },
+    include: { entries: { select: { status: true } } },
+    orderBy: { opensAt: "desc" },
+  });
+
   return <>
-    <Section eyebrow="Competitions" title="Achievements connected to a lifelong identity"><Card><p className="text-lg leading-8 text-charcoal/70">Competitions are part of the wider Bark Booth platform. Each participating dog uses their permanent identity, so genuine entries, results, badges and rosettes can become trusted chapters in that dog’s profile.</p><div className="mt-5 flex flex-wrap gap-3"><ButtonLink href="/register-dog">Register a dog</ButtonLink><ButtonLink href="/profiles" variant="secondary">Search registry</ButtonLink></div></Card></Section>
-    <Section eyebrow="Open competitions" title="Current opportunities"><EmptyState title="No competitions are open">Published competitions will appear here when entry details, rules and fulfilment are ready. There are currently no entries, closing dates, fees, prizes or results to display.</EmptyState></Section>
-    <Section eyebrow="How it connects" title="One record from entry to achievement"><div className="grid gap-4 md:grid-cols-3"><Card><h2 className="text-xl font-bold text-navy">Registered participants</h2><p className="mt-2 text-charcoal/65">Every entry will be associated with a real registered dog.</p></Card><Card><h2 className="text-xl font-bold text-navy">Published outcomes</h2><p className="mt-2 text-charcoal/65">Results will be shown only after an actual competition has been judged.</p></Card><Card><h2 className="text-xl font-bold text-navy">Lasting achievements</h2><p className="mt-2 text-charcoal/65">Earned badges and rosettes will remain connected to the canonical dog profile.</p></Card></div></Section>
+    <Section eyebrow="Free photo competitions" title="Bark Booth competitions">
+      <Card className="bg-gradient-to-br from-white to-skysoft/60"><p className="text-lg leading-8 text-charcoal/70">{launchConfig.copy.competition}</p></Card>
+    </Section>
+    <Section eyebrow="Current and completed" title="Genuine competitions">
+      {competitions.length ? <div className="grid gap-5 md:grid-cols-2">{competitions.map((competition) => {
+        const acceptingEntries = competitionAcceptsEntries(competition.status, competition.opensAt, competition.closesAt);
+        return <Card key={competition.id}>
+          <div className="flex justify-between gap-3"><div><p className="registry-label">{competition.eligibility === "UK_ONLY" ? "UK only" : "International"} · Free entry</p><h2 className="mt-2 text-2xl font-bold text-navy">{competition.title}</h2></div><span className="font-bold text-info">{realEntrantCount(competition.entries)} entries</span></div>
+          <p className="mt-3 text-charcoal/70">{competition.description}</p>
+          <p className="mt-3 font-bold text-navy">Prize: {competition.prizeSummary}</p>
+          <p className="mt-2 text-sm">Opens {competition.opensAt.toLocaleDateString("en-GB")} · Closes {competition.closesAt.toLocaleDateString("en-GB")}</p>
+          <div className="mt-5"><ButtonLink href={`/competitions/${competition.slug}`}>{acceptingEntries ? "Enter now" : "View competition"}</ButtonLink></div>
+        </Card>;
+      })}</div> : <Card><h2 className="text-xl font-bold text-navy">No public competitions yet</h2><p className="mt-2 text-charcoal/65">An administrator can prepare the first genuine competition in draft without publishing it.</p></Card>}
+    </Section>
   </>;
 }

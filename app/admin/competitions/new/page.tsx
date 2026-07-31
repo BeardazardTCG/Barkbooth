@@ -1,0 +1,2 @@
+import { requireUser } from "@/lib/auth/session";import { redirect } from "next/navigation";import { Section } from "@/components/ui";import { CompetitionForm } from "@/components/competition-admin-form";
+export default async function New(){const u=await requireUser();if(u.role!=="ADMIN")redirect("/dashboard");return <Section eyebrow="Restricted administration" title="Create competition"><CompetitionForm/></Section>}

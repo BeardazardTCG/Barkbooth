@@ -4,14 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/auth/actions";
 import type { ReactNode } from "react";
+import { supportConfig } from "@/lib/launch-config";
 import { isNavigationRouteActive, isOwnerWorkspaceRoute } from "@/lib/app-routes";
 
 type Viewer = { displayName: string; username: string } | null;
-const publicLinks = [["Registry", "/profiles"], ["Activities", "/competitions"], ["Directory", "/directory"], ["How it works", "/about"]];
-const appLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register Dog", "/register-dog", "plus"]];
+const publicLinks = [["Registry", "/profiles"], ["Activities", "/competitions"], ["Directory", "/directory"], ["How it works", "/about"], ["Support", "/support"]];
+const appLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register Dog", "/register-dog", "plus"], ["Competitions", "/competitions", "award"], ["Support", "/support", "person"]];
 const discoveryLinks = [["Public homepage", "/", "globe"], ["Registry", "/profiles", "search"], ["Activities", "/competitions", "award"], ["Directory", "/directory", "directory"]];
-const mobileLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Bark Booth", "/", "globe"], ["Account", "/account", "person"]];
-const footerLinks = [["Terms", "/legal/terms-and-conditions"], ["Privacy", "/legal/privacy-policy"], ["Cookies", "/legal/cookie-policy"], ["Image consent", "/legal/image-usage-consent"], ["Help", "/faq"]];
+const mobileLinks = [["Dashboard", "/dashboard", "home"], ["My Dogs", "/dogs", "dogs"], ["Register", "/register-dog", "plus"], ["Competitions", "/competitions", "award"], ["Account", "/account", "person"]];
+const footerLinks = [["Terms", "/legal/terms-and-conditions"], ["Privacy", "/legal/privacy-policy"], ["Cookies", "/legal/cookie-policy"], ["Image consent", "/legal/image-usage-consent"], ["Help", "/faq"], ["Support", "/support"]];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, ReactNode> = {
@@ -40,7 +41,7 @@ function AppSidebar({ viewer, pathname }: { viewer: NonNullable<Viewer>; pathnam
 
 function MobileAppNav({ pathname }: { pathname: string }) { return <nav aria-label="Mobile owner navigation" className="mobile-app-nav lg:hidden">{mobileLinks.map(([label, href, icon]) => { const active = isNavigationRouteActive(pathname, href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`mobile-app-link ${active ? "text-navy" : "text-slate"}`}><Icon name={icon}/><span>{label}</span></Link>; })}</nav>; }
 
-function PublicFooter() { return <footer className="border-t border-navy/10 bg-navy px-5 py-10 text-white"><div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1fr_1.5fr]"><div><BarkBoothLogo inverse/><p className="mt-4 max-w-md text-sm leading-6 text-skysoft/70">A trusted lifelong identity for every dog, with owner-controlled details and records that grow with their story.</p></div><div className="flex flex-wrap content-start gap-x-6 gap-y-3 md:justify-end">{footerLinks.map(([label, href]) => <Link key={href} href={href} className="text-sm font-semibold text-skysoft/75 hover:text-white">{label}</Link>)}</div></div></footer>; }
+function PublicFooter() { const support = supportConfig(); const configured = [["Instagram", support.instagramUrl], ["Facebook Page", support.facebookPageUrl], ["Facebook Group", support.facebookGroupUrl], ["Contact", support.businessEmail ? `mailto:${support.businessEmail}` : null], ["Support", support.supportEmail ? `mailto:${support.supportEmail}` : null]].filter((item): item is [string,string] => Boolean(item[1])); return <footer className="border-t border-navy/10 bg-navy px-5 py-10 text-white"><div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1fr_1.5fr]"><div><BarkBoothLogo inverse/><p className="mt-4 max-w-md text-sm leading-6 text-skysoft/70">A trusted lifelong identity for every dog, with owner-controlled details and records that grow with their story.</p></div><div className="flex flex-wrap content-start gap-x-6 gap-y-3 md:justify-end">{footerLinks.map(([label, href]) => <Link key={href} href={href} className="text-sm font-semibold text-skysoft/75 hover:text-white">{label}</Link>)}{configured.map(([label, href]) => <a key={label} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined} className="text-sm font-semibold text-skysoft/75 hover:text-white">{label}</a>)}</div></div></footer>; }
 
 export function SiteChrome({ viewer, children }: { viewer: Viewer; children: ReactNode }) {
   const pathname = usePathname();
