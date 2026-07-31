@@ -7,6 +7,7 @@ import { deleteObject, putObject } from "@/lib/storage";
 import { documentContentTypes, imageContentTypes, MAX_PROFILE_PHOTO_BYTES, MAX_RECORD_DOCUMENT_BYTES, storageKey, validateUpload } from "@/lib/uploads";
 import type { ActionResult } from "@/lib/forms/action-result";
 import { selectedDogTypes, selectedSex } from "@/lib/dogs/profile-options";
+import { validateEvidenceUrl } from "@/lib/evidence-links";
 
 function asString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -199,6 +200,28 @@ function actionErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error && /required|select|supported|smaller|not found|only manage/i.test(error.message) ? error.message : fallback;
 }
 
+async function addEvidenceLinkImpl(formData: FormData) {
+  const user = await requireUser();
+  const recordId = asString(formData.get("recordId"));
+  const record = await prisma.dogRecord.findUnique({ where: { id: recordId }, include: { dog: true } });
+  if (!record) throw new Error("Record not found.");
+  await requireDogOwner(record.dogId);
+  const providerLabel = asString(formData.get("providerLabel"));
+  if (!providerLabel || providerLabel.length > 120) throw new Error("Choose a provider label under 120 characters.");
+  const referenceNumber = asString(formData.get("referenceNumber"));
+  if (referenceNumber.length > 160) throw new Error("Reference number is too long.");
+  await prisma.dogRecordEvidenceLink.create({ data: { recordId, addedById: user.id, providerLabel, url: validateEvidenceUrl(asString(formData.get("url"))), referenceNumber: referenceNumber || null } });
+  revalidateDogSurfaces(record.dog.registryNumber);
+}
+
+async function removeEvidenceLinkImpl(formData: FormData) {
+  const link = await prisma.dogRecordEvidenceLink.findUnique({ where: { id: asString(formData.get("evidenceLinkId")) }, include: { record: { include: { dog: true } } } });
+  if (!link) throw new Error("Evidence link not found.");
+  await requireDogOwner(link.record.dogId);
+  await prisma.dogRecordEvidenceLink.delete({ where: { id: link.id } });
+  revalidateDogSurfaces(link.record.dog.registryNumber);
+}
+
 async function addDogRecordImpl(formData: FormData) {
   const dogId = asString(formData.get("dogId"));
   const dog = await requireDogOwner(dogId);
@@ -387,7 +410,9 @@ export async function updateOwnerEssentials(_previous: ActionResult, formData: F
 export async function removeDogRecord(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeDogRecordImpl(formData), "Record removed"); }
 export async function uploadDogProfilePhoto(_previous: ActionResult, formData: FormData) { return runPetAction(() => uploadDogProfilePhotoImpl(formData), formData.get("replacing") === "true" ? "Photo replaced" : "Photo uploaded", true); }
 export async function removeDogProfilePhoto(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeDogProfilePhotoImpl(formData), "Photo removed"); }
-export async function uploadRecordDocument(_previous: ActionResult, formData: FormData) { return runPetAction(() => uploadRecordDocumentImpl(formData), "Document uploaded", true); }
+export async function uploadRecordDocument(_previous: ActionResult, formData: FormData) { return runPetAction(() => uploadRecordDocumentImpl(formData), "Document uploaded", true).then((result) => result.status === "error" ? { ...result, message: "We could not accept this file. Try a PDF, JPG, PNG or WebP under 10 MB. If the provider offers a public result page, you can add its link instead." } : result); }
 export async function removeRecordDocument(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeRecordDocumentImpl(formData), "Document removed"); }
+export async function addEvidenceLink(_previous: ActionResult, formData: FormData) { return runPetAction(() => addEvidenceLinkImpl(formData), "External evidence added", true); }
+export async function removeEvidenceLink(_previous: ActionResult, formData: FormData) { return runPetAction(() => removeEvidenceLinkImpl(formData), "External evidence removed"); }
 export async function updateBehaviourLifestyle(_previous: ActionResult, formData: FormData) { return runPetAction(() => updateBehaviourLifestyleImpl(formData), "Behaviour and lifestyle saved"); }
 export async function updatePetDetails(_previous: ActionResult, formData: FormData) { return runPetAction(() => updatePetDetailsImpl(formData), "Pet details saved"); }

@@ -120,28 +120,59 @@ enum BehaviourAssessmentSource {
   VERIFIED_RESCUE_ASSESSED
 }
 
+enum UserRole {
+  MEMBER
+  ADMIN
+}
+
+enum CompetitionStatus {
+  DRAFT
+  PUBLISHED
+  OPEN
+  CLOSED
+  JUDGING
+  COMPLETED
+  CANCELLED
+}
+
+enum CompetitionEligibility {
+  UK_ONLY
+  INTERNATIONAL
+}
+
+enum CompetitionEntryStatus {
+  SUBMITTED
+  WITHDRAWN
+  DISQUALIFIED
+  FINALIST
+  WINNER
+}
+
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  passwordHash String
-  displayName  String
-  username     String         @unique
-  country      String
-  over16       Boolean
-  ownerStatuses OwnerStatus[]
-  roleApplications RoleApplication[]
-  reviewedRoleApplications RoleApplication[] @relation("RoleApplicationReviewer")
-  dogOwnerships DogOwnership[]
-  requestedDogAccess DogAccessRequest[] @relation("DogAccessRequester")
-  incomingDogAccess DogAccessRequest[] @relation("DogAccessTargetOwner")
-  reviewedDogAccess DogAccessRequest[] @relation("DogAccessReviewer")
-  revokedDogAccess DogAccessRequest[] @relation("DogAccessRevoker")
-  uploadedDogPhotos DogProfilePhoto[]
-  uploadedRecordDocuments DogRecordDocument[]
-  sessions     Session[]
-  passwordResetTokens PasswordResetToken[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id                       String                  @id @default(cuid())
+  email                    String                  @unique
+  passwordHash             String
+  displayName              String
+  username                 String                  @unique
+  country                  String
+  over16                   Boolean
+  ownerStatuses            OwnerStatus[]
+  roleApplications         RoleApplication[]
+  reviewedRoleApplications RoleApplication[]       @relation("RoleApplicationReviewer")
+  dogOwnerships            DogOwnership[]
+  requestedDogAccess       DogAccessRequest[]      @relation("DogAccessRequester")
+  incomingDogAccess        DogAccessRequest[]      @relation("DogAccessTargetOwner")
+  reviewedDogAccess        DogAccessRequest[]      @relation("DogAccessReviewer")
+  revokedDogAccess         DogAccessRequest[]      @relation("DogAccessRevoker")
+  uploadedDogPhotos        DogProfilePhoto[]
+  uploadedRecordDocuments  DogRecordDocument[]
+  sessions                 Session[]
+  passwordResetTokens      PasswordResetToken[]
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  role                     UserRole                @default(MEMBER)
+  evidenceLinks            DogRecordEvidenceLink[]
+  competitionEntries       CompetitionEntry[]
 }
 
 model OwnerStatus {
@@ -155,37 +186,37 @@ model OwnerStatus {
 }
 
 model RoleApplication {
-  id                 String                @id @default(cuid())
-  userId             String
-  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  requestedRole      RequestedRole
-  status             RoleApplicationStatus @default(DRAFT)
-  applicantType      String?
-  organisationName   String?
-  publicDisplayName  String?
-  website            String?
-  email              String?
-  showEmailPublicly  Boolean               @default(false)
-  phone              String?
-  serviceArea        String?
-  registrationNumber String?
-  charityNumber      String?
-  insuranceDetails   String?
-  qualifications     String?
+  id                   String                @id @default(cuid())
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestedRole        RequestedRole
+  status               RoleApplicationStatus @default(DRAFT)
+  applicantType        String?
+  organisationName     String?
+  publicDisplayName    String?
+  website              String?
+  email                String?
+  showEmailPublicly    Boolean               @default(false)
+  phone                String?
+  serviceArea          String?
+  registrationNumber   String?
+  charityNumber        String?
+  insuranceDetails     String?
+  qualifications       String?
   professionalCategory ProfessionalCategory?
-  breeds             String?
-  description        String?
-  evidenceNotes      String?
-  submittedAt        DateTime?
-  reviewedAt         DateTime?
-  reviewedById       String?
-  reviewedBy         User?                 @relation("RoleApplicationReviewer", fields: [reviewedById], references: [id])
-  rejectionReason    String?
-  isFeatured         Boolean               @default(false)
-  featuredUntil      DateTime?
-  promotionTier      PromotionTier         @default(NONE)
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  breeds               String?
+  description          String?
+  evidenceNotes        String?
+  submittedAt          DateTime?
+  reviewedAt           DateTime?
+  reviewedById         String?
+  reviewedBy           User?                 @relation("RoleApplicationReviewer", fields: [reviewedById], references: [id])
+  rejectionReason      String?
+  isFeatured           Boolean               @default(false)
+  featuredUntil        DateTime?
+  promotionTier        PromotionTier         @default(NONE)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([userId])
   @@index([requestedRole])
@@ -195,59 +226,60 @@ model RoleApplication {
 }
 
 model DogIdentity {
-  id                    String          @id @default(cuid())
-  registryNumber        String          @unique
-  registrySequence      Int             @unique @default(autoincrement())
+  id                    String                 @id @default(cuid())
+  registryNumber        String                 @unique
+  registrySequence      Int                    @unique @default(autoincrement())
   name                  String
   primaryRole           String
   kennelClubName        String?
   breed                 String?
-  isMixedBreed          Boolean         @default(false)
+  isMixedBreed          Boolean                @default(false)
   breedMix              String?
   dnaConfirmed          String?
   dogTypes              String?
   neuteredSpayed        String?
   dateOfBirth           DateTime?
-  estimatedDob          Boolean         @default(false)
+  estimatedDob          Boolean                @default(false)
   sex                   String?
   colour                String?
   microchipNumber       String?
-  vaccinated            BehaviourAnswer       @default(UNKNOWN)
+  vaccinated            BehaviourAnswer        @default(UNKNOWN)
   lastVaccinationDate   DateTime?
   countryOfRegistration String?
-  visibility            DogVisibility   @default(PUBLIC)
+  visibility            DogVisibility          @default(PUBLIC)
   ownerships            DogOwnership[]
   accessRequests        DogAccessRequest[]
   records               DogRecord[]
   profilePhoto          DogProfilePhoto?
   behaviourLifestyle    DogBehaviourLifestyle?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  competitionEntries    CompetitionEntry[]
 }
 
 model DogBehaviourLifestyle {
-  id                  String                    @id @default(cuid())
-  dogId               String                    @unique
-  dog                 DogIdentity               @relation(fields: [dogId], references: [id], onDelete: Cascade)
-  assessmentSource    BehaviourAssessmentSource @default(OWNER_DECLARED)
-  reactive            BehaviourAnswer           @default(UNKNOWN)
-  foodAggression      BehaviourAnswer           @default(UNKNOWN)
-  resourceGuarding    BehaviourAnswer           @default(UNKNOWN)
-  separationAnxiety   BehaviourAnswer           @default(UNKNOWN)
-  highPreyDrive       BehaviourAnswer           @default(UNKNOWN)
-  escapeArtist        BehaviourAnswer           @default(UNKNOWN)
-  goodWithChildren    BehaviourAnswer           @default(UNKNOWN)
-  goodWithDogs        BehaviourAnswer           @default(UNKNOWN)
-  goodWithCats        BehaviourAnswer           @default(UNKNOWN)
-  goodWithLivestock   BehaviourAnswer           @default(UNKNOWN)
-  friendlyWithStrangers BehaviourAnswer         @default(UNKNOWN)
-  reliableOffLead     BehaviourAnswer           @default(UNKNOWN)
-  recallTrained       BehaviourAnswer           @default(UNKNOWN)
-  crateTrained        BehaviourAnswer           @default(UNKNOWN)
-  muzzleTrained       BehaviourAnswer           @default(UNKNOWN)
-  neuteredSpayed      BehaviourAnswer           @default(UNKNOWN)
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  id                    String                    @id @default(cuid())
+  dogId                 String                    @unique
+  dog                   DogIdentity               @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  assessmentSource      BehaviourAssessmentSource @default(OWNER_DECLARED)
+  reactive              BehaviourAnswer           @default(UNKNOWN)
+  foodAggression        BehaviourAnswer           @default(UNKNOWN)
+  resourceGuarding      BehaviourAnswer           @default(UNKNOWN)
+  separationAnxiety     BehaviourAnswer           @default(UNKNOWN)
+  highPreyDrive         BehaviourAnswer           @default(UNKNOWN)
+  escapeArtist          BehaviourAnswer           @default(UNKNOWN)
+  goodWithChildren      BehaviourAnswer           @default(UNKNOWN)
+  goodWithDogs          BehaviourAnswer           @default(UNKNOWN)
+  goodWithCats          BehaviourAnswer           @default(UNKNOWN)
+  goodWithLivestock     BehaviourAnswer           @default(UNKNOWN)
+  friendlyWithStrangers BehaviourAnswer           @default(UNKNOWN)
+  reliableOffLead       BehaviourAnswer           @default(UNKNOWN)
+  recallTrained         BehaviourAnswer           @default(UNKNOWN)
+  crateTrained          BehaviourAnswer           @default(UNKNOWN)
+  muzzleTrained         BehaviourAnswer           @default(UNKNOWN)
+  neuteredSpayed        BehaviourAnswer           @default(UNKNOWN)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
 
   @@index([assessmentSource])
 }
@@ -266,6 +298,7 @@ model DogRecord {
   expiryDate         DateTime?
   notes              String?
   documents          DogRecordDocument[]
+  evidenceLinks      DogRecordEvidenceLink[]
   createdAt          DateTime                    @default(now())
   updatedAt          DateTime                    @updatedAt
 
@@ -273,6 +306,90 @@ model DogRecord {
   @@index([dogId, verificationStatus])
   @@index([category, recordType])
   @@index([provider])
+}
+
+model DogRecordEvidenceLink {
+  id              String    @id @default(cuid())
+  recordId        String
+  record          DogRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  addedById       String
+  addedBy         User      @relation(fields: [addedById], references: [id], onDelete: Restrict)
+  providerLabel   String    @db.VarChar(120)
+  url             String    @db.VarChar(2048)
+  referenceNumber String?   @db.VarChar(160)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([recordId])
+  @@index([addedById])
+}
+
+model Competition {
+  id                String                 @id @default(cuid())
+  slug              String                 @unique @db.VarChar(120)
+  title             String                 @db.VarChar(160)
+  theme             String                 @db.VarChar(160)
+  description       String
+  status            CompetitionStatus      @default(DRAFT)
+  opensAt           DateTime
+  closesAt          DateTime
+  resultPublishedAt DateTime?
+  eligibility       CompetitionEligibility @default(UK_ONLY)
+  entryFeePence     Int                    @default(0)
+  maxEntriesPerDog  Int                    @default(1)
+  prizeSummary      String
+  rules             String
+  rulesVersion      String                 @default("1") @db.VarChar(40)
+  imageGuidelines   String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  entries           CompetitionEntry[]
+  results           CompetitionResult[]
+
+  @@index([status, opensAt, closesAt])
+}
+
+model CompetitionEntry {
+  id                  String                 @id @default(cuid())
+  competitionId       String
+  competition         Competition            @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  dogId               String
+  dog                 DogIdentity            @relation(fields: [dogId], references: [id], onDelete: Restrict)
+  submittedById       String
+  submittedBy         User                   @relation(fields: [submittedById], references: [id], onDelete: Restrict)
+  caption             String?                @db.VarChar(300)
+  storageKey          String                 @unique
+  fileName            String
+  contentType         String
+  sizeBytes           Int
+  status              CompetitionEntryStatus @default(SUBMITTED)
+  profileCompleteness Int
+  rulesVersion        String                 @db.VarChar(40)
+  rulesAcceptedAt     DateTime
+  imageUseConsentAt   DateTime
+  moderationReason    String?                @db.VarChar(500)
+  submittedAt         DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  results             CompetitionResult[]
+
+  @@index([competitionId, status])
+  @@index([dogId])
+  @@index([submittedById])
+}
+
+model CompetitionResult {
+  id            String           @id @default(cuid())
+  competitionId String
+  competition   Competition      @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  entryId       String
+  entry         CompetitionEntry @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  placement     Int
+  title         String           @db.VarChar(160)
+  judgeNotes    String?
+  publishedAt   DateTime
+
+  @@unique([competitionId, placement])
+  @@unique([competitionId, entryId])
 }
 
 model DogProfilePhoto {
@@ -355,13 +472,13 @@ model Session {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId, expiresAt])
 }

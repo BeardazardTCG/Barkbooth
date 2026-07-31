@@ -8,6 +8,8 @@ import { ProfileCompletionCard } from "@/components/profile-completion-card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { removeDogProfilePhoto, updateBehaviourLifestyle, updateOwnerEssentials, uploadDogProfilePhoto } from "@/lib/dogs/actions";
 import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
+import { calculateVerificationSummary } from "@/lib/verification-summary";
+import { ProfileReadinessStrip } from "@/components/profile-readiness-strip";
 import { allRecordCategories, recordCategoryLabels } from "@/lib/records/catalog";
 import { prisma } from "@/lib/prisma";
 import { isDogAccessCurrentlyActive } from "@/lib/dog-access";
@@ -64,7 +66,7 @@ function indicatorState(records: DogRecord[], categories: DogRecordCategory[] | 
 export default async function DogIdentityPage({ params }: { params: { registryNumber: string } }) {
   const [dog, currentUser] = await Promise.all([prisma.dogIdentity.findUnique({
     where: { registryNumber: params.registryNumber },
-    include: { profilePhoto: true, behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { include: { documents: { orderBy: { createdAt: "desc" } } }, orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
+    include: { profilePhoto: true, behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { include: { documents: { orderBy: { createdAt: "desc" } }, evidenceLinks: { orderBy: { createdAt: "desc" } } }, orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
   }), getCurrentUser()]);
   if (!dog) notFound();
   const canManage = Boolean(currentUser && dog.ownerships.some((ownership) => ownership.userId === currentUser.id));
@@ -79,9 +81,10 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
   const behaviourVerifiedCount = behaviourState === "verified" ? 1 : 0;
   const behaviourOwnerDeclaredCount = behaviourState === "owner" ? 1 : 0;
   const completeness = calculateDogProfileCompleteness(dog);
-  const verifiedCount = dog.records.filter((record) => record.verificationStatus === "VERIFIED").length + behaviourVerifiedCount;
-  const ownerDeclaredCount = dog.records.filter((record) => record.status === "HAVE_RECORD" && record.verificationStatus === "NOT_SUBMITTED").length + behaviourOwnerDeclaredCount;
-  const submittedCount = dog.records.filter((record) => record.verificationStatus === "PENDING").length;
+  const recordSummary = calculateVerificationSummary(dog.records);
+  const verifiedCount = recordSummary.verified + behaviourVerifiedCount;
+  const ownerDeclaredCount = recordSummary.ownerDeclared + behaviourOwnerDeclaredCount;
+  const submittedCount = recordSummary.evidenceSubmitted;
   const behaviourTrust = behaviourState === "verified" ? "Behaviour Assessed by Verified Rescue" : behaviourState === "owner" ? "Owner Declared" : "Not provided";
   const behaviourTrustStatus = behaviourState === "verified" ? "VERIFIED" : behaviourState === "owner" ? "NOT_SUBMITTED" : "LEGACY";
   const identityDetails = [
@@ -111,7 +114,7 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
           </div>
           <dl className="mt-6 grid gap-3 sm:grid-cols-2">{identityDetails.map(([label, value]) => <div key={label} className="rounded-2xl bg-white/10 p-3"><dt className="text-[0.65rem] font-bold uppercase tracking-widest text-white/50">{label}</dt><dd className="mt-1 font-bold text-white">{value}</dd></div>)}</dl>
           <p className="mt-4 rounded-2xl bg-white/10 p-3 text-sm font-bold text-white/75">Core identity information is owner-declared unless marked as verified.</p>
-          <div className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Verification Summary</p><p className="mt-1 font-bold text-white">{verifiedCount} verified · {submittedCount} document submitted · {ownerDeclaredCount} owner declared</p></div>
+          <div className="mt-5 rounded-2xl bg-white/10 p-4"><p className="text-xs font-bold uppercase tracking-widest text-white/50">Verification Summary</p><p className="mt-1 font-bold text-white">{verifiedCount} verified · {submittedCount} evidence submitted · {ownerDeclaredCount} owner declared</p></div>
           <div className="mt-5 grid grid-cols-4 gap-2">{indicatorConfig.map((item) => { const state = indicatorState(dog.records, item.categories, behaviourState); return <a key={item.key} href={item.href} title={`${item.label}: ${state}`} className={`rounded-2xl px-2 py-3 text-center text-xs font-bold ${state === "verified" ? "bg-verified/10 text-navy" : state === "owner" ? "bg-skysoft text-navy" : "bg-white/10 text-white/45"}`}>{item.label}</a>; })}</div>
         </Card>
         <Card><h2 className="text-2xl font-bold text-navy">Full profile</h2><p className="mt-3 leading-7 text-charcoal/65">Each editable section saves only when you press its labelled button.</p><div className="mt-5 rounded-2xl bg-lightgrey p-4"><p className="text-sm font-bold text-navy">Profile photo</p>{canManage && <><ManagedForm action={uploadDogProfilePhoto} pendingMessage="Uploading…" encType="multipart/form-data" resetOnSuccess className="mt-3 grid min-w-0 gap-3"><input type="hidden" name="dogId" value={dog.id} /><input type="hidden" name="replacing" value={String(Boolean(dog.profilePhoto))} /><FileField name="photo" label="Choose profile photo" required accept="image/jpeg,image/png,image/webp" maxBytes={5 * 1024 * 1024} /><FormSubmitButton label={dog.profilePhoto ? "Replace photo" : "Upload photo"} pendingLabel="Uploading…" /></ManagedForm>{dog.profilePhoto && <ManagedForm action={removeDogProfilePhoto} pendingMessage="Removing…" warnOnLeave={false} className="mt-3 grid gap-2"><input type="hidden" name="dogId" value={dog.id} /><FormSubmitButton label="Remove photo" pendingLabel="Removing…" requireDirty={false} confirmMessage="Remove this profile photo? This cannot be undone." className="bg-white text-red-700" /></ManagedForm>}</>}</div><div className="mt-5 flex flex-wrap gap-2"><a href="#pet-details" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">Pet details</a><a href="#records" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Records</a><a href="#behaviour" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-navy">Behaviour</a><ButtonLink href="/dogs">Back to My Dogs</ButtonLink></div></Card>
@@ -144,7 +147,7 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
     </Section>
 
     <Section eyebrow="Trust foundation" title={`${dog.name}'s structured records`}>
-      <div id="records" className="grid gap-5 lg:grid-cols-[1fr_auto]"><ProfileCompletionCard percentage={completeness.percentage} sections={completeness.sections} /><Card className="lg:min-w-64"><p className="text-sm font-bold uppercase tracking-[0.2em] text-info">Records Overview</p><p className="mt-2 text-2xl font-bold text-navy">{dog.records.length} records</p><p className="mt-2 text-sm text-charcoal/60">{verifiedCount} verified · {submittedCount} submitted · {ownerDeclaredCount} owner declared</p></Card></div>
+      <div id="records" className="grid gap-5 lg:grid-cols-[1fr_auto]"><ProfileCompletionCard percentage={completeness.percentage} sections={completeness.sections} /><Card className="lg:min-w-64"><p className="text-sm font-bold uppercase tracking-[0.2em] text-info">Records Overview</p><p className="mt-2 text-2xl font-bold text-navy">{dog.records.length} records</p><p className="mt-2 text-sm text-charcoal/60">{verifiedCount} verified · {submittedCount} evidence submitted · {ownerDeclaredCount} owner declared</p></Card></div>
       {canManage && <div className="mt-5"><AddRecordForm dogId={dog.id} /></div>}
       <div className="mt-7 grid gap-5">{allRecordCategories.map((category) => <div id={`records-${category.toLowerCase().replace(/_/g, "-")}`} key={category}><CategorySection category={category} records={dog.records.filter((record) => record.category === category)} canManage={canManage} /></div>)}</div>
     </Section>
