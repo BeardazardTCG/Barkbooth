@@ -4,7 +4,7 @@ import type { CompetitionEligibility, CompetitionEntryStatus, CompetitionStatus 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
-import { competitionAcceptsEntries, competitionCountryEligibility } from "@/lib/competitions";
+import { canTransitionCompetition, competitionAcceptsEntries, competitionCountryEligibility } from "@/lib/competitions";
 import { prisma } from "@/lib/prisma";
 import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
 import { deleteObject, putObject } from "@/lib/storage";
@@ -86,7 +86,8 @@ export async function enterCompetition(_previous: ActionResult, form: FormData):
 export async function saveCompetition(form: FormData) {
   await requireAdmin();
   const id = value(form, "id");
-  const status = value(form, "status") as CompetitionStatus;
+  const existing = id ? await prisma.competition.findUnique({ where: { id }, include: { _count: { select: { entries: true } } } }) : null;
+  const status = existing?.status ?? "DRAFT";
   const eligibility = value(form, "eligibility") as CompetitionEligibility;
   if (!competitionStatuses.has(status) || !competitionEligibilities.has(eligibility)) throw new Error("Choose valid competition settings.");
   const opensAt = new Date(value(form, "opensAt"));
@@ -100,9 +101,26 @@ export async function saveCompetition(form: FormData) {
     maxEntriesPerDog: Math.max(1, Number(value(form, "maxEntriesPerDog")) || 1),
     prizeSummary: value(form, "prizeSummary"), rules: value(form, "rules"), rulesVersion: value(form, "rulesVersion") || "1", imageGuidelines: value(form, "imageGuidelines"),
   };
+  if (existing && existing._count.entries > 0 && data.maxEntriesPerDog < existing.maxEntriesPerDog) throw new Error("The entry limit cannot be reduced after entries exist; existing entries will never be silently invalidated.");
   const competition = id ? await prisma.competition.update({ where: { id }, data }) : await prisma.competition.create({ data });
   revalidatePath("/competitions");
+  if (value(form, "intent") === "preview") redirect(`/competitions/${competition.slug}`);
   redirect(`/admin/competitions/${competition.id}`);
+}
+
+export async function transitionCompetition(form: FormData) {
+  const admin = await requireAdmin();
+  const id = value(form, "competitionId");
+  const to = value(form, "to") as CompetitionStatus;
+  const competition = await prisma.competition.findUniqueOrThrow({ where: { id } });
+  if (!competitionStatuses.has(to) || !canTransitionCompetition(competition.status, to)) throw new Error(`Changing ${competition.status} to ${to} is not allowed.`);
+  if (to === "OPEN" && new Date() >= competition.closesAt) throw new Error("A competition cannot open after its closing time.");
+  const reason = value(form, "cancellationReason");
+  if (to === "CANCELLED" && !reason) throw new Error("A cancellation reason is required.");
+  await prisma.competition.update({ where: { id }, data: to === "CANCELLED"
+    ? { status: to, cancelledAt: new Date(), cancelledById: admin.id, cancellationReason: reason }
+    : { status: to, ...(competition.status === "CANCELLED" ? { cancelledAt: null, cancelledById: null, cancellationReason: null } : {}) } });
+  revalidatePath("/competitions"); revalidatePath(`/admin/competitions/${id}`); revalidatePath("/admin/competitions");
 }
 
 export async function moderateEntry(form: FormData) {
@@ -116,7 +134,7 @@ export async function moderateEntry(form: FormData) {
   revalidatePath(`/admin/competitions/${entry.competitionId}`);
 }
 
-export async function publishResult(form: FormData) {
+export async function saveResult(form: FormData) {
   await requireAdmin();
   const competitionId = value(form, "competitionId");
   const entryId = value(form, "entryId");
@@ -125,14 +143,21 @@ export async function publishResult(form: FormData) {
   if (!Number.isInteger(placement) || placement < 1 || !title) throw new Error("Enter a valid placement and result title.");
   const entry = await prisma.competitionEntry.findFirst({ where: { id: entryId, competitionId, status: { in: ["FINALIST", "WINNER"] } } });
   if (!entry) throw new Error("Only a finalist or winner from this competition can receive a published result.");
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.competitionResult.upsert({
+  await prisma.competitionResult.upsert({
       where: { competitionId_entryId: { competitionId, entryId } },
-      create: { competitionId, entryId, placement, title, judgeNotes: value(form, "judgeNotes") || null, publishedAt: now },
-      update: { placement, title, judgeNotes: value(form, "judgeNotes") || null, publishedAt: now },
-    }),
-    prisma.competition.update({ where: { id: competitionId }, data: { status: "COMPLETED", resultPublishedAt: now } }),
+      create: { competitionId, entryId, placement, title, judgeNotes: value(form, "judgeNotes") || null },
+      update: { placement, title, judgeNotes: value(form, "judgeNotes") || null },
+    });
+  revalidatePath(`/admin/competitions/${competitionId}`);
+}
+
+export async function publishResults(form: FormData) {
+  await requireAdmin(); const competitionId=value(form,"competitionId");
+  const competition=await prisma.competition.findUniqueOrThrow({where:{id:competitionId},include:{results:true}});
+  if (competition.status !== "JUDGING" || !competition.results.length) throw new Error("Move to judging and save at least one placement before publishing results.");
+  const now=new Date(); await prisma.$transaction([
+    prisma.competitionResult.updateMany({where:{competitionId},data:{publishedAt:now}}),
+    prisma.competition.update({where:{id:competitionId},data:{status:"COMPLETED",resultPublishedAt:now}}),
   ]);
   revalidatePath("/competitions");
   revalidatePath(`/admin/competitions/${competitionId}`);

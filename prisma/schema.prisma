@@ -173,6 +173,7 @@ model User {
   role                     UserRole                @default(MEMBER)
   evidenceLinks            DogRecordEvidenceLink[]
   competitionEntries       CompetitionEntry[]
+  cancelledCompetitions    Competition[]           @relation("CompetitionCanceller")
 }
 
 model OwnerStatus {
@@ -334,6 +335,10 @@ model Competition {
   opensAt           DateTime
   closesAt          DateTime
   resultPublishedAt DateTime?
+  cancelledAt       DateTime?
+  cancelledById     String?
+  cancelledBy       User?                  @relation("CompetitionCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
+  cancellationReason String?               @db.VarChar(500)
   eligibility       CompetitionEligibility @default(UK_ONLY)
   entryFeePence     Int                    @default(0)
   maxEntriesPerDog  Int                    @default(1)
@@ -347,6 +352,7 @@ model Competition {
   results           CompetitionResult[]
 
   @@index([status, opensAt, closesAt])
+  @@index([cancelledById])
 }
 
 model CompetitionEntry {
@@ -386,7 +392,7 @@ model CompetitionResult {
   placement     Int
   title         String           @db.VarChar(160)
   judgeNotes    String?
-  publishedAt   DateTime
+  publishedAt   DateTime?
 
   @@unique([competitionId, placement])
   @@unique([competitionId, entryId])

@@ -10,6 +10,6 @@ export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getCurrentUser();
-  const viewer = user ? { displayName: user.displayName, username: user.username } : null;
+  const viewer = user ? { displayName: user.displayName, username: user.username, role: user.role } : null;
   return <html lang="en"><body className="font-sans text-charcoal"><FormFeedbackProvider><SiteChrome viewer={viewer}>{children}</SiteChrome></FormFeedbackProvider></body></html>;
 }

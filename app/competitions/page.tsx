@@ -2,8 +2,10 @@ import { ButtonLink, Card, Section } from "@/components/ui";
 import { competitionAcceptsEntries, realEntrantCount } from "@/lib/competitions";
 import { launchConfig } from "@/lib/launch-config";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export default async function CompetitionsPage() {
+  const user = await getCurrentUser();
   const competitions = await prisma.competition.findMany({
     where: { status: { in: ["PUBLISHED", "OPEN", "CLOSED", "JUDGING", "COMPLETED"] } },
     include: { entries: { select: { status: true } } },
@@ -12,7 +14,7 @@ export default async function CompetitionsPage() {
 
   return <>
     <Section eyebrow="Free photo competitions" title="Bark Booth competitions">
-      <Card className="bg-gradient-to-br from-white to-skysoft/60"><p className="text-lg leading-8 text-charcoal/70">{launchConfig.copy.competition}</p></Card>
+      {user?.role === "ADMIN" && <div className="mb-5 flex flex-wrap gap-2"><ButtonLink href="/admin/competitions">Manage competitions</ButtonLink><ButtonLink href="/admin/competitions/new" variant="secondary">Create competition</ButtonLink></div>}<Card className="bg-gradient-to-br from-white to-skysoft/60"><p className="text-lg leading-8 text-charcoal/70">{launchConfig.copy.competition}</p></Card>
     </Section>
     <Section eyebrow="Current and completed" title="Genuine competitions">
       {competitions.length ? <div className="grid gap-5 md:grid-cols-2">{competitions.map((competition) => {
