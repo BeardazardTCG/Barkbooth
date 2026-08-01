@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { CompetitionForm } from "@/components/competition-admin-form";
 import { Card, Section } from "@/components/ui";
 import { requireUser } from "@/lib/auth/session";
-import { moderateEntry, publishResult } from "@/lib/competitions/actions";
+import { moderateEntry, publishResults, saveResult, transitionCompetition } from "@/lib/competitions/actions";
 import { prisma } from "@/lib/prisma";
 
 export default async function ManageCompetitionPage({ params }: { params: { id: string } }) {
@@ -16,6 +16,7 @@ export default async function ManageCompetitionPage({ params }: { params: { id: 
 
   return <>
     <Section eyebrow="Restricted administration" title={`Manage ${competition.title}`}>
+      <Card className="mb-5"><p className="registry-label">Current state</p><h2 className="text-2xl font-bold text-navy">{competition.status}</h2><div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">{({DRAFT:[["PUBLISHED","Schedule"],["OPEN","Open now"],["CANCELLED","Cancel competition"]],PUBLISHED:[["OPEN","Open now"],["DRAFT","Return to draft"],["CANCELLED","Cancel competition"]],OPEN:[["CLOSED","Close entries"],["CANCELLED","Cancel competition"]],CLOSED:[["JUDGING","Move to judging"],["OPEN","Reopen entries with confirmation"],["CANCELLED","Cancel competition"]],JUDGING:[["CANCELLED","Cancel competition"]],COMPLETED:[],CANCELLED:[["DRAFT","Restore to draft with confirmation"]]} as Record<string,string[][]>)[competition.status].map(([to,label])=><form action={transitionCompetition} key={to} className="min-w-0"><input type="hidden" name="competitionId" value={competition.id}/><input type="hidden" name="to" value={to}/>{to === "CANCELLED" && <label className="mb-2 grid gap-1 font-bold">Cancellation reason<input name="cancellationReason" required maxLength={500} className="rounded-xl p-3" placeholder="Required; records and images are retained"/></label>}<button className={to === "CANCELLED" ? "button-secondary w-full" : "button-primary w-full"}>{label}</button></form>)}</div>{competition.cancellationReason&&<p className="mt-4 rounded-xl bg-lightgrey p-3"><strong>Cancelled {competition.cancelledAt?.toLocaleString("en-GB")}:</strong> {competition.cancellationReason}. Nothing was deleted.</p>}</Card>
       <CompetitionForm competition={competition} />
     </Section>
     <Section eyebrow="Genuine database entries" title={`Review entries (${competition.entries.length})`}>
@@ -40,18 +41,19 @@ export default async function ManageCompetitionPage({ params }: { params: { id: 
             <label className="grid min-w-0 gap-1 font-bold text-navy">Decision reason<input name="reason" defaultValue={entry.moderationReason ?? ""} maxLength={500} placeholder="Required for withdrawal or disqualification" className="min-w-0 rounded-xl bg-white p-3" /></label>
             <button className="button-secondary w-full sm:w-auto" type="submit">Save entry decision</button>
           </form>
-          {["FINALIST", "WINNER"].includes(entry.status) && <form action={publishResult} className="mt-4 grid min-w-0 gap-3 rounded-2xl border border-navy/10 p-4">
-            <h3 className="font-bold text-navy">Publish result</h3>
-            <p className="text-sm text-charcoal/65">This publishes the result and marks the competition Completed.</p>
+          {["FINALIST", "WINNER"].includes(entry.status) && <form action={saveResult} className="mt-4 grid min-w-0 gap-3 rounded-2xl border border-navy/10 p-4">
+            <h3 className="font-bold text-navy">Prepare result placement</h3>
+            <p className="text-sm text-charcoal/65">This saves a private result draft. Publication requires separate confirmation.</p>
             <input type="hidden" name="competitionId" value={competition.id} />
             <input type="hidden" name="entryId" value={entry.id} />
             <label className="grid gap-1 font-bold text-navy">Placement<input name="placement" type="number" min="1" required className="rounded-xl p-3" /></label>
             <label className="grid min-w-0 gap-1 font-bold text-navy">Result title<input name="title" required maxLength={160} placeholder="For example, First place" className="min-w-0 rounded-xl p-3" /></label>
             <label className="grid min-w-0 gap-1 font-bold text-navy">Judge notes (optional)<textarea name="judgeNotes" className="min-w-0 rounded-xl p-3" /></label>
-            <button className="button-primary w-full sm:w-auto" type="submit">Publish result and complete competition</button>
+            <button className="button-primary w-full sm:w-auto" type="submit">Save result draft</button>
           </form>}
         </Card>)}
       </div>}
+      {competition.status === "JUDGING" && <Card className="mt-5"><h2 className="text-xl font-bold text-navy">Publish results</h2><p className="mt-2">Preview first. This explicit confirmation completes the competition and publishes all saved placements.</p><div className="mt-4 flex flex-wrap gap-2"><a className="button-secondary" href={`/competitions/${competition.slug}`}>Preview results</a><form action={publishResults}><input type="hidden" name="competitionId" value={competition.id}/><button className="button-primary">Confirm publication</button></form></div></Card>}
     </Section>
   </>;
 }
