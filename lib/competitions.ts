@@ -10,3 +10,8 @@ export const lifecycleTransitions: Record<string, readonly string[]> = {
   CLOSED: ["OPEN", "JUDGING", "CANCELLED"], JUDGING: ["COMPLETED", "CANCELLED"], COMPLETED: [], CANCELLED: ["DRAFT"],
 };
 export function canTransitionCompetition(from: string, to: string) { return lifecycleTransitions[from]?.includes(to) ?? false; }
+
+export function competitionOpenNowDates(opensAt: Date, closesAt: Date, now = new Date()) {
+  if (closesAt <= now) throw new Error("A competition cannot open after its closing time.");
+  return { opensAt: opensAt > now ? now : opensAt, closesAt };
+}

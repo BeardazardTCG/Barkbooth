@@ -4,7 +4,7 @@ import type { CompetitionEligibility, CompetitionEntryStatus, CompetitionStatus 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
-import { canTransitionCompetition, competitionAcceptsEntries, competitionCountryEligibility } from "@/lib/competitions";
+import { canTransitionCompetition, competitionAcceptsEntries, competitionCountryEligibility, competitionOpenNowDates } from "@/lib/competitions";
 import { prisma } from "@/lib/prisma";
 import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
 import { deleteObject, putObject } from "@/lib/storage";
@@ -112,14 +112,19 @@ export async function transitionCompetition(form: FormData) {
   const admin = await requireAdmin();
   const id = value(form, "competitionId");
   const to = value(form, "to") as CompetitionStatus;
-  const competition = await prisma.competition.findUniqueOrThrow({ where: { id } });
-  if (!competitionStatuses.has(to) || !canTransitionCompetition(competition.status, to)) throw new Error(`Changing ${competition.status} to ${to} is not allowed.`);
-  if (to === "OPEN" && new Date() >= competition.closesAt) throw new Error("A competition cannot open after its closing time.");
   const reason = value(form, "cancellationReason");
+  if (!competitionStatuses.has(to)) throw new Error("Choose a valid competition state.");
   if (to === "CANCELLED" && !reason) throw new Error("A cancellation reason is required.");
-  await prisma.competition.update({ where: { id }, data: to === "CANCELLED"
-    ? { status: to, cancelledAt: new Date(), cancelledById: admin.id, cancellationReason: reason }
-    : { status: to, ...(competition.status === "CANCELLED" ? { cancelledAt: null, cancelledById: null, cancellationReason: null } : {}) } });
+
+  await prisma.$transaction(async (tx) => {
+    const competition = await tx.competition.findUniqueOrThrow({ where: { id } });
+    if (!canTransitionCompetition(competition.status, to)) throw new Error(`Changing ${competition.status} to ${to} is not allowed.`);
+    const now = new Date();
+    const openDates = to === "OPEN" ? competitionOpenNowDates(competition.opensAt, competition.closesAt, now) : {};
+    await tx.competition.update({ where: { id }, data: to === "CANCELLED"
+      ? { status: to, cancelledAt: now, cancelledById: admin.id, cancellationReason: reason }
+      : { status: to, ...openDates, ...(competition.status === "CANCELLED" ? { cancelledAt: null, cancelledById: null, cancellationReason: null } : {}) } });
+  });
   revalidatePath("/competitions"); revalidatePath(`/admin/competitions/${id}`); revalidatePath("/admin/competitions");
 }
 
