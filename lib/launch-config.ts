@@ -14,7 +14,7 @@ function optionalEmail(input?: string) { const value = input?.trim(); return val
 export function supportConfig() {
   return {
     instagramUrl: optionalUrl(process.env.NEXT_PUBLIC_INSTAGRAM_URL), facebookPageUrl: optionalUrl(process.env.NEXT_PUBLIC_FACEBOOK_PAGE_URL), facebookGroupUrl: optionalUrl(process.env.NEXT_PUBLIC_FACEBOOK_GROUP_URL),
-    businessEmail: optionalEmail(process.env.NEXT_PUBLIC_BUSINESS_EMAIL), supportEmail: optionalEmail(process.env.NEXT_PUBLIC_SUPPORT_EMAIL), problemReportEmail: optionalEmail(process.env.NEXT_PUBLIC_PROBLEM_REPORT_EMAIL),
+    businessEmail: optionalEmail(process.env.NEXT_PUBLIC_BUSINESS_EMAIL), supportEmail: optionalEmail(process.env.NEXT_PUBLIC_SUPPORT_EMAIL) ?? "barkbooth-help@outlook.com", problemReportEmail: optionalEmail(process.env.NEXT_PUBLIC_PROBLEM_REPORT_EMAIL) ?? "barkbooth-help@outlook.com",
   };
 }
 export const problemReportBody = "Page or feature:\n\nWhat happened:\n\nWhat did you expect:\n\nDevice:\n\nBrowser:\n\nScreenshot available: Yes / No";

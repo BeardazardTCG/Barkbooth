@@ -174,6 +174,8 @@ model User {
   evidenceLinks            DogRecordEvidenceLink[]
   competitionEntries       CompetitionEntry[]
   cancelledCompetitions    Competition[]           @relation("CompetitionCanceller")
+  newsPosts                NewsPost[]
+  events                   Event[]
 }
 
 model OwnerStatus {
@@ -256,6 +258,57 @@ model DogIdentity {
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   competitionEntries    CompetitionEntry[]
+  nickname              String?
+  heritageParents       DogHeritageParent[]
+  vaccinations          DogVaccination[]
+}
+
+enum HeritageParentType {
+  MOTHER
+  FATHER
+}
+
+enum RegistryAffiliation {
+  YES
+  NO
+  UNKNOWN
+}
+
+model DogHeritageParent {
+  id                      String              @id @default(cuid())
+  dogId                   String
+  dog                     DogIdentity         @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  parentType              HeritageParentType
+  isUnknown               Boolean             @default(false)
+  parentName              String?
+  barkBoothRegistryNumber String?
+  breed                   String?
+  colourMarkings          String?
+  registryAffiliated      RegistryAffiliation @default(UNKNOWN)
+  registryName            String?
+  registryNumber          String?
+  notes                   String?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  @@unique([dogId, parentType])
+  @@index([barkBoothRegistryNumber])
+}
+
+model DogVaccination {
+  id                 String      @id @default(cuid())
+  dogId              String
+  dog                DogIdentity @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  name               String      @db.VarChar(160)
+  vaccinated         Boolean     @default(false)
+  administeredAt     DateTime?
+  nextDueAt          DateTime?
+  veterinaryPractice String?     @db.VarChar(200)
+  notes              String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([dogId, nextDueAt])
 }
 
 model DogBehaviourLifestyle {
@@ -326,33 +379,109 @@ model DogRecordEvidenceLink {
 }
 
 model Competition {
-  id                String                 @id @default(cuid())
-  slug              String                 @unique @db.VarChar(120)
-  title             String                 @db.VarChar(160)
-  theme             String                 @db.VarChar(160)
-  description       String
-  status            CompetitionStatus      @default(DRAFT)
-  opensAt           DateTime
-  closesAt          DateTime
-  resultPublishedAt DateTime?
-  cancelledAt       DateTime?
-  cancelledById     String?
-  cancelledBy       User?                  @relation("CompetitionCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
-  cancellationReason String?               @db.VarChar(500)
-  eligibility       CompetitionEligibility @default(UK_ONLY)
-  entryFeePence     Int                    @default(0)
-  maxEntriesPerDog  Int                    @default(1)
-  prizeSummary      String
-  rules             String
-  rulesVersion      String                 @default("1") @db.VarChar(40)
-  imageGuidelines   String
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  entries           CompetitionEntry[]
-  results           CompetitionResult[]
+  id                 String                 @id @default(cuid())
+  slug               String                 @unique @db.VarChar(120)
+  title              String                 @db.VarChar(160)
+  theme              String                 @db.VarChar(160)
+  description        String
+  status             CompetitionStatus      @default(DRAFT)
+  opensAt            DateTime
+  closesAt           DateTime
+  resultPublishedAt  DateTime?
+  cancelledAt        DateTime?
+  cancelledById      String?
+  cancelledBy        User?                  @relation("CompetitionCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
+  cancellationReason String?                @db.VarChar(500)
+  eligibility        CompetitionEligibility @default(UK_ONLY)
+  entryFeePence      Int                    @default(0)
+  maxEntriesPerDog   Int                    @default(1)
+  prizeSummary       String
+  rules              String
+  rulesVersion       String                 @default("1") @db.VarChar(40)
+  imageGuidelines    String
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  entries            CompetitionEntry[]
+  results            CompetitionResult[]
+  heroStorageKey     String?                @unique
+  heroFileName       String?
+  heroContentType    String?
+  heroSizeBytes      Int?
+  judges             CompetitionJudge[]
+  newsPosts          NewsPost[]
 
   @@index([status, opensAt, closesAt])
   @@index([cancelledById])
+}
+
+model CompetitionJudge {
+  id               String      @id @default(cuid())
+  competitionId    String
+  competition      Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  name             String      @db.VarChar(160)
+  roleTitle        String?     @db.VarChar(160)
+  organisation     String?     @db.VarChar(200)
+  biography        String?
+  profession       String?
+  judgingFocus     String?
+  guestJudge       Boolean     @default(false)
+  displayOrder     Int         @default(0)
+  imageStorageKey  String?     @unique
+  imageFileName    String?
+  imageContentType String?
+  imageSizeBytes   Int?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([competitionId, displayOrder])
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model NewsPost {
+  id               String            @id @default(cuid())
+  authorId         String
+  author           User              @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  competitionId    String?
+  competition      Competition?      @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  slug             String            @unique @db.VarChar(160)
+  title            String            @db.VarChar(200)
+  summary          String?
+  body             String
+  status           PublicationStatus @default(DRAFT)
+  featured         Boolean           @default(false)
+  publishedAt      DateTime?
+  imageStorageKey  String?           @unique
+  imageFileName    String?
+  imageContentType String?
+  imageSizeBytes   Int?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model Event {
+  id          String            @id @default(cuid())
+  authorId    String
+  author      User              @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  name        String            @db.VarChar(200)
+  description String
+  location    String?           @db.VarChar(240)
+  startsAt    DateTime
+  endsAt      DateTime?
+  externalUrl String?           @db.VarChar(2048)
+  organiser   String?           @db.VarChar(200)
+  status      PublicationStatus @default(DRAFT)
+  cancelled   Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([status, startsAt])
 }
 
 model CompetitionEntry {

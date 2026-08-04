@@ -4,12 +4,12 @@ import { BarkBoothLogo } from "@/components/nav";
 import { ButtonLink, Card, DogProfileImage, Section } from "@/components/ui";
 import { CategorySection, AddRecordForm } from "@/components/records/record-components";
 import { StatusBadge } from "@/components/status-badge";
-import { ProfileCompletionCard } from "@/components/profile-completion-card";
+import { HeritageSection, VaccinationSection } from "@/components/dog-care-sections";
 import { getCurrentUser } from "@/lib/auth/session";
 import { removeDogProfilePhoto, updateBehaviourLifestyle, updateOwnerEssentials, uploadDogProfilePhoto } from "@/lib/dogs/actions";
-import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
+
 import { calculateVerificationSummary } from "@/lib/verification-summary";
-import { ProfileReadinessStrip } from "@/components/profile-readiness-strip";
+
 import { allRecordCategories, recordCategoryLabels } from "@/lib/records/catalog";
 import { prisma } from "@/lib/prisma";
 import { isDogAccessCurrentlyActive } from "@/lib/dog-access";
@@ -66,7 +66,7 @@ function indicatorState(records: DogRecord[], categories: DogRecordCategory[] | 
 export default async function DogIdentityPage({ params }: { params: { registryNumber: string } }) {
   const [dog, currentUser] = await Promise.all([prisma.dogIdentity.findUnique({
     where: { registryNumber: params.registryNumber },
-    include: { profilePhoto: true, behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { include: { documents: { orderBy: { createdAt: "desc" } }, evidenceLinks: { orderBy: { createdAt: "desc" } } }, orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
+    include: { profilePhoto: true, heritageParents: true, vaccinations: { orderBy: { nextDueAt: "asc" } }, behaviourLifestyle: true, accessRequests: { where: { status: "APPROVED" }, include: { requester: { include: { roleApplications: true } } } }, ownerships: { include: { user: { include: { roleApplications: true } } }, orderBy: { createdAt: "asc" } }, records: { include: { documents: { orderBy: { createdAt: "desc" } }, evidenceLinks: { orderBy: { createdAt: "desc" } } }, orderBy: [{ category: "asc" }, { createdAt: "desc" }] } },
   }), getCurrentUser()]);
   if (!dog) notFound();
   const canManage = Boolean(currentUser && dog.ownerships.some((ownership) => ownership.userId === currentUser.id));
@@ -80,7 +80,6 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
   const behaviourState = behaviourIndicatorState(dog.behaviourLifestyle, rescueVerified);
   const behaviourVerifiedCount = behaviourState === "verified" ? 1 : 0;
   const behaviourOwnerDeclaredCount = behaviourState === "owner" ? 1 : 0;
-  const completeness = calculateDogProfileCompleteness(dog);
   const recordSummary = calculateVerificationSummary(dog.records);
   const verifiedCount = recordSummary.verified + behaviourVerifiedCount;
   const ownerDeclaredCount = recordSummary.ownerDeclared + behaviourOwnerDeclaredCount;
@@ -147,10 +146,12 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
     </Section>
 
     <Section eyebrow="Trust foundation" title={`${dog.name}'s structured records`}>
-      <div id="records" className="grid gap-5 lg:grid-cols-[1fr_auto]"><ProfileCompletionCard percentage={completeness.percentage} sections={completeness.sections} /><Card className="lg:min-w-64"><p className="text-sm font-bold uppercase tracking-[0.2em] text-info">Records Overview</p><p className="mt-2 text-2xl font-bold text-navy">{dog.records.length} records</p><p className="mt-2 text-sm text-charcoal/60">{verifiedCount} verified · {submittedCount} evidence submitted · {ownerDeclaredCount} owner declared</p></Card></div>
+      <div id="records" className="grid gap-5"><Card><p className="text-sm font-bold uppercase tracking-[0.2em] text-info">Records Overview</p><p className="mt-2 text-2xl font-bold text-navy">{dog.records.length} records</p><p className="mt-2 text-sm text-charcoal/60">{verifiedCount} verified · {submittedCount} evidence submitted · {ownerDeclaredCount} owner declared</p></Card></div>
       {canManage && <div className="mt-5"><AddRecordForm dogId={dog.id} /></div>}
       <div className="mt-7 grid gap-5">{allRecordCategories.map((category) => <div id={`records-${category.toLowerCase().replace(/_/g, "-")}`} key={category}><CategorySection category={category} records={dog.records.filter((record) => record.category === category)} canManage={canManage} /></div>)}</div>
     </Section>
+
+    <Section eyebrow="Optional known details" title="Heritage and vaccinations"><div className="grid gap-8"><HeritageSection dogId={dog.id} parents={dog.heritageParents} canManage={canManage}/><VaccinationSection dogId={dog.id} items={dog.vaccinations} canManage={canManage}/></div></Section>
 
     <Section eyebrow="Behaviour & Lifestyle" title="Welfare and compatibility overview">
       <div id="behaviour" className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]"><Card><StatusBadge status={behaviourTrustStatus} label={behaviourTrust} /><p className="mt-4 leading-7 text-charcoal/65">Complete this section, then press Save behaviour and lifestyle.</p>{canManage && <ManagedForm action={updateBehaviourLifestyle} className="mt-5 grid gap-3"><input type="hidden" name="dogId" value={dog.id} />{behaviourQuestions.map((question) => <label key={String(question.name)} className="grid gap-1 text-sm font-bold text-navy">{question.label}<select name={String(question.name)} defaultValue={String(dog.behaviourLifestyle?.[question.name] ?? "UNKNOWN")} className="rounded-2xl border border-navy/10 bg-white p-3"><option value="UNKNOWN">Unknown</option><option value="YES">Yes</option><option value="NO">No</option></select></label>)}<FormSubmitButton label="Save behaviour and lifestyle" /></ManagedForm>}</Card>{!canManage && <Card><div className="grid gap-3 sm:grid-cols-2">{behaviourQuestions.map((question) => <div key={String(question.name)} className="rounded-2xl bg-lightgrey p-3"><p className="text-xs font-bold uppercase tracking-widest text-charcoal/45">{question.label}</p><p className="mt-1 font-bold text-navy">{formatAnswer(String(dog.behaviourLifestyle?.[question.name] ?? "UNKNOWN"))}</p></div>)}</div></Card>}</div>
