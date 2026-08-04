@@ -168,7 +168,24 @@ export async function publishResults(form: FormData) {
 
 export async function saveJudge(formData: FormData){await requireAdmin();const competitionId=value(formData,"competitionId"),id=value(formData,"judgeId"),name=value(formData,"name");if(!name)throw new Error("Judge name is required.");const data={name,roleTitle:value(formData,"roleTitle")||null,organisation:value(formData,"organisation")||null,biography:value(formData,"biography")||null,profession:value(formData,"profession")||null,judgingFocus:value(formData,"judgingFocus")||null,guestJudge:formData.get("guestJudge")==="on",displayOrder:Number(value(formData,"displayOrder")||0)};if(id){const judge=await prisma.competitionJudge.findFirst({where:{id,competitionId}});if(!judge)throw new Error("Judge not found.");await prisma.competitionJudge.update({where:{id},data})}else await prisma.competitionJudge.create({data:{competitionId,...data}});revalidatePath(`/admin/competitions/${competitionId}`)}
 export async function removeJudge(formData: FormData){await requireAdmin();const id=value(formData,"judgeId"),competitionId=value(formData,"competitionId");const judge=await prisma.competitionJudge.findFirst({where:{id,competitionId},include:{competition:true}});if(!judge)throw new Error("Judge not found.");await prisma.competitionJudge.delete({where:{id}});if(judge.imageStorageKey)await deleteObject(judge.imageStorageKey).catch(error=>console.error("Judge image cleanup failed",{error}));revalidatePath(`/admin/competitions/${competitionId}`);revalidatePath(`/competitions/${judge.competition.slug}`)}
-export async function uploadCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUnique({where:{id}});if(!competition)throw new Error("Competition not found.");const{file,bytes}=await validateUpload(formData.get("hero"),imageContentTypes,MAX_PROFILE_PHOTO_BYTES),key=storageKey(`competitions/${id}/hero`,file.type);await putObject(key,bytes,file.type);await prisma.competition.update({where:{id},data:{heroStorageKey:key,heroFileName:file.name,heroContentType:file.type,heroSizeBytes:file.size}});if(competition.heroStorageKey)deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}
+export async function uploadCompetitionHero(formData: FormData) {
+  await requireAdmin();
+  const id = value(formData, "competitionId");
+  const competition = await prisma.competition.findUnique({ where: { id } });
+  if (!competition) throw new Error("Competition not found.");
+  const { file, bytes } = await validateUpload(formData.get("hero"), imageContentTypes, MAX_PROFILE_PHOTO_BYTES);
+  const key = storageKey(`competitions/${id}/hero`, file.type);
+  await putObject(key, bytes, file.type);
+  try {
+    await prisma.competition.update({ where: { id }, data: { heroStorageKey: key, heroFileName: file.name, heroContentType: file.type, heroSizeBytes: file.size } });
+  } catch (error) {
+    await deleteObject(key).catch((cleanupError) => console.error("Hero rollback cleanup failed", { error: cleanupError }));
+    throw error;
+  }
+  if (competition.heroStorageKey) await deleteObject(competition.heroStorageKey).catch((error) => console.error("Hero cleanup failed", { error }));
+  revalidatePath(`/competitions/${competition.slug}`);
+  revalidatePath(`/admin/competitions/${id}`);
+}
 export async function removeCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUniqueOrThrow({where:{id}});await prisma.competition.update({where:{id},data:{heroStorageKey:null,heroFileName:null,heroContentType:null,heroSizeBytes:null}});if(competition.heroStorageKey)deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}
 
 export async function uploadJudgeImage(formData: FormData) {
