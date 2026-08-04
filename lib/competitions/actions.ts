@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { canTransitionCompetition, competitionAcceptsEntries, competitionCountryEligibility, competitionOpenNowDates } from "@/lib/competitions";
 import { prisma } from "@/lib/prisma";
-import { calculateDogProfileCompleteness } from "@/lib/profile-completeness";
 import { deleteObject, putObject } from "@/lib/storage";
 import { imageContentTypes, MAX_PROFILE_PHOTO_BYTES, storageKey, validateUpload } from "@/lib/uploads";
 import type { ActionResult } from "@/lib/forms/action-result";
@@ -40,8 +39,7 @@ export async function enterCompetition(_previous: ActionResult, form: FormData):
   if (!competition || !acceptedForEntry(competition.status, competition.opensAt, competition.closesAt, user.role === "ADMIN")) return { status: "error", message: "This competition is not open for entry." };
   if (!competitionCountryEligibility(competition.eligibility, user.country)) return { status: "error", message: "Initial physical-prize competitions are UK-only. Profiles and external evidence remain available internationally." };
   if (!dog) return { status: "error", message: "You may only enter a dog registered to your account." };
-  const completeness = calculateDogProfileCompleteness(dog).percentage;
-  if (!dog.profilePhoto || completeness < 65) return { status: "error", message: "Complete the essential profile details and add a profile photo before entering." };
+  if (!dog.name || !dog.sex) return { status: "error", message: "A dog name and sex are required for a Bark Booth identity." };
   if (form.get("rulesAccepted") !== "on" || form.get("imageConsent") !== "on" || form.get("photoCompliance") !== "on") return { status: "error", message: "Accept the rules, photo guidelines and image-use consent to enter." };
 
   let uploadedKey: string | null = null;
@@ -67,7 +65,7 @@ export async function enterCompetition(_previous: ActionResult, form: FormData):
         fileName: file.name,
         contentType: file.type,
         sizeBytes: file.size,
-        profileCompleteness: completeness,
+        profileCompleteness: 100,
         rulesVersion: currentCompetition.rulesVersion,
         rulesAcceptedAt: now,
         imageUseConsentAt: now,
@@ -167,3 +165,8 @@ export async function publishResults(form: FormData) {
   revalidatePath("/competitions");
   revalidatePath(`/admin/competitions/${competitionId}`);
 }
+
+export async function saveJudge(formData: FormData){await requireAdmin();const competitionId=value(formData,"competitionId"),id=value(formData,"judgeId"),name=value(formData,"name");if(!name)throw new Error("Judge name is required.");const data={name,roleTitle:value(formData,"roleTitle")||null,organisation:value(formData,"organisation")||null,biography:value(formData,"biography")||null,profession:value(formData,"profession")||null,judgingFocus:value(formData,"judgingFocus")||null,guestJudge:formData.get("guestJudge")==="on",displayOrder:Number(value(formData,"displayOrder")||0)};if(id){const judge=await prisma.competitionJudge.findFirst({where:{id,competitionId}});if(!judge)throw new Error("Judge not found.");await prisma.competitionJudge.update({where:{id},data})}else await prisma.competitionJudge.create({data:{competitionId,...data}});revalidatePath(`/admin/competitions/${competitionId}`)}
+export async function removeJudge(formData: FormData){await requireAdmin();const id=value(formData,"judgeId"),competitionId=value(formData,"competitionId");const judge=await prisma.competitionJudge.findFirst({where:{id,competitionId}});if(!judge)throw new Error("Judge not found.");await prisma.competitionJudge.delete({where:{id}});revalidatePath(`/admin/competitions/${competitionId}`)}
+export async function uploadCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUnique({where:{id}});if(!competition)throw new Error("Competition not found.");const{file,bytes}=await validateUpload(formData.get("hero"),imageContentTypes,MAX_PROFILE_PHOTO_BYTES),key=storageKey(`competitions/${id}/hero`,file.type);await putObject(key,bytes,file.type);await prisma.competition.update({where:{id},data:{heroStorageKey:key,heroFileName:file.name,heroContentType:file.type,heroSizeBytes:file.size}});if(competition.heroStorageKey)deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}
+export async function removeCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUniqueOrThrow({where:{id}});await prisma.competition.update({where:{id},data:{heroStorageKey:null,heroFileName:null,heroContentType:null,heroSizeBytes:null}});if(competition.heroStorageKey)deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}

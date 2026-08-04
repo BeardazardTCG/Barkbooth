@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { CompetitionForm } from "@/components/competition-admin-form";
 import { Card, Section } from "@/components/ui";
 import { requireUser } from "@/lib/auth/session";
-import { moderateEntry, publishResults, saveResult, transitionCompetition } from "@/lib/competitions/actions";
+import { moderateEntry, publishResults, saveResult, transitionCompetition, saveJudge, removeJudge, uploadCompetitionHero, removeCompetitionHero } from "@/lib/competitions/actions";
 import { prisma } from "@/lib/prisma";
 
 export default async function ManageCompetitionPage({ params }: { params: { id: string } }) {
@@ -10,14 +10,15 @@ export default async function ManageCompetitionPage({ params }: { params: { id: 
   if (user.role !== "ADMIN") redirect("/dashboard");
   const competition = await prisma.competition.findUnique({
     where: { id: params.id },
-    include: { entries: { include: { dog: true }, orderBy: { submittedAt: "asc" } } },
+    include: { judges: { orderBy: { displayOrder: "asc" } }, entries: { include: { dog: true }, orderBy: { submittedAt: "asc" } } },
   });
   if (!competition) notFound();
 
   return <>
     <Section eyebrow="Restricted administration" title={`Manage ${competition.title}`}>
       <Card className="mb-5"><p className="registry-label">Current state</p><h2 className="text-2xl font-bold text-navy">{competition.status}</h2><div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">{({DRAFT:[["PUBLISHED","Schedule"],["OPEN","Open now"],["CANCELLED","Cancel competition"]],PUBLISHED:[["OPEN","Open now"],["DRAFT","Return to draft"],["CANCELLED","Cancel competition"]],OPEN:[["CLOSED","Close entries"],["CANCELLED","Cancel competition"]],CLOSED:[["JUDGING","Move to judging"],["OPEN","Reopen entries with confirmation"],["CANCELLED","Cancel competition"]],JUDGING:[["CANCELLED","Cancel competition"]],COMPLETED:[],CANCELLED:[["DRAFT","Restore to draft with confirmation"]]} as Record<string,string[][]>)[competition.status].map(([to,label])=><form action={transitionCompetition} key={to} className="min-w-0"><input type="hidden" name="competitionId" value={competition.id}/><input type="hidden" name="to" value={to}/>{to === "CANCELLED" && <label className="mb-2 grid gap-1 font-bold">Cancellation reason<input name="cancellationReason" required maxLength={500} className="rounded-xl p-3" placeholder="Required; records and images are retained"/></label>}<button className={to === "CANCELLED" ? "button-secondary w-full" : "button-primary w-full"}>{label}</button></form>)}</div>{competition.cancellationReason&&<p className="mt-4 rounded-xl bg-lightgrey p-3"><strong>Cancelled {competition.cancelledAt?.toLocaleString("en-GB")}:</strong> {competition.cancellationReason}. Nothing was deleted.</p>}</Card>
-      <CompetitionForm competition={competition} />
+      <CompetitionForm competition={competition} /><Card className="mt-5"><h2 className="text-xl font-bold text-navy">Featured image</h2><p className="mt-2 text-sm">Optional. When absent, the public page uses a compact text treatment instead of a blank image block.</p><form action={uploadCompetitionHero} encType="multipart/form-data" className="mt-3 flex flex-wrap gap-2"><input type="hidden" name="competitionId" value={competition.id}/><input type="file" name="hero" required accept="image/jpeg,image/png,image/webp"/><button className="button-primary">{competition.heroStorageKey?"Replace image":"Upload image"}</button></form>{competition.heroStorageKey&&<form action={removeCompetitionHero} className="mt-2"><input type="hidden" name="competitionId" value={competition.id}/><button className="button-secondary">Remove image</button></form>}</Card>
+      <Card className="mt-5"><h2 className="text-xl font-bold text-navy">Judging panel</h2><p className="mt-2 text-sm">Add judges in the order they should appear publicly.</p><form action={saveJudge} className="mt-4 grid gap-3"><input type="hidden" name="competitionId" value={competition.id}/><input name="name" required placeholder="Judge name" className="rounded-xl p-3"/><input name="roleTitle" placeholder="Role / title" className="rounded-xl p-3"/><input name="organisation" placeholder="Organisation / company" className="rounded-xl p-3"/><textarea name="biography" placeholder="Short biography" className="rounded-xl p-3"/><textarea name="profession" placeholder="What they do professionally" className="rounded-xl p-3"/><textarea name="judgingFocus" placeholder="What they will focus on" className="rounded-xl p-3"/><input type="number" name="displayOrder" defaultValue="0" className="rounded-xl p-3"/><label><input type="checkbox" name="guestJudge"/> Guest judge</label><button className="button-primary">Add judge</button></form>{competition.judges.map(j=><div key={j.id} className="mt-3 flex justify-between rounded-xl bg-lightgrey p-3"><span><strong>{j.name}</strong> · order {j.displayOrder}</span><form action={removeJudge}><input type="hidden" name="competitionId" value={competition.id}/><input type="hidden" name="judgeId" value={j.id}/><button className="font-bold text-red-700">Remove</button></form></div>)}</Card>
     </Section>
     <Section eyebrow="Genuine database entries" title={`Review entries (${competition.entries.length})`}>
       <p className="mb-5 rounded-2xl bg-skysoft/50 p-4 text-sm font-bold leading-6 text-navy">
@@ -31,7 +32,7 @@ export default async function ManageCompetitionPage({ params }: { params: { id: 
               <p className="registry-label">{entry.status}</p>
               <h2 className="mt-1 break-words text-xl font-bold text-navy">{entry.dog.name}</h2>
               <p className="mt-1 break-all text-sm font-bold text-info">{entry.dog.registryNumber}</p>
-              <p className="mt-2 text-sm text-charcoal/65">Submitted {entry.submittedAt.toLocaleString("en-GB")} · profile {entry.profileCompleteness}% complete</p>
+              <p className="mt-2 text-sm text-charcoal/65">Submitted {entry.submittedAt.toLocaleString("en-GB")} · valid Bark Booth identity</p>
               {entry.caption && <p className="mt-2 text-sm">{entry.caption}</p>}
             </div>
           </div>

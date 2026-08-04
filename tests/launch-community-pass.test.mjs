@@ -1,0 +1,7 @@
+import test from "node:test";import assert from "node:assert/strict";import fs from "node:fs";
+const read=p=>fs.readFileSync(p,"utf8");
+test("dashboard uses one compact searchable dog manager",()=>{const d=read("app/dashboard/page.tsx"),c=read("components/dog-management.tsx");assert.doesNotMatch(d,/ProfileReadinessStrip/);assert.match(c,/nickname/);assert.match(c,/registryNumber/);assert.match(c,/slice\(0,6\)/)});
+test("entry eligibility is identity, ownership, country, photo and consent only",()=>{const s=read("lib/competitions/actions.ts");assert.doesNotMatch(s,/completeness <|!dog\.profilePhoto/);assert.match(s,/!dog\.name \|\| !dog\.sex/)});
+test("records and optional care are collapsed and owner guarded",()=>{assert.match(read("components/records/record-components.tsx"),/<details>/);const a=read("lib/dogs/actions.ts");assert.match(a,/saveHeritageParent/);assert.match(a,/requireDogOwner/);assert.match(a,/bbRegistryPattern/)});
+test("community and judge mutations enforce admin",()=>{assert.match(read("lib/community/actions.ts"),/role!=="ADMIN"/);assert.match(read("lib/competitions/actions.ts"),/saveJudge[\s\S]*requireAdmin/)});
+test("support and social configuration is safe",()=>{const c=read("lib/launch-config.ts"),n=read("components/nav.tsx");assert.match(c,/barkbooth-help@outlook\.com/);assert.match(n,/Bark Booth Official Facebook Page/);assert.doesNotMatch(n,/facebook\.com\//)});
