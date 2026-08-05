@@ -22,7 +22,7 @@ export function RegisterDogForm() {
       <label className="flex items-center gap-2 self-end rounded-2xl bg-lightgrey p-3 font-bold text-charcoal/70"><input name="estimatedDob" type="checkbox" />Date is estimated</label>
       <label className="font-bold text-navy">Colour / markings<input name="colour" className={control} /></label>
       <label className="font-bold text-navy">Neutered / spayed<select name="neuteredSpayed" defaultValue="UNKNOWN" className={control}><option value="UNKNOWN">Not provided</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
-      <label className="font-bold text-navy">Kennel Club name<input name="kennelClubName" className={control} /></label>
+      <label className="font-bold text-navy">Registered name<input name="kennelClubName" className={control} /><span className="text-xs font-normal leading-5 text-charcoal/65">Optional. The dog’s official registered name, if different from their everyday name.</span></label>
       <label className="font-bold text-navy">Country of registration<input name="countryOfRegistration" autoComplete="country-name" className={control} /></label>
       <label className="font-bold text-navy">DNA confirmed<select name="dnaConfirmed" defaultValue="UNKNOWN" className={control}><option value="UNKNOWN">Not provided</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
       <label className="font-bold text-navy">Profile visibility<select name="visibility" defaultValue="PUBLIC" className={control}><option value="PUBLIC">Public registry identity</option><option value="PRIVATE">Private to your account</option><option value="LINK_ONLY">Link only</option></select></label>

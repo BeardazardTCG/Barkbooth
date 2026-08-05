@@ -125,7 +125,7 @@ export default async function DogIdentityPage({ params }: { params: { registryNu
         <input type="hidden" name="dogId" value={dog.id} />
         <div id="pet-details" className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-2 font-bold text-navy">Dog name<input name="name" required defaultValue={dog.name} className="rounded-2xl p-3" /></label>
-          <label className="grid gap-2 font-bold text-navy">Kennel Club name<input name="kennelClubName" defaultValue={dog.kennelClubName ?? ""} className="rounded-2xl p-3" /></label>
+          <label className="grid gap-2 font-bold text-navy">Registered name<input name="kennelClubName" defaultValue={dog.kennelClubName ?? ""} className="rounded-2xl p-3" /><span className="text-xs font-normal leading-5 text-charcoal/65">Optional. The dog’s official registered name, if different from their everyday name.</span></label>
           <BreedSelector mixedBreed={dog.isMixedBreed} initialBreed={dog.breed} initialBreedMix={dog.breedMix} />
           <label className="grid gap-2 font-bold text-navy">DNA confirmed<select name="dnaConfirmed" defaultValue={dog.dnaConfirmed ?? "UNKNOWN"} className="rounded-2xl p-3"><option value="UNKNOWN">Not provided</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
           <label className="grid gap-2 font-bold text-navy">Date of birth<input type="date" name="dateOfBirth" defaultValue={dog.dateOfBirth?.toISOString().slice(0, 10) ?? ""} className="rounded-2xl p-3" /></label>

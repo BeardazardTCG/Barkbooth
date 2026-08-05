@@ -176,6 +176,9 @@ model User {
   cancelledCompetitions    Competition[]           @relation("CompetitionCanceller")
   newsPosts                NewsPost[]
   events                   Event[]
+  professionalProfiles     ProfessionalProfile[]
+  professionalEvidenceReviewed ProfessionalProfileEvidence[] @relation("ProfessionalEvidenceReviewer")
+  professionalProfilesReviewed ProfessionalProfile[] @relation("ProfessionalProfileReviewer")
 }
 
 model OwnerStatus {
@@ -351,6 +354,8 @@ model DogRecord {
   issueDate          DateTime?
   expiryDate         DateTime?
   notes              String?
+  systemGenerated    Boolean                     @default(false)
+  normalizedRecordType String?
   documents          DogRecordDocument[]
   evidenceLinks      DogRecordEvidenceLink[]
   createdAt          DateTime                    @default(now())
@@ -360,6 +365,7 @@ model DogRecord {
   @@index([dogId, verificationStatus])
   @@index([category, recordType])
   @@index([provider])
+  @@index([dogId, category, normalizedRecordType, systemGenerated])
 }
 
 model DogRecordEvidenceLink {
@@ -440,6 +446,197 @@ enum PublicationStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+
+enum ProfessionalProfileType {
+  VET
+  GROOMER
+  TRAINER
+  BEHAVIOURIST
+  DOG_WALKER
+  PET_SITTER
+  DAY_CARE
+  BOARDING_KENNELS
+  HYDROTHERAPY
+  PHYSIOTHERAPIST
+  BREEDER
+  RESCUE
+  PHOTOGRAPHER
+  OTHER
+}
+
+enum ProfessionalProfilePublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProfessionalProfileVerificationStatus {
+  NOT_SUBMITTED
+  EVIDENCE_SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum ProfessionalAddressVisibility {
+  FULL_ADDRESS
+  TOWN_AREA_ONLY
+  SERVICE_AREA_ONLY
+}
+
+enum ServiceRadiusUnit {
+  MILES
+  KILOMETRES
+}
+
+enum ProfessionalEvidenceType {
+  QUALIFICATION
+  INSURANCE
+  LICENCE
+  MEMBERSHIP
+  FIRST_AID
+  OTHER
+}
+
+enum ProfessionalMediaKind {
+  LOGO
+  GALLERY
+}
+
+model ProfessionalProfile {
+  id                 String                                  @id @default(cuid())
+  ownerUserId        String
+  owner              User                                    @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  type               ProfessionalProfileType
+  customType         String?                                 @db.VarChar(80)
+  businessName       String                                  @db.VarChar(160)
+  slug               String                                  @unique @db.VarChar(180)
+  shortDescription   String                                  @db.VarChar(600)
+  yearEstablished    Int?
+  email              String?                                 @db.VarChar(254)
+  phone              String?                                 @db.VarChar(60)
+  website            String?                                 @db.VarChar(2048)
+  facebookUrl        String?                                 @db.VarChar(2048)
+  instagramUrl       String?                                 @db.VarChar(2048)
+  addressLine1       String?                                 @db.VarChar(200)
+  addressLine2       String?                                 @db.VarChar(200)
+  townCity           String?                                 @db.VarChar(120)
+  regionCounty       String?                                 @db.VarChar(120)
+  postcode           String?                                 @db.VarChar(40)
+  country            String                                  @db.VarChar(120)
+  mobileBusiness     Boolean                                 @default(false)
+  serviceRadiusValue Int?
+  serviceRadiusUnit  ServiceRadiusUnit                       @default(MILES)
+  addressVisibility  ProfessionalAddressVisibility           @default(TOWN_AREA_ONLY)
+  publicationStatus  ProfessionalProfilePublicationStatus    @default(DRAFT)
+  verificationStatus ProfessionalProfileVerificationStatus   @default(NOT_SUBMITTED)
+  verificationNotes  String?
+  adminReviewNotes   String?
+  reviewedById       String?
+  reviewedBy         User?                                   @relation("ProfessionalProfileReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewedAt         DateTime?
+  publishedAt        DateTime?
+  archivedAt         DateTime?
+  archiveReason      String?                                 @db.VarChar(500)
+  hoursNote          String?
+  appointmentOnly    Boolean                                 @default(false)
+  services           ProfessionalProfileService[]
+  evidence           ProfessionalProfileEvidence[]
+  media              ProfessionalProfileMedia[]
+  openingHours       ProfessionalOpeningHour[]
+  audits             ProfessionalProfileAudit[]
+  createdAt          DateTime                                @default(now())
+  updatedAt          DateTime                                @updatedAt
+
+  @@index([ownerUserId])
+  @@index([publicationStatus, type])
+  @@index([verificationStatus])
+}
+
+model ProfessionalProfileService {
+  id        String              @id @default(cuid())
+  profileId String
+  profile   ProfessionalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  serviceKey String             @db.VarChar(100)
+  label     String              @db.VarChar(160)
+  isOther   Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  @@unique([profileId, serviceKey])
+}
+
+model ProfessionalProfileEvidence {
+  id                 String                                @id @default(cuid())
+  profileId          String
+  profile            ProfessionalProfile                   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  evidenceType       ProfessionalEvidenceType
+  title              String                                @db.VarChar(160)
+  issuerProvider     String?                               @db.VarChar(160)
+  referenceNumber    String?                               @db.VarChar(160)
+  expiryDate         DateTime?
+  storageKey         String?                               @unique
+  fileName           String?
+  contentType        String?
+  sizeBytes          Int?
+  publicUrl          String?                               @db.VarChar(2048)
+  publicUrlVisible   Boolean                               @default(false)
+  ownerNotes         String?
+  verificationStatus ProfessionalProfileVerificationStatus @default(NOT_SUBMITTED)
+  adminReviewNotes   String?
+  reviewedById       String?
+  reviewedBy         User?                                 @relation("ProfessionalEvidenceReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewedAt         DateTime?
+  createdAt          DateTime                              @default(now())
+  updatedAt          DateTime                              @updatedAt
+
+  @@index([profileId])
+  @@index([verificationStatus])
+}
+
+model ProfessionalProfileMedia {
+  id          String                  @id @default(cuid())
+  profileId   String
+  profile     ProfessionalProfile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  kind        ProfessionalMediaKind
+  storageKey  String                  @unique
+  fileName    String
+  contentType String
+  sizeBytes   Int
+  displayOrder Int                    @default(0)
+  altText     String?                 @db.VarChar(240)
+  active      Boolean                 @default(true)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@index([profileId, kind, active, displayOrder])
+}
+
+model ProfessionalOpeningHour {
+  id           String              @id @default(cuid())
+  profileId    String
+  profile      ProfessionalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int
+  closed       Boolean             @default(false)
+  opensAt      String?             @db.VarChar(5)
+  closesAt     String?             @db.VarChar(5)
+  secondOpensAt String?            @db.VarChar(5)
+  secondClosesAt String?           @db.VarChar(5)
+
+  @@unique([profileId, dayOfWeek])
+}
+
+model ProfessionalProfileAudit {
+  id        String              @id @default(cuid())
+  profileId String
+  profile   ProfessionalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  action    String              @db.VarChar(80)
+  reason    String?             @db.VarChar(500)
+  createdAt DateTime            @default(now())
+
+  @@index([profileId, createdAt])
 }
 
 model NewsPost {

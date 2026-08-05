@@ -144,6 +144,10 @@ function asDate(value: string) {
   return value ? new Date(`${value}T00:00:00.000Z`) : null;
 }
 
+function normalizeRecordType(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 async function requireDogOwner(dogId: string) {
   const user = await requireUser();
   const ownership = await prisma.dogOwnership.findUnique({ where: { userId_dogId: { userId: user.id, dogId } }, include: { dog: true } });
@@ -231,6 +235,8 @@ async function addDogRecordImpl(formData: FormData) {
     dogId,
     category: asEnum(asString(formData.get("category")), recordCategories, "OTHER"),
     recordType,
+    normalizedRecordType: normalizeRecordType(recordType),
+    systemGenerated: false,
     status: asEnum(asString(formData.get("status")), recordStatuses, "HAVE_RECORD"),
     verificationStatus: "NOT_SUBMITTED",
     referenceNumber: asString(formData.get("referenceNumber")) || null,
@@ -250,6 +256,8 @@ async function updateDogRecordImpl(formData: FormData) {
   await prisma.dogRecord.update({ where: { id: recordId }, data: {
     category: asEnum(asString(formData.get("category")), recordCategories, recordCategories.includes(existing.category as (typeof recordCategories)[number]) ? existing.category as (typeof recordCategories)[number] : "OTHER"),
     recordType: recordType || existing.recordType,
+    normalizedRecordType: normalizeRecordType(recordType),
+    systemGenerated: false,
     status: asEnum(asString(formData.get("status")), recordStatuses, existing.status),
     referenceNumber: asString(formData.get("referenceNumber")) || null,
     issueDate: null,
