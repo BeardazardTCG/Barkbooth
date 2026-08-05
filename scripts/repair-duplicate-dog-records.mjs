@@ -48,7 +48,9 @@ function groupPlan(group) {
     proposedEvidenceLinkMoveCount: safe.reduce((total, record) => total + record.evidenceLinks.length, 0),
     resultingReferenceNumber,
     resultingVerificationStatus,
-    safeToApply: safe.length > 0 && conflicts.length === 0,
+    hasSafeRepairs: safe.length > 0,
+    hasConflicts: conflicts.length > 0,
+    safeToApply: safe.length > 0,
   };
 }
 function emptySummary(dryRun) { return { totalGroups: 0, safeGroups: 0, conflictGroups: 0, safeDuplicates: 0, proposedRemovals: 0, documentsToMove: 0, evidenceLinksToMove: 0, removed: 0, documentsMoved: 0, evidenceLinksMoved: 0, dryRun }; }
@@ -61,7 +63,7 @@ function addToSummary(summary, plan) {
   summary.evidenceLinksToMove += plan.proposedEvidenceLinkMoveCount;
 }
 async function applyPlan(client, group, plan) {
-  if (!plan.safeDuplicateRecordIds.length || plan.conflictingRecordIds.length) return { removed: 0, documentsMoved: 0, evidenceLinksMoved: 0 };
+  if (!plan.safeDuplicateRecordIds.length) return { removed: 0, documentsMoved: 0, evidenceLinksMoved: 0 };
   const { canonical, safe, resultingReferenceNumber, resultingVerificationStatus, resultingNotes } = classify(group);
   const counts = { removed: 0, documentsMoved: 0, evidenceLinksMoved: 0 };
   await client.$transaction(async (tx) => {
