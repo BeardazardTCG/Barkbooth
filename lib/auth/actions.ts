@@ -52,7 +52,7 @@ export async function signup(_prevState: ActionResult, formData: FormData): Prom
   }
   if (!isSupportedLocation(country) || !over16 || !/^\S+@\S+\.\S+$/.test(email) || !/^[a-z0-9_]{3,30}$/.test(username)) {
     logAuthDiagnostic("signup", "validation_failed");
-    return { status: "error", message: !isSupportedLocation(country) ? "Choose a supported location." : !over16 ? "You must confirm you are over 16 to create an account." : "Check your email and use a username with 3–30 letters, numbers, or underscores." };
+    return { status: "error", message: !isSupportedLocation(country) ? "Choose a supported country or location." : !over16 ? "You must confirm you are over 16 to create an account." : "Check your email and use a username with 3–30 letters, numbers, or underscores." };
   }
   const policyError = passwordPolicyError(password);
   if (policyError) {

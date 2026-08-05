@@ -1,0 +1,40 @@
+-- Add idempotency metadata for default/system-generated dog records.
+ALTER TABLE "DogRecord" ADD COLUMN IF NOT EXISTS "systemGenerated" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "DogRecord" ADD COLUMN IF NOT EXISTS "normalizedRecordType" TEXT;
+UPDATE "DogRecord" SET "normalizedRecordType" = lower(regexp_replace(trim("recordType"), '\s+', ' ', 'g')) WHERE "normalizedRecordType" IS NULL;
+CREATE INDEX IF NOT EXISTS "DogRecord_dogId_category_normalizedRecordType_systemGenerated_idx" ON "DogRecord"("dogId", "category", "normalizedRecordType", "systemGenerated");
+CREATE UNIQUE INDEX IF NOT EXISTS "DogRecord_default_record_identity_key" ON "DogRecord"("dogId", "category", "normalizedRecordType") WHERE "systemGenerated" = true;
+
+CREATE TYPE "ProfessionalProfileType" AS ENUM ('VET','GROOMER','TRAINER','BEHAVIOURIST','DOG_WALKER','PET_SITTER','DAY_CARE','BOARDING_KENNELS','HYDROTHERAPY','PHYSIOTHERAPIST','BREEDER','RESCUE','PHOTOGRAPHER','OTHER');
+CREATE TYPE "ProfessionalProfilePublicationStatus" AS ENUM ('DRAFT','PUBLISHED','ARCHIVED');
+CREATE TYPE "ProfessionalProfileVerificationStatus" AS ENUM ('NOT_SUBMITTED','EVIDENCE_SUBMITTED','UNDER_REVIEW','VERIFIED','REJECTED');
+CREATE TYPE "ProfessionalAddressVisibility" AS ENUM ('FULL_ADDRESS','TOWN_AREA_ONLY','SERVICE_AREA_ONLY');
+CREATE TYPE "ServiceRadiusUnit" AS ENUM ('MILES','KILOMETRES');
+CREATE TYPE "ProfessionalEvidenceType" AS ENUM ('QUALIFICATION','INSURANCE','LICENCE','MEMBERSHIP','FIRST_AID','OTHER');
+CREATE TYPE "ProfessionalMediaKind" AS ENUM ('LOGO','GALLERY');
+
+CREATE TABLE "ProfessionalProfile" ("id" TEXT NOT NULL,"ownerUserId" TEXT NOT NULL,"type" "ProfessionalProfileType" NOT NULL,"customType" VARCHAR(80),"businessName" VARCHAR(160) NOT NULL,"slug" VARCHAR(180) NOT NULL,"shortDescription" VARCHAR(600) NOT NULL,"yearEstablished" INTEGER,"email" VARCHAR(254),"phone" VARCHAR(60),"website" VARCHAR(2048),"facebookUrl" VARCHAR(2048),"instagramUrl" VARCHAR(2048),"addressLine1" VARCHAR(200),"addressLine2" VARCHAR(200),"townCity" VARCHAR(120),"regionCounty" VARCHAR(120),"postcode" VARCHAR(40),"country" VARCHAR(120) NOT NULL,"mobileBusiness" BOOLEAN NOT NULL DEFAULT false,"serviceRadiusValue" INTEGER,"serviceRadiusUnit" "ServiceRadiusUnit" NOT NULL DEFAULT 'MILES',"addressVisibility" "ProfessionalAddressVisibility" NOT NULL DEFAULT 'TOWN_AREA_ONLY',"publicationStatus" "ProfessionalProfilePublicationStatus" NOT NULL DEFAULT 'DRAFT',"verificationStatus" "ProfessionalProfileVerificationStatus" NOT NULL DEFAULT 'NOT_SUBMITTED',"verificationNotes" TEXT,"adminReviewNotes" TEXT,"reviewedById" TEXT,"reviewedAt" TIMESTAMP(3),"publishedAt" TIMESTAMP(3),"archivedAt" TIMESTAMP(3),"archiveReason" VARCHAR(500),"hoursNote" TEXT,"appointmentOnly" BOOLEAN NOT NULL DEFAULT false,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL,CONSTRAINT "ProfessionalProfile_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ProfessionalProfileService" ("id" TEXT NOT NULL,"profileId" TEXT NOT NULL,"serviceKey" VARCHAR(100) NOT NULL,"label" VARCHAR(160) NOT NULL,"isOther" BOOLEAN NOT NULL DEFAULT false,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "ProfessionalProfileService_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ProfessionalProfileEvidence" ("id" TEXT NOT NULL,"profileId" TEXT NOT NULL,"evidenceType" "ProfessionalEvidenceType" NOT NULL,"title" VARCHAR(160) NOT NULL,"issuerProvider" VARCHAR(160),"referenceNumber" VARCHAR(160),"expiryDate" TIMESTAMP(3),"storageKey" TEXT,"fileName" TEXT,"contentType" TEXT,"sizeBytes" INTEGER,"publicUrl" VARCHAR(2048),"publicUrlVisible" BOOLEAN NOT NULL DEFAULT false,"ownerNotes" TEXT,"verificationStatus" "ProfessionalProfileVerificationStatus" NOT NULL DEFAULT 'NOT_SUBMITTED',"adminReviewNotes" TEXT,"reviewedById" TEXT,"reviewedAt" TIMESTAMP(3),"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL,CONSTRAINT "ProfessionalProfileEvidence_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ProfessionalProfileMedia" ("id" TEXT NOT NULL,"profileId" TEXT NOT NULL,"kind" "ProfessionalMediaKind" NOT NULL,"storageKey" TEXT NOT NULL,"fileName" TEXT NOT NULL,"contentType" TEXT NOT NULL,"sizeBytes" INTEGER NOT NULL,"displayOrder" INTEGER NOT NULL DEFAULT 0,"altText" VARCHAR(240),"active" BOOLEAN NOT NULL DEFAULT true,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL,CONSTRAINT "ProfessionalProfileMedia_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ProfessionalOpeningHour" ("id" TEXT NOT NULL,"profileId" TEXT NOT NULL,"dayOfWeek" INTEGER NOT NULL,"closed" BOOLEAN NOT NULL DEFAULT false,"opensAt" VARCHAR(5),"closesAt" VARCHAR(5),"secondOpensAt" VARCHAR(5),"secondClosesAt" VARCHAR(5),CONSTRAINT "ProfessionalOpeningHour_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ProfessionalProfileAudit" ("id" TEXT NOT NULL,"profileId" TEXT NOT NULL,"actorUserId" TEXT,"action" VARCHAR(80) NOT NULL,"reason" VARCHAR(500),"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "ProfessionalProfileAudit_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "ProfessionalProfile_slug_key" ON "ProfessionalProfile"("slug");
+CREATE INDEX "ProfessionalProfile_ownerUserId_idx" ON "ProfessionalProfile"("ownerUserId");
+CREATE INDEX "ProfessionalProfile_publicationStatus_type_idx" ON "ProfessionalProfile"("publicationStatus", "type");
+CREATE INDEX "ProfessionalProfile_verificationStatus_idx" ON "ProfessionalProfile"("verificationStatus");
+CREATE UNIQUE INDEX "ProfessionalProfileService_profileId_serviceKey_key" ON "ProfessionalProfileService"("profileId","serviceKey");
+CREATE INDEX "ProfessionalProfileEvidence_profileId_idx" ON "ProfessionalProfileEvidence"("profileId");
+CREATE UNIQUE INDEX "ProfessionalProfileEvidence_storageKey_key" ON "ProfessionalProfileEvidence"("storageKey");
+CREATE UNIQUE INDEX "ProfessionalProfileMedia_storageKey_key" ON "ProfessionalProfileMedia"("storageKey");
+CREATE INDEX "ProfessionalProfileMedia_profileId_kind_active_displayOrder_idx" ON "ProfessionalProfileMedia"("profileId","kind","active","displayOrder");
+CREATE UNIQUE INDEX "ProfessionalOpeningHour_profileId_dayOfWeek_key" ON "ProfessionalOpeningHour"("profileId","dayOfWeek");
+CREATE INDEX "ProfessionalProfileAudit_profileId_createdAt_idx" ON "ProfessionalProfileAudit"("profileId","createdAt");
+ALTER TABLE "ProfessionalProfile" ADD CONSTRAINT "ProfessionalProfile_ownerUserId_fkey" FOREIGN KEY ("ownerUserId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalProfile" ADD CONSTRAINT "ProfessionalProfile_reviewedById_fkey" FOREIGN KEY ("reviewedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalProfileService" ADD CONSTRAINT "ProfessionalProfileService_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "ProfessionalProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalProfileEvidence" ADD CONSTRAINT "ProfessionalProfileEvidence_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "ProfessionalProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalProfileEvidence" ADD CONSTRAINT "ProfessionalProfileEvidence_reviewedById_fkey" FOREIGN KEY ("reviewedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalProfileMedia" ADD CONSTRAINT "ProfessionalProfileMedia_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "ProfessionalProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalOpeningHour" ADD CONSTRAINT "ProfessionalOpeningHour_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "ProfessionalProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProfessionalProfileAudit" ADD CONSTRAINT "ProfessionalProfileAudit_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "ProfessionalProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
