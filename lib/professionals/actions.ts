@@ -123,7 +123,7 @@ async function rollbackUploadedObject(key: string, operation: string) {
 function publicationTimestampData(to: ProfessionalProfilePublicationStatus) {
   if (to === "PUBLISHED") return { publishedAt: new Date(), archivedAt: null, archiveReason: null };
   if (to === "DRAFT") return { publishedAt: null, archivedAt: null, archiveReason: null };
-  return { archivedAt: new Date() };
+  return { publishedAt: null, archivedAt: new Date() };
 }
 
 export async function saveProfessionalProfile(form: FormData) {
