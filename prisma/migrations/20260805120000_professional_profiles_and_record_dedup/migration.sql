@@ -3,8 +3,6 @@ ALTER TABLE "DogRecord" ADD COLUMN IF NOT EXISTS "systemGenerated" BOOLEAN NOT N
 ALTER TABLE "DogRecord" ADD COLUMN IF NOT EXISTS "normalizedRecordType" TEXT;
 UPDATE "DogRecord" SET "normalizedRecordType" = lower(regexp_replace(trim("recordType"), '\s+', ' ', 'g')) WHERE "normalizedRecordType" IS NULL;
 CREATE INDEX IF NOT EXISTS "DogRecord_dogId_category_normalizedRecordType_systemGenerated_idx" ON "DogRecord"("dogId", "category", "normalizedRecordType", "systemGenerated");
-CREATE UNIQUE INDEX IF NOT EXISTS "DogRecord_default_record_identity_key" ON "DogRecord"("dogId", "category", "normalizedRecordType") WHERE "systemGenerated" = true;
-
 CREATE TYPE "ProfessionalProfileType" AS ENUM ('VET','GROOMER','TRAINER','BEHAVIOURIST','DOG_WALKER','PET_SITTER','DAY_CARE','BOARDING_KENNELS','HYDROTHERAPY','PHYSIOTHERAPIST','BREEDER','RESCUE','PHOTOGRAPHER','OTHER');
 CREATE TYPE "ProfessionalProfilePublicationStatus" AS ENUM ('DRAFT','PUBLISHED','ARCHIVED');
 CREATE TYPE "ProfessionalProfileVerificationStatus" AS ENUM ('NOT_SUBMITTED','EVIDENCE_SUBMITTED','UNDER_REVIEW','VERIFIED','REJECTED');

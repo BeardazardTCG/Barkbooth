@@ -107,6 +107,25 @@ function profileStatusAfterEvidence(current: ProfessionalProfileVerificationStat
   return current === "NOT_SUBMITTED" ? "EVIDENCE_SUBMITTED" : current;
 }
 
+function revalidateProfessionalSurfaces(profile: { id: string; slug: string }, admin = false) {
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/professionals/${profile.id}`);
+  revalidatePath("/professionals");
+  revalidatePath(`/professionals/${profile.slug}`);
+  if (admin) revalidatePath("/admin/professionals");
+}
+async function bestEffortDeleteObject(key: string, operation: string) {
+  await deleteObject(key).catch((error) => console.error("Professional Profile storage cleanup failed", { operation, storageKey: key, error }));
+}
+async function rollbackUploadedObject(key: string, operation: string) {
+  await deleteObject(key).catch((error) => console.error("Professional Profile upload rollback cleanup failed", { operation, storageKey: key, error }));
+}
+function publicationTimestampData(to: ProfessionalProfilePublicationStatus) {
+  if (to === "PUBLISHED") return { publishedAt: new Date(), archivedAt: null, archiveReason: null };
+  if (to === "DRAFT") return { publishedAt: null, archivedAt: null, archiveReason: null };
+  return { archivedAt: new Date() };
+}
+
 export async function saveProfessionalProfile(form: FormData) {
   const user = await requireUser();
   const id = s(form.get("profileId"));
@@ -160,8 +179,7 @@ export async function saveProfessionalProfile(form: FormData) {
   })) : await prisma.professionalProfile.create({
     data: { ownerUserId: user.id, slug: await uniqueSlug(businessName), ...data, services: { create: serviceCreates }, openingHours: { create: openingHours }, audits: { create: { actorUserId: user.id, action: "OWNER_CREATE" } } },
   });
-  revalidatePath("/dashboard");
-  revalidatePath(`/dashboard/professionals/${saved.id}`);
+  revalidateProfessionalSurfaces(saved);
 }
 
 export async function setProfessionalPublication(form: FormData) {
@@ -169,13 +187,10 @@ export async function setProfessionalPublication(form: FormData) {
   const to = asAllowed(s(form.get("to")), publicationStatuses, "publication status") as ProfessionalProfilePublicationStatus;
   if (!allowedPublicationTransitions[profile.publicationStatus].includes(to)) throw new Error("That publication change is not allowed.");
   if (to === "PUBLISHED" && !publicationMinimum(profile)) throw new Error("Add a real description, contact method and safe location/service area before publishing.");
-  const data: Record<string, unknown> = { publicationStatus: to };
-  if (to === "PUBLISHED") data.publishedAt = new Date();
-  if (to === "DRAFT") { data.publishedAt = null; data.archivedAt = null; data.archiveReason = null; }
-  if (to === "ARCHIVED") { data.archivedAt = new Date(); data.archiveReason = bounded(s(form.get("reason")), "Archive reason", 500, true); }
+  const data: Record<string, unknown> = { publicationStatus: to, ...publicationTimestampData(to) };
+  if (to === "ARCHIVED") data.archiveReason = bounded(s(form.get("reason")), "Archive reason", 500, true);
   await prisma.professionalProfile.update({ where: { id: profile.id }, data: { ...data, audits: { create: { actorUserId: user.id, action: `PUBLICATION_${to}`, reason: data.archiveReason as string | undefined } } } });
-  revalidatePath("/professionals");
-  revalidatePath(`/professionals/${profile.slug}`);
+  revalidateProfessionalSurfaces(profile);
 }
 
 export async function addProfessionalEvidence(form: FormData) {
@@ -206,9 +221,10 @@ export async function addProfessionalEvidence(form: FormData) {
       await tx.professionalProfile.update({ where: { id: profile.id }, data: { verificationStatus: profileStatusAfterEvidence(profile.verificationStatus), audits: { create: { actorUserId: user.id, action: "EVIDENCE_SUBMITTED" } } } });
     });
   } catch (error) {
-    if (upload) await deleteObject(upload.storageKey);
+    if (upload) await rollbackUploadedObject(upload.storageKey, "rollbackProfessionalEvidenceUpload");
     throw error;
   }
+  revalidateProfessionalSurfaces(profile);
 }
 
 export async function updateProfessionalEvidence(form: FormData) {
@@ -225,6 +241,7 @@ export async function updateProfessionalEvidence(form: FormData) {
     publicUrlVisible: form.get("publicUrlVisible") === "on",
     ownerNotes: bounded(s(form.get("ownerNotes")), "Owner notes", 2000),
   } });
+  revalidateProfessionalSurfaces(evidence.profile);
 }
 
 export async function replaceProfessionalEvidenceDocument(form: FormData) {
@@ -236,23 +253,26 @@ export async function replaceProfessionalEvidenceDocument(form: FormData) {
   try {
     await prisma.professionalProfileEvidence.update({ where: { id: evidence.id }, data: next });
   } catch (error) {
-    await deleteObject(next.storageKey);
+    await rollbackUploadedObject(next.storageKey, "rollbackProfessionalEvidenceDocumentReplacement");
     throw error;
   }
-  if (oldKey) await deleteObject(oldKey);
+  if (oldKey) await bestEffortDeleteObject(oldKey, "replaceProfessionalEvidenceDocument");
+  revalidateProfessionalSurfaces(evidence.profile);
 }
 
 export async function removeProfessionalEvidenceDocument(form: FormData) {
   const { evidence } = await ownerEvidence(s(form.get("evidenceId")));
   if (!evidence.storageKey) return;
   await prisma.professionalProfileEvidence.update({ where: { id: evidence.id }, data: { storageKey: null, fileName: null, contentType: null, sizeBytes: null } });
-  await deleteObject(evidence.storageKey);
+  await bestEffortDeleteObject(evidence.storageKey, "removeProfessionalEvidenceDocument");
+  revalidateProfessionalSurfaces(evidence.profile);
 }
 
 export async function removeProfessionalEvidence(form: FormData) {
   const { evidence } = await ownerEvidence(s(form.get("evidenceId")));
   await prisma.professionalProfileEvidence.delete({ where: { id: evidence.id } });
-  if (evidence.storageKey) await deleteObject(evidence.storageKey);
+  if (evidence.storageKey) await bestEffortDeleteObject(evidence.storageKey, "removeProfessionalEvidence");
+  revalidateProfessionalSurfaces(evidence.profile);
 }
 
 export async function uploadProfessionalImage(form: FormData) {
@@ -278,28 +298,31 @@ export async function uploadProfessionalImage(form: FormData) {
       }
     });
   } catch (error) {
-    await deleteObject(key);
+    await rollbackUploadedObject(key, "rollbackProfessionalImageUpload");
     throw error;
   }
-  if (oldKey) await deleteObject(oldKey);
+  if (oldKey) await bestEffortDeleteObject(oldKey, "replaceProfessionalLogo");
+  revalidateProfessionalSurfaces(profile);
 }
 
 export async function updateProfessionalMedia(form: FormData) {
   const { media } = await ownerMedia(s(form.get("mediaId")));
   await prisma.professionalProfileMedia.update({ where: { id: media.id }, data: { altText: bounded(s(form.get("altText")), "Alt text", 240), displayOrder: intInRange(s(form.get("displayOrder")), "Display order", 0, 1000) ?? media.displayOrder } });
+  revalidateProfessionalSurfaces(media.profile);
 }
 
 export async function removeProfessionalMedia(form: FormData) {
   const { media } = await ownerMedia(s(form.get("mediaId")));
   await prisma.professionalProfileMedia.update({ where: { id: media.id }, data: { active: false } });
-  await deleteObject(media.storageKey);
+  await bestEffortDeleteObject(media.storageKey, "removeProfessionalMedia");
+  revalidateProfessionalSurfaces(media.profile);
 }
 
 export async function reviewProfessionalProfile(form: FormData) {
   const user = await requireUser();
   if (user.role !== "ADMIN") throw new Error("ADMIN access required.");
   const status = asAllowed(s(form.get("verificationStatus")), profileVerificationStatuses, "profile verification status") as ProfessionalProfileVerificationStatus;
-  await prisma.professionalProfile.update({ where: { id: s(form.get("profileId")) }, data: {
+  const profile = await prisma.professionalProfile.update({ where: { id: s(form.get("profileId")) }, data: {
     verificationStatus: status,
     verificationNotes: bounded(s(form.get("verificationNotes")), "Owner-visible verification note", 2000),
     adminReviewNotes: bounded(s(form.get("adminReviewNotes")), "Admin review note", 2000),
@@ -307,7 +330,7 @@ export async function reviewProfessionalProfile(form: FormData) {
     reviewedAt: new Date(),
     audits: { create: { actorUserId: user.id, action: `ADMIN_PROFILE_${status}`, reason: s(form.get("adminReviewNotes")) || null } },
   } });
-  revalidatePath("/admin/professionals");
+  revalidateProfessionalSurfaces(profile, true);
 }
 
 export async function reviewProfessionalEvidence(form: FormData) {
@@ -315,13 +338,13 @@ export async function reviewProfessionalEvidence(form: FormData) {
   if (user.role !== "ADMIN") throw new Error("ADMIN access required.");
   const status = asAllowed(s(form.get("verificationStatus")), profileVerificationStatuses, "evidence verification status") as ProfessionalProfileVerificationStatus;
   const evidenceId = s(form.get("evidenceId"));
-  const evidence = await prisma.professionalProfileEvidence.findUnique({ where: { id: evidenceId }, select: { profileId: true } });
+  const evidence = await prisma.professionalProfileEvidence.findUnique({ where: { id: evidenceId }, include: { profile: true } });
   if (!evidence) throw new Error("Evidence not found.");
   await prisma.$transaction(async (tx) => {
     await tx.professionalProfileEvidence.update({ where: { id: evidenceId }, data: { verificationStatus: status, adminReviewNotes: bounded(s(form.get("adminReviewNotes")), "Admin review note", 2000), reviewedById: user.id, reviewedAt: new Date() } });
     await tx.professionalProfileAudit.create({ data: { profileId: evidence.profileId, actorUserId: user.id, action: `ADMIN_EVIDENCE_${status}`, reason: s(form.get("adminReviewNotes")) || null } });
   });
-  revalidatePath("/admin/professionals");
+  revalidateProfessionalSurfaces(evidence.profile, true);
 }
 
 export async function adminSetProfessionalPublication(form: FormData) {
@@ -332,5 +355,8 @@ export async function adminSetProfessionalPublication(form: FormData) {
   const to = asAllowed(s(form.get("to")), publicationStatuses, "publication status") as ProfessionalProfilePublicationStatus;
   if (!allowedPublicationTransitions[profile.publicationStatus].includes(to)) throw new Error("That publication change is not allowed.");
   const reason = to === "ARCHIVED" ? bounded(s(form.get("reason")), "Archive reason", 500, true) : bounded(s(form.get("reason")), "Review reason", 500);
-  await prisma.professionalProfile.update({ where: { id: profile.id }, data: { publicationStatus: to, archivedAt: to === "ARCHIVED" ? new Date() : null, archiveReason: to === "ARCHIVED" ? reason : null, audits: { create: { actorUserId: user.id, action: `ADMIN_PUBLICATION_${to}`, reason } } } });
+  const timestampData: Record<string, unknown> = { ...publicationTimestampData(to) };
+  if (to === "ARCHIVED") timestampData.archiveReason = reason;
+  const updated = await prisma.professionalProfile.update({ where: { id: profile.id }, data: { publicationStatus: to, ...timestampData, audits: { create: { actorUserId: user.id, action: `ADMIN_PUBLICATION_${to}`, reason } } } });
+  revalidateProfessionalSurfaces(updated, true);
 }
