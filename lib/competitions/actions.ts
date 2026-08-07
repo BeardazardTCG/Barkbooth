@@ -4,7 +4,7 @@ import type { CompetitionEligibility, CompetitionEntryStatus, CompetitionStatus 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
-import { canTransitionCompetition, competitionAcceptsEntries, competitionCountryEligibility, competitionOpenNowDates } from "@/lib/competitions";
+import { canTransitionCompetition, competitionAcceptsEntries, competitionCountryEligibility, competitionOpenNowDates, parseBoundedInteger, parsePoundsToPence } from "@/lib/competitions";
 import { prisma } from "@/lib/prisma";
 import { deleteObject, putObject } from "@/lib/storage";
 import { imageContentTypes, MAX_PROFILE_PHOTO_BYTES, storageKey, validateUpload } from "@/lib/uploads";
@@ -96,11 +96,11 @@ export async function saveCompetition(form: FormData) {
   if (required.some((field) => !value(form, field))) throw new Error("Complete every required competition field.");
   const data = {
     slug: value(form, "slug"), title: value(form, "title"), theme: value(form, "theme"), tagline: value(form,"tagline") || null, description: value(form, "description"),
-    status, opensAt, closesAt, eligibility, entryFeePence: Math.max(0, Math.round(Number(value(form,"entryFeePounds") || 0) * 100)),
+    status, opensAt, closesAt, eligibility, entryFeePence: parsePoundsToPence(value(form,"entryFeePounds") || "0", "Entry fee", 100_000)!,
     launchMessage: value(form,"launchMessage") || null, heroAltText: value(form,"heroAltText") || null,
     heroFocalPosition: ["top","center","bottom"].includes(value(form,"heroFocalPosition")) ? value(form,"heroFocalPosition") : "center",
     judgingCriteria: value(form,"judgingCriteria") || null, galleryVisible: form.get("galleryVisible") === "on",
-    maxEntriesPerDog: Math.max(1, Number(value(form, "maxEntriesPerDog")) || 1),
+    maxEntriesPerDog: parseBoundedInteger(value(form, "maxEntriesPerDog"), "Maximum entries per dog", 1, 20),
     prizeSummary: value(form, "prizeSummary"), rules: value(form, "rules"), rulesVersion: value(form, "rulesVersion") || "1", imageGuidelines: value(form, "imageGuidelines"),
   };
   if (existing && existing._count.entries > 0 && data.maxEntriesPerDog < existing.maxEntriesPerDog) throw new Error("The entry limit cannot be reduced after entries exist; existing entries will never be silently invalidated.");
@@ -136,12 +136,14 @@ export async function savePrize(formData: FormData) {
   await requireAdmin(); const competitionId=value(formData,"competitionId"), id=value(formData,"prizeId");
   const description=value(formData,"description"), placement=value(formData,"placement");
   if(!description || !placement) throw new Error("Prize placement and description are required.");
-  const pounds=value(formData,"valuePounds");
-  const data={placement,title:value(formData,"title")||null,description,valuePence:pounds?Math.max(0,Math.round(Number(pounds)*100)):null,sponsor:value(formData,"sponsor")||null,imageUrl:value(formData,"imageUrl")||null,digitalAward:value(formData,"digitalAward")||null,displayOrder:Number(value(formData,"displayOrder")||0)};
+  const pounds=value(formData,"valuePounds"), imageUrl=value(formData,"imageUrl");
+  if (imageUrl) { let parsed: URL; try { parsed = new URL(imageUrl); } catch { throw new Error("Prize image must be a valid HTTPS URL."); } if (parsed.protocol !== "https:") throw new Error("Prize image must use HTTPS."); }
+  const data={placement,title:value(formData,"title")||null,description,valuePence:parsePoundsToPence(pounds,"Estimated prize value",10_000_000,true),sponsor:value(formData,"sponsor")||null,imageUrl:imageUrl||null,digitalAward:value(formData,"digitalAward")||null,displayOrder:parseBoundedInteger(value(formData,"displayOrder")||"0","Prize display order",0,1000)};
   if(id){const prize=await prisma.competitionPrize.findFirst({where:{id,competitionId}});if(!prize)throw new Error("Prize not found.");await prisma.competitionPrize.update({where:{id},data});}else await prisma.competitionPrize.create({data:{competitionId,...data}});
-  revalidatePath(`/admin/competitions/${competitionId}`);
+  const competition=await prisma.competition.findUniqueOrThrow({where:{id:competitionId},select:{slug:true}});
+  revalidatePath(`/admin/competitions/${competitionId}`); revalidatePath(`/competitions/${competition.slug}`); revalidatePath("/competitions");
 }
-export async function removePrize(formData: FormData) { await requireAdmin(); const id=value(formData,"prizeId"),competitionId=value(formData,"competitionId"); const prize=await prisma.competitionPrize.findFirst({where:{id,competitionId}});if(!prize)throw new Error("Prize not found.");await prisma.competitionPrize.delete({where:{id}});revalidatePath(`/admin/competitions/${competitionId}`); }
+export async function removePrize(formData: FormData) { await requireAdmin(); if(formData.get("confirmRemove")!=="on") throw new Error("Confirm prize removal."); const id=value(formData,"prizeId"),competitionId=value(formData,"competitionId"); const prize=await prisma.competitionPrize.findFirst({where:{id,competitionId},include:{competition:{select:{slug:true}}}});if(!prize)throw new Error("Prize not found.");await prisma.competitionPrize.delete({where:{id}});revalidatePath(`/admin/competitions/${competitionId}`);revalidatePath(`/competitions/${prize.competition.slug}`);revalidatePath("/competitions"); }
 
 export async function moderateEntry(form: FormData) {
   await requireAdmin();
@@ -199,11 +201,12 @@ export async function uploadCompetitionHero(formData: FormData) {
     await deleteObject(key).catch((cleanupError) => console.error("Hero rollback cleanup failed", { error: cleanupError }));
     throw error;
   }
-  // The new object and DB pointer are durable before cleanup; do not make Amy wait for deletion.
-  if (competition.heroStorageKey) void deleteObject(competition.heroStorageKey).catch((error) => console.error("Hero cleanup failed", { error }));
+  // Next 14 in this deployment has no guaranteed post-response task primitive.
+  // Await best-effort cleanup so a successful response never abandons old media.
+  if (competition.heroStorageKey) await deleteObject(competition.heroStorageKey).catch((error) => console.error("Hero cleanup failed", { error }));
   revalidatePath(`/competitions/${competition.slug}`);
 }
-export async function removeCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUniqueOrThrow({where:{id}});await prisma.competition.update({where:{id},data:{heroStorageKey:null,heroFileName:null,heroContentType:null,heroSizeBytes:null}});if(competition.heroStorageKey)deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}
+export async function removeCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUniqueOrThrow({where:{id}});await prisma.competition.update({where:{id},data:{heroStorageKey:null,heroFileName:null,heroContentType:null,heroSizeBytes:null}});if(competition.heroStorageKey)await deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}
 
 export async function uploadJudgeImage(formData: FormData) {
   await requireAdmin(); const judgeId = value(formData, "judgeId"), competitionId = value(formData, "competitionId");
