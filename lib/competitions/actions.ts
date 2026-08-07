@@ -99,6 +99,7 @@ export async function saveCompetition(form: FormData) {
     status, opensAt, closesAt, eligibility, entryFeePence: parsePoundsToPence(value(form,"entryFeePounds") || "0", "Entry fee", 100_000)!,
     launchMessage: value(form,"launchMessage") || null, heroAltText: value(form,"heroAltText") || null,
     heroFocalPosition: ["top","center","bottom"].includes(value(form,"heroFocalPosition")) ? value(form,"heroFocalPosition") : "center",
+    heroImageType: value(form,"heroImageType")==="PHOTOGRAPH" ? "PHOTOGRAPH" : "ARTWORK",
     judgingCriteria: value(form,"judgingCriteria") || null, galleryVisible: form.get("galleryVisible") === "on",
     maxEntriesPerDog: parseBoundedInteger(value(form, "maxEntriesPerDog"), "Maximum entries per dog", 1, 20),
     prizeSummary: value(form, "prizeSummary"), rules: value(form, "rules"), rulesVersion: value(form, "rulesVersion") || "1", imageGuidelines: value(form, "imageGuidelines"),
