@@ -404,6 +404,7 @@ model Competition {
   launchMessage      String?                @db.VarChar(240)
   heroAltText        String?                @db.VarChar(240)
   heroFocalPosition  String                 @default("center") @db.VarChar(20)
+  heroImageType      String                 @default("ARTWORK") @db.VarChar(20)
   judgingCriteria    String?
   galleryVisible     Boolean                @default(true)
   maxEntriesPerDog   Int                    @default(1)

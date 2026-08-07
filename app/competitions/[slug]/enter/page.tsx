@@ -22,7 +22,7 @@ export default async function CompetitionEntryPage({ params }: { params: { slug:
   if (!adminDraft && !competitionAcceptsEntries(competition.status, competition.opensAt, competition.closesAt)) notFound();
   const eligible = competitionCountryEligibility(competition.eligibility, user.country);
 
-  return <Section eyebrow="Free competition entry" title={`Enter ${competition.title}`}>
+  return <Section eyebrow="Competition entry" title={`Enter ${competition.title}`}><a href={`/competitions/${competition.slug}`} className="mb-4 inline-block font-bold text-info">← Back to competition</a><div className="mb-5 flex items-center gap-4 rounded-2xl bg-navy p-4 text-white">{competition.heroStorageKey&&<img src={`/api/competition-hero/${competition.id}`} alt="Competition artwork thumbnail" className={`h-20 w-28 rounded-xl bg-white/10 ${competition.heroImageType === "PHOTOGRAPH" ? "object-cover" : "object-contain"}`}/>}<div><strong className="block text-lg">{competition.title}</strong><span className="text-sm">Closes {competition.closesAt.toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",hour12:true})}</span></div></div>
     <div className="mb-5 grid gap-3">{dogs.map((dog) => <ProfileReadinessStrip key={dog.id} dog={dog} />)}</div>
     <Card>
       <p className={`mb-5 rounded-2xl p-4 font-bold leading-6 ${eligible ? "bg-skysoft/50 text-navy" : "bg-amber-50 text-amber-900"}`}>
