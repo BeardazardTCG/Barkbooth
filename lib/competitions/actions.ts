@@ -37,6 +37,7 @@ export async function enterCompetition(_previous: ActionResult, form: FormData):
   });
 
   if (!competition || !acceptedForEntry(competition.status, competition.opensAt, competition.closesAt, user.role === "ADMIN")) return { status: "error", message: "This competition is not open for entry." };
+  if (competition.entryFeePence > 0) return { status: "error", message: "Paid entries are not available yet." };
   if (!competitionCountryEligibility(competition.eligibility, user.country)) return { status: "error", message: "Initial physical-prize competitions are UK-only. Profiles and external evidence remain available internationally." };
   if (!dog) return { status: "error", message: "You may only enter a dog registered to your account." };
   if (!dog.name || !dog.sex) return { status: "error", message: "A dog name and sex are required for a Bark Booth identity." };
@@ -94,8 +95,11 @@ export async function saveCompetition(form: FormData) {
   const required = ["slug", "title", "theme", "description", "prizeSummary", "rules", "imageGuidelines"] as const;
   if (required.some((field) => !value(form, field))) throw new Error("Complete every required competition field.");
   const data = {
-    slug: value(form, "slug"), title: value(form, "title"), theme: value(form, "theme"), description: value(form, "description"),
-    status, opensAt, closesAt, eligibility, entryFeePence: 0,
+    slug: value(form, "slug"), title: value(form, "title"), theme: value(form, "theme"), tagline: value(form,"tagline") || null, description: value(form, "description"),
+    status, opensAt, closesAt, eligibility, entryFeePence: Math.max(0, Math.round(Number(value(form,"entryFeePounds") || 0) * 100)),
+    launchMessage: value(form,"launchMessage") || null, heroAltText: value(form,"heroAltText") || null,
+    heroFocalPosition: ["top","center","bottom"].includes(value(form,"heroFocalPosition")) ? value(form,"heroFocalPosition") : "center",
+    judgingCriteria: value(form,"judgingCriteria") || null, galleryVisible: form.get("galleryVisible") === "on",
     maxEntriesPerDog: Math.max(1, Number(value(form, "maxEntriesPerDog")) || 1),
     prizeSummary: value(form, "prizeSummary"), rules: value(form, "rules"), rulesVersion: value(form, "rulesVersion") || "1", imageGuidelines: value(form, "imageGuidelines"),
   };
@@ -117,14 +121,27 @@ export async function transitionCompetition(form: FormData) {
   await prisma.$transaction(async (tx) => {
     const competition = await tx.competition.findUniqueOrThrow({ where: { id } });
     if (!canTransitionCompetition(competition.status, to)) throw new Error(`Changing ${competition.status} to ${to} is not allowed.`);
+    if (to === "OPEN" && competition.entryFeePence > 0) throw new Error("Paid competitions cannot open until payment processing is connected.");
     const now = new Date();
     const openDates = to === "OPEN" ? competitionOpenNowDates(competition.opensAt, competition.closesAt, now) : {};
     await tx.competition.update({ where: { id }, data: to === "CANCELLED"
       ? { status: to, cancelledAt: now, cancelledById: admin.id, cancellationReason: reason }
       : { status: to, ...openDates, ...(competition.status === "CANCELLED" ? { cancelledAt: null, cancelledById: null, cancellationReason: null } : {}) } });
   });
-  revalidatePath("/competitions"); revalidatePath(`/admin/competitions/${id}`); revalidatePath("/admin/competitions");
+  const slug = await prisma.competition.findUniqueOrThrow({where:{id},select:{slug:true}});
+  revalidatePath("/competitions"); revalidatePath(`/competitions/${slug.slug}`); revalidatePath(`/admin/competitions/${id}`);
 }
+
+export async function savePrize(formData: FormData) {
+  await requireAdmin(); const competitionId=value(formData,"competitionId"), id=value(formData,"prizeId");
+  const description=value(formData,"description"), placement=value(formData,"placement");
+  if(!description || !placement) throw new Error("Prize placement and description are required.");
+  const pounds=value(formData,"valuePounds");
+  const data={placement,title:value(formData,"title")||null,description,valuePence:pounds?Math.max(0,Math.round(Number(pounds)*100)):null,sponsor:value(formData,"sponsor")||null,imageUrl:value(formData,"imageUrl")||null,digitalAward:value(formData,"digitalAward")||null,displayOrder:Number(value(formData,"displayOrder")||0)};
+  if(id){const prize=await prisma.competitionPrize.findFirst({where:{id,competitionId}});if(!prize)throw new Error("Prize not found.");await prisma.competitionPrize.update({where:{id},data});}else await prisma.competitionPrize.create({data:{competitionId,...data}});
+  revalidatePath(`/admin/competitions/${competitionId}`);
+}
+export async function removePrize(formData: FormData) { await requireAdmin(); const id=value(formData,"prizeId"),competitionId=value(formData,"competitionId"); const prize=await prisma.competitionPrize.findFirst({where:{id,competitionId}});if(!prize)throw new Error("Prize not found.");await prisma.competitionPrize.delete({where:{id}});revalidatePath(`/admin/competitions/${competitionId}`); }
 
 export async function moderateEntry(form: FormData) {
   await requireAdmin();
@@ -182,9 +199,9 @@ export async function uploadCompetitionHero(formData: FormData) {
     await deleteObject(key).catch((cleanupError) => console.error("Hero rollback cleanup failed", { error: cleanupError }));
     throw error;
   }
-  if (competition.heroStorageKey) await deleteObject(competition.heroStorageKey).catch((error) => console.error("Hero cleanup failed", { error }));
+  // The new object and DB pointer are durable before cleanup; do not make Amy wait for deletion.
+  if (competition.heroStorageKey) void deleteObject(competition.heroStorageKey).catch((error) => console.error("Hero cleanup failed", { error }));
   revalidatePath(`/competitions/${competition.slug}`);
-  revalidatePath(`/admin/competitions/${id}`);
 }
 export async function removeCompetitionHero(formData:FormData){await requireAdmin();const id=value(formData,"competitionId"),competition=await prisma.competition.findUniqueOrThrow({where:{id}});await prisma.competition.update({where:{id},data:{heroStorageKey:null,heroFileName:null,heroContentType:null,heroSizeBytes:null}});if(competition.heroStorageKey)deleteObject(competition.heroStorageKey).catch(error=>console.error("Hero cleanup failed",{error}));revalidatePath(`/competitions/${competition.slug}`);revalidatePath(`/admin/competitions/${id}`)}
 
