@@ -1,32 +1,6 @@
 import { ButtonLink, Card, Section } from "@/components/ui";
-import { competitionAcceptsEntries, realEntrantCount } from "@/lib/competitions";
-import { launchConfig } from "@/lib/launch-config";
+import { competitionAcceptsEntries, competitionListingGroup, realEntrantCount } from "@/lib/competitions";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-
-export default async function CompetitionsPage() {
-  const user = await getCurrentUser();
-  const competitions = await prisma.competition.findMany({
-    where: { status: { in: ["PUBLISHED", "OPEN", "CLOSED", "JUDGING", "COMPLETED"] } },
-    include: { entries: { select: { status: true } } },
-    orderBy: { opensAt: "desc" },
-  });
-
-  return <>
-    <Section eyebrow="Free photo competitions" title="Bark Booth competitions">
-      {user?.role === "ADMIN" && <div className="mb-5 flex flex-wrap gap-2"><ButtonLink href="/admin/competitions">Manage competitions</ButtonLink><ButtonLink href="/admin/competitions/new" variant="secondary">Create competition</ButtonLink></div>}<Card className="bg-gradient-to-br from-white to-skysoft/60"><p className="text-lg leading-8 text-charcoal/70">{launchConfig.copy.competition}</p></Card>
-    </Section>
-    <Section eyebrow="Current and completed" title="Genuine competitions">
-      {competitions.length ? <div className="grid gap-5 md:grid-cols-2">{competitions.map((competition) => {
-        const acceptingEntries = competitionAcceptsEntries(competition.status, competition.opensAt, competition.closesAt);
-        return <Card key={competition.id}>
-          <div className="flex justify-between gap-3"><div><p className="registry-label">{competition.eligibility === "UK_ONLY" ? "UK only" : "International"} · Free entry</p><h2 className="mt-2 text-2xl font-bold text-navy">{competition.title}</h2></div><span className="font-bold text-info">{realEntrantCount(competition.entries)} entries</span></div>
-          <p className="mt-3 text-charcoal/70">{competition.description}</p>
-          <p className="mt-3 font-bold text-navy">Prize: {competition.prizeSummary}</p>
-          <p className="mt-2 text-sm">Opens {competition.opensAt.toLocaleDateString("en-GB")} · Closes {competition.closesAt.toLocaleDateString("en-GB")}</p>
-          <div className="mt-5"><ButtonLink href={`/competitions/${competition.slug}`}>{acceptingEntries ? "Enter now" : "View competition"}</ButtonLink></div>
-        </Card>;
-      })}</div> : <Card><h2 className="text-xl font-bold text-navy">No public competitions yet</h2><p className="mt-2 text-charcoal/65">An administrator can prepare the first genuine competition in draft without publishing it.</p></Card>}
-    </Section>
-  </>;
-}
+const groups=[{title:"Open now",key:"open"},{title:"Coming soon",key:"upcoming"},{title:"Scheduled — awaiting opening",key:"awaiting"},{title:"Judging / entries closed",key:"judging"},{title:"Recently completed / winners",key:"completed"}] as const;
+export default async function CompetitionsPage(){const user=await getCurrentUser();const competitions=await prisma.competition.findMany({where:{status:{in:["PUBLISHED","OPEN","CLOSED","JUDGING","COMPLETED"]}},include:{entries:{select:{status:true}},prizes:{orderBy:{displayOrder:"asc"},take:1}},orderBy:{opensAt:"desc"}});return <><Section eyebrow="Photo competitions" title="Find your dog's next big moment">{user?.role==="ADMIN"&&<div className="flex gap-2"><ButtonLink href="/admin/competitions">Manage competitions</ButtonLink><ButtonLink href="/admin/competitions/new" variant="secondary">Create competition</ButtonLink></div>}<p className="mt-5 max-w-3xl text-lg leading-8">Real dogs, transparent judging and prizes worth getting excited about.</p></Section>{groups.map(g=>{const items=competitions.filter(c=>competitionListingGroup(c.status,c.opensAt,c.closesAt)===g.key);if(!items.length)return null;return <Section key={g.title} title={g.title}><div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{items.map(c=>{const count=realEntrantCount(c.entries),open=competitionAcceptsEntries(c.status,c.opensAt,c.closesAt)&&c.entryFeePence===0,days=Math.ceil((+c.closesAt-Date.now())/86400000);return <article key={c.id} className="registry-card overflow-hidden rounded-[1.5rem]"><div className="relative aspect-[16/9] bg-gradient-to-br from-skysoft to-navy">{c.heroStorageKey&&<img src={`/api/competition-hero/${c.id}`} alt={c.heroAltText||`${c.title} competition`} className="h-full w-full object-cover" style={{objectPosition:c.heroFocalPosition}}/>}<span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-navy">{c.entryFeePence===0?"FREE":`£${(c.entryFeePence/100).toFixed(2)}`}</span></div><div className="p-5"><p className="registry-label">{c.theme} · {c.eligibility==="UK_ONLY"?"UK only":"International"}</p><h2 className="mt-2 text-2xl font-extrabold">{c.title}</h2>{c.tagline&&<p className="mt-2 text-charcoal/70">{c.tagline}</p>}<p className="mt-4 font-bold">{count===0?(c.launchMessage||"Entries are now open"):count<5?`${count} genuine ${count===1?"entry":"entries"}`:`${count} genuine entrants`}</p><p className="mt-2 text-sm">{days>0?`Closes in ${days} days`:"Entries closed"} · {c.closesAt.toLocaleDateString("en-GB")}</p><p className="mt-3 line-clamp-2"><strong>Prize:</strong> {c.prizes[0]?.title||c.prizeSummary}</p><div className="mt-5"><ButtonLink href={`/competitions/${c.slug}`}>{open?"Enter now":"View competition"}</ButtonLink></div></div></article>})}</div></Section>})}</>}

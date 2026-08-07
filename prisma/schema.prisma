@@ -389,6 +389,7 @@ model Competition {
   slug               String                 @unique @db.VarChar(120)
   title              String                 @db.VarChar(160)
   theme              String                 @db.VarChar(160)
+  tagline            String?                @db.VarChar(240)
   description        String
   status             CompetitionStatus      @default(DRAFT)
   opensAt            DateTime
@@ -400,6 +401,11 @@ model Competition {
   cancellationReason String?                @db.VarChar(500)
   eligibility        CompetitionEligibility @default(UK_ONLY)
   entryFeePence      Int                    @default(0)
+  launchMessage      String?                @db.VarChar(240)
+  heroAltText        String?                @db.VarChar(240)
+  heroFocalPosition  String                 @default("center") @db.VarChar(20)
+  judgingCriteria    String?
+  galleryVisible     Boolean                @default(true)
   maxEntriesPerDog   Int                    @default(1)
   prizeSummary       String
   rules              String
@@ -414,10 +420,29 @@ model Competition {
   heroContentType    String?
   heroSizeBytes      Int?
   judges             CompetitionJudge[]
+  prizes             CompetitionPrize[]
   newsPosts          NewsPost[]
 
   @@index([status, opensAt, closesAt])
   @@index([cancelledById])
+}
+
+model CompetitionPrize {
+  id             String      @id @default(cuid())
+  competitionId  String
+  competition    Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  placement      String      @db.VarChar(40)
+  title          String?     @db.VarChar(160)
+  description    String
+  valuePence     Int?
+  sponsor        String?     @db.VarChar(160)
+  imageUrl       String?     @db.VarChar(500)
+  digitalAward   String?     @db.VarChar(160)
+  displayOrder   Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([competitionId, displayOrder])
 }
 
 model CompetitionJudge {
